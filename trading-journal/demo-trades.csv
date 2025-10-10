@@ -1,0 +1,41 @@
+symbol,entry_date,exit_date,direction,entry_price,exit_price,quantity,pnl,fees,strategy,confluence,notes,tags
+US30,2025-09-07 09:30:00,2025-09-07 11:45:00,long,34250.00,34385.00,2,2700,-25,Breakout,EMA Cross,Good setup at key level. Followed plan perfectly.,winner;breakout
+NAS100,2025-09-07 14:15:00,2025-09-07 15:30:00,short,15820.00,15795.00,3,750,-18,Support/Resistance,Key Level,Resistance held well. Quick scalp.,winner;scalp
+EURUSD,2025-09-08 08:00:00,2025-09-08 09:15:00,long,1.0850,1.0835,5,-750,-12,Trend Following,Volume Spike,False breakout. Stopped out.,loser;stopped
+US30,2025-09-08 10:30:00,2025-09-08 13:00:00,long,34180.00,34420.00,2,4800,-25,Momentum,Multiple Timeframe,Strong momentum continuation.,winner;momentum
+GBPUSD,2025-09-09 11:00:00,2025-09-09 12:30:00,short,1.2650,1.2625,4,1000,-15,Reversal,Price Action,Good reversal at daily high.,winner;reversal
+SPX500,2025-09-09 14:00:00,2025-09-09 15:45:00,long,4580.00,4595.00,3,450,-20,Breakout,Key Level,Breakout continuation.,winner;breakout
+US30,2025-09-10 09:15:00,2025-09-10 10:00:00,short,34500.00,34550.00,2,-1000,-25,Support/Resistance,EMA Cross,Wrong direction. Risk managed.,loser;stopped
+NAS100,2025-09-10 13:30:00,2025-09-10 16:00:00,long,15900.00,16050.00,3,4500,-18,Trend Following,Volume Spike,Perfect trend trade.,winner;trend
+EURUSD,2025-09-11 07:30:00,2025-09-11 09:00:00,short,1.0880,1.0865,5,750,-12,Momentum,Price Action,Clean momentum move.,winner;momentum
+US30,2025-09-11 10:45:00,2025-09-11 12:15:00,long,34320.00,34480.00,2,3200,-25,Breakout,Multiple Timeframe,Strong breakout with volume.,winner;breakout
+GBPUSD,2025-09-12 08:00:00,2025-09-12 09:30:00,long,1.2680,1.2695,4,600,-15,Support/Resistance,Key Level,Support bounce.,winner;support
+SPX500,2025-09-12 14:30:00,2025-09-12 15:00:00,short,4600.00,4610.00,3,-300,-20,Reversal,EMA Cross,Early entry. Stopped out.,loser;early
+US30,2025-09-13 09:00:00,2025-09-13 11:30:00,long,34450.00,34620.00,2,3400,-25,Trend Following,Volume Spike,Excellent trend continuation.,winner;trend
+NAS100,2025-09-13 13:00:00,2025-09-13 14:45:00,short,16020.00,15980.00,3,1200,-18,Support/Resistance,Price Action,Resistance rejection.,winner;resistance
+EURUSD,2025-09-16 08:30:00,2025-09-16 10:00:00,long,1.0900,1.0920,5,1000,-12,Breakout,Key Level,Clean breakout trade.,winner;breakout
+US30,2025-09-16 11:15:00,2025-09-16 12:00:00,short,34550.00,34580.00,2,-600,-25,Momentum,Multiple Timeframe,Wrong momentum read.,loser;stopped
+GBPUSD,2025-09-17 09:30:00,2025-09-17 11:00:00,short,1.2720,1.2690,4,1200,-15,Reversal,Price Action,Perfect reversal at resistance.,winner;reversal
+SPX500,2025-09-17 14:00:00,2025-09-17 16:00:00,long,4620.00,4650.00,3,900,-20,Trend Following,EMA Cross,Good trend trade.,winner;trend
+US30,2025-09-18 10:00:00,2025-09-18 11:30:00,long,34600.00,34780.00,2,3600,-25,Breakout,Volume Spike,Strong breakout with confirmation.,winner;breakout
+NAS100,2025-09-18 13:45:00,2025-09-18 15:15:00,short,16100.00,16080.00,3,600,-18,Support/Resistance,Key Level,Quick scalp at resistance.,winner;scalp
+EURUSD,2025-09-19 07:00:00,2025-09-19 08:30:00,short,1.0935,1.0920,5,750,-12,Momentum,Price Action,Morning momentum trade.,winner;momentum
+US30,2025-09-19 10:30:00,2025-09-19 11:15:00,long,34720.00,34700.00,2,-400,-25,Trend Following,Multiple Timeframe,Failed to follow through.,loser;stopped
+GBPUSD,2025-09-20 09:00:00,2025-09-20 10:45:00,long,1.2700,1.2730,4,1200,-15,Breakout,Key Level,Support breakout.,winner;breakout
+SPX500,2025-09-20 14:30:00,2025-09-20 15:45:00,short,4665.00,4650.00,3,450,-20,Reversal,EMA Cross,Reversal at daily high.,winner;reversal
+US30,2025-09-23 09:15:00,2025-09-23 12:00:00,long,34800.00,35020.00,2,4400,-25,Trend Following,Volume Spike,Excellent trend day.,winner;trend
+NAS100,2025-09-23 13:30:00,2025-09-23 15:00:00,short,16150.00,16120.00,3,900,-18,Support/Resistance,Price Action,Clean resistance rejection.,winner;resistance
+EURUSD,2025-09-24 08:00:00,2025-09-24 09:00:00,long,1.0950,1.0935,5,-750,-12,Breakout,Key Level,False breakout.,loser;false
+US30,2025-09-24 11:00:00,2025-09-24 13:30:00,short,35050.00,34920.00,2,2600,-25,Momentum,Multiple Timeframe,Strong momentum reversal.,winner;momentum
+GBPUSD,2025-09-25 10:30:00,2025-09-25 12:00:00,short,1.2760,1.2735,4,1000,-15,Reversal,Price Action,Good reversal setup.,winner;reversal
+SPX500,2025-09-25 14:00:00,2025-09-25 15:30:00,long,4680.00,4700.00,3,600,-20,Breakout,EMA Cross,Late day breakout.,winner;breakout
+US30,2025-09-26 09:30:00,2025-09-26 10:30:00,long,34950.00,34980.00,2,600,-25,Support/Resistance,Key Level,Quick bounce.,winner;support
+NAS100,2025-09-26 13:00:00,2025-09-26 14:15:00,short,16180.00,16200.00,3,-600,-18,Trend Following,Volume Spike,Wrong trend direction.,loser;stopped
+EURUSD,2025-09-27 07:30:00,2025-09-27 09:15:00,short,1.0965,1.0945,5,1000,-12,Momentum,Price Action,Clean momentum continuation.,winner;momentum
+US30,2025-09-27 11:00:00,2025-09-27 13:00:00,long,35000.00,35180.00,2,3600,-25,Breakout,Multiple Timeframe,Perfect breakout trade.,winner;breakout
+GBPUSD,2025-09-30 09:00:00,2025-09-30 10:30:00,long,1.2740,1.2770,4,1200,-15,Support/Resistance,Key Level,Support held perfectly.,winner;support
+SPX500,2025-09-30 14:30:00,2025-09-30 16:00:00,short,4710.00,4695.00,3,450,-20,Reversal,EMA Cross,End of month reversal.,winner;reversal
+US30,2025-10-01 10:00:00,2025-10-01 11:45:00,short,35120.00,35090.00,2,600,-25,Momentum,Volume Spike,Quick scalp.,winner;scalp
+NAS100,2025-10-01 13:30:00,2025-10-01 15:00:00,long,16220.00,16280.00,3,1800,-18,Trend Following,Price Action,Afternoon trend.,winner;trend
+EURUSD,2025-10-02 08:00:00,2025-10-02 09:30:00,long,1.0975,1.0995,5,1000,-12,Breakout,Key Level,Morning breakout.,winner;breakout
+US30,2025-10-02 10:30:00,2025-10-02 11:30:00,long,35150.00,35120.00,2,-600,-25,Support/Resistance,Multiple Timeframe,Support failed.,loser;failed

@@ -1,0 +1,109 @@
+'use client'
+
+import React from 'react'
+import { X } from 'lucide-react'
+import { useTradesFilters } from '@/stores/trades-filters'
+
+interface ColumnPickerProps {
+  open: boolean
+  onClose: () => void
+}
+
+const AVAILABLE_COLUMNS = [
+  { id: 'date', label: 'Date', default: true },
+  { id: 'account', label: 'Account', default: true },
+  { id: 'symbol', label: 'Symbol', default: true },
+  { id: 'direction', label: 'Direction', default: true },
+  { id: 'entry_price', label: 'Entry Price', default: true },
+  { id: 'stop_price', label: 'Stop Loss', default: true },
+  { id: 'exit_price', label: 'Exit Price', default: true },
+  { id: 'size', label: 'Size', default: true },
+  { id: 'pnl_currency', label: 'P&L (Currency)', default: true },
+  { id: 'r_multiple', label: 'R Multiple', default: true },
+  { id: 'strategy', label: 'Strategy', default: true },
+  { id: 'playbook', label: 'Playbook', default: true },
+  { id: 'setup_grade', label: 'Setup Grade', default: true },
+  { id: 'setup_score', label: 'Setup Score', default: true },
+  { id: 'confluences', label: 'Confluences', default: true },
+  { id: 'session', label: 'Session', default: true },
+  { id: 'hold_time', label: 'Hold Time', default: true },
+  { id: 'mae_r', label: 'MAE (R)', default: true },
+  { id: 'mfe_r', label: 'MFE (R)', default: true },
+  { id: 'entry_time', label: 'Entry Time', default: false },
+  { id: 'exit_time', label: 'Exit Time', default: false },
+  { id: 'fees', label: 'Fees/Slippage', default: false },
+  { id: 'tags', label: 'Tags', default: false },
+  { id: 'rule_breaks', label: 'Rule Breaks', default: false },
+  { id: 'notes', label: 'Notes', default: false },
+  { id: 'attachments', label: 'Attachments', default: false },
+]
+
+export function ColumnPicker({ open, onClose }: ColumnPickerProps) {
+  const visibleColumnsArray = useTradesFilters((state) => state.filters.visibleColumns)
+  const { toggleColumn, setVisibleColumns } = useTradesFilters()
+
+  const visibleColumns = React.useMemo(() => new Set(visibleColumnsArray), [visibleColumnsArray])
+
+  const handleReset = () => {
+    const defaultColumns = AVAILABLE_COLUMNS.filter((col) => col.default).map((col) => col.id)
+    setVisibleColumns(defaultColumns)
+  }
+
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-md mx-4">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Customize Columns</h2>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Column List */}
+        <div className="px-6 py-4 max-h-96 overflow-y-auto">
+          <div className="space-y-2">
+            {AVAILABLE_COLUMNS.map((column) => (
+              <label
+                key={column.id}
+                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={visibleColumns.has(column.id)}
+                  onChange={() => toggleColumn(column.id)}
+                  className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-slate-700 dark:text-slate-300">{column.label}</span>
+                {column.default && (
+                  <span className="ml-auto text-xs text-slate-400">(default)</span>
+                )}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-slate-800">
+          <button
+            onClick={handleReset}
+            className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+          >
+            Reset to Default
+          </button>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}

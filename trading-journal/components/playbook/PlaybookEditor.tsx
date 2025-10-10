@@ -1,0 +1,650 @@
+'use client'
+
+import * as React from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { ArrowLeft, Save } from 'lucide-react'
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Switch } from '@/components/ui/switch'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
+import { getDefaultRubric } from '@/lib/playbook-scoring'
+import type {
+  Playbook,
+  PlaybookRule,
+  PlaybookConfluence,
+  PlaybookRubric,
+  Symbol as SymbolRecord,
+} from '@/types/supabase'
+import { RulesEditor } from './RulesEditor'
+import { ConfluencesEditor } from './ConfluencesEditor'
+import { ScoringEditor } from './ScoringEditor'
+import { PreviewPanel } from './PreviewPanel'
+import type { RuleDraft, ConfluenceDraft } from './types'
+
+const sessionOptions = ['Asia', 'London', 'NY'] as const
+const categoryOptions = ['Breakout', 'Reversion', 'ICT', 'News', 'Other'] as const
+
+interface PlaybookEditorProps {
+  mode: 'create' | 'edit'
+  userId: string
+  initialPlaybook: Playbook | null
+  initialRules: PlaybookRule[]
+  initialConfluences: PlaybookConfluence[]
+  initialRubric: PlaybookRubric | null
+  symbols: SymbolRecord[]
+}
+
+interface BasicsState {
+  name: string
+  category: (typeof categoryOptions)[number]
+  description: string
+  sessions: string[]
+  symbols: string[]
+  rr_min: string
+  active: boolean
+}
+
+export function PlaybookEditor({
+  mode,
+  userId,
+  initialPlaybook,
+  initialRules,
+  initialConfluences,
+  initialRubric,
+  symbols,
+}: PlaybookEditorProps) {
+  const router = useRouter()
+  const supabase = React.useMemo(() => createClient(), [])
+
+  const [playbookId, setPlaybookId] = React.useState<string | null>(
+    initialPlaybook?.id ?? null
+  )
+
+  const [basics, setBasics] = React.useState<BasicsState>({
+    name: initialPlaybook?.name ?? '',
+    category: (initialPlaybook?.category as BasicsState['category']) ?? 'Other',
+    description: initialPlaybook?.description ?? '',
+    sessions: initialPlaybook?.sessions ?? [],
+    symbols: initialPlaybook?.symbols ?? [],
+    rr_min: initialPlaybook?.rr_min != null ? String(initialPlaybook.rr_min) : '',
+    active: initialPlaybook?.active ?? true,
+  })
+
+  const [rules, setRules] = React.useState<RuleDraft[]>(
+    initialRules
+      .map((rule) => ({
+        id: rule.id,
+        playbook_id: rule.playbook_id,
+        label: rule.label,
+        type: rule.type,
+        weight: Number(rule.weight) || 0,
+        sort: rule.sort ?? 0,
+      }))
+      .sort((a, b) => a.sort - b.sort)
+  )
+
+  const [confluences, setConfluences] = React.useState<ConfluenceDraft[]>(
+    initialConfluences
+      .map((item) => ({
+        id: item.id,
+        playbook_id: item.playbook_id,
+        label: item.label,
+        weight: Number(item.weight) || 0,
+        primary_confluence: item.primary_confluence,
+        sort: item.sort ?? 0,
+      }))
+      .sort((a, b) => a.sort - b.sort)
+  )
+
+  const [rubric, setRubric] = React.useState<PlaybookRubric>(() => {
+    const fallback = getDefaultRubric()
+    return initialRubric
+      ? { ...initialRubric }
+      : {
+          ...fallback,
+          playbook_id: initialPlaybook?.id ?? '',
+        }
+  })
+
+  const [deletedRuleIds, setDeletedRuleIds] = React.useState<string[]>([])
+  const [deletedConfluenceIds, setDeletedConfluenceIds] = React.useState<string[]>([])
+  const [activeTab, setActiveTab] = React.useState('basics')
+  const [saving, setSaving] = React.useState(false)
+  const [dirty, setDirty] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+  const [status, setStatus] = React.useState<string | null>(null)
+
+  const persistedRuleIds = React.useRef(new Set(initialRules.map((rule) => rule.id)))
+  const persistedConfluenceIds = React.useRef(
+    new Set(initialConfluences.map((conf) => conf.id))
+  )
+
+  React.useEffect(() => {
+    if (playbookId && rubric.playbook_id !== playbookId) {
+      setRubric((prev) => ({ ...prev, playbook_id: playbookId }))
+    }
+  }, [playbookId, rubric.playbook_id])
+
+  const markDirty = () => {
+    setDirty(true)
+    setStatus(null)
+  }
+
+  const toggleSession = (session: string) => {
+    setBasics((prev) => {
+      const nextSessions = prev.sessions.includes(session)
+        ? prev.sessions.filter((s) => s !== session)
+        : [...prev.sessions, session]
+      return { ...prev, sessions: nextSessions }
+    })
+    markDirty()
+  }
+
+  const toggleSymbol = (code: string) => {
+    setBasics((prev) => {
+      const nextSymbols = prev.symbols.includes(code)
+        ? prev.symbols.filter((sym) => sym !== code)
+        : [...prev.symbols, code]
+      return { ...prev, symbols: nextSymbols }
+    })
+    markDirty()
+  }
+
+  const handleAddRule = () => {
+    const newRule: RuleDraft = {
+      id: crypto.randomUUID(),
+      playbook_id: playbookId ?? undefined,
+      label: '',
+      type: 'must',
+      weight: 1,
+      sort: rules.length,
+    }
+    setRules((prev) => [...prev, newRule])
+    markDirty()
+  }
+
+  const handleUpdateRule = (id: string, updates: Partial<RuleDraft>) => {
+    setRules((prev) =>
+      prev.map((rule) => (rule.id === id ? { ...rule, ...updates } : rule))
+    )
+    markDirty()
+  }
+
+  const handleRemoveRule = (id: string) => {
+    setRules((prev) => {
+      const next = prev.filter((rule) => rule.id !== id)
+      return next.map((rule, index) => ({ ...rule, sort: index }))
+    })
+    if (persistedRuleIds.current.has(id)) {
+      setDeletedRuleIds((prev) => [...prev, id])
+    }
+    markDirty()
+  }
+
+  const handleReorderRules = (fromIndex: number, toIndex: number) => {
+    setRules((prev) => {
+      const ordered = [...prev].sort((a, b) => a.sort - b.sort)
+      const [moved] = ordered.splice(fromIndex, 1)
+      ordered.splice(toIndex, 0, moved)
+      return ordered.map((rule, index) => ({ ...rule, sort: index }))
+    })
+    markDirty()
+  }
+
+  const handleAddConfluence = () => {
+    const newConfluence: ConfluenceDraft = {
+      id: crypto.randomUUID(),
+      playbook_id: playbookId ?? undefined,
+      label: '',
+      weight: 1,
+      primary_confluence: false,
+      sort: confluences.length,
+    }
+    setConfluences((prev) => [...prev, newConfluence])
+    markDirty()
+  }
+
+  const handleUpdateConfluence = (id: string, updates: Partial<ConfluenceDraft>) => {
+    setConfluences((prev) =>
+      prev.map((conf) => (conf.id === id ? { ...conf, ...updates } : conf))
+    )
+    markDirty()
+  }
+
+  const handleRemoveConfluence = (id: string) => {
+    setConfluences((prev) => {
+      const next = prev.filter((conf) => conf.id !== id)
+      return next.map((conf, index) => ({ ...conf, sort: index }))
+    })
+    if (persistedConfluenceIds.current.has(id)) {
+      setDeletedConfluenceIds((prev) => [...prev, id])
+    }
+    markDirty()
+  }
+
+  const handleReorderConfluences = (fromIndex: number, toIndex: number) => {
+    setConfluences((prev) => {
+      const ordered = [...prev].sort((a, b) => a.sort - b.sort)
+      const [moved] = ordered.splice(fromIndex, 1)
+      ordered.splice(toIndex, 0, moved)
+      return ordered.map((conf, index) => ({ ...conf, sort: index }))
+    })
+    markDirty()
+  }
+
+  const validationErrors = React.useMemo(() => {
+    const issues: string[] = []
+    if (!basics.name.trim()) {
+      issues.push('Playbook name is required.')
+    }
+    if (rules.length === 0) {
+      issues.push('Add at least one rule for this playbook.')
+    }
+    if (confluences.length === 0) {
+      issues.push('Add at least one confluence so scoring can evaluate setups.')
+    }
+    return issues
+  }, [basics.name, rules.length, confluences.length])
+
+  const handleSave = async () => {
+    setError(null)
+    setStatus(null)
+
+    if (validationErrors.length > 0) {
+      setError(validationErrors.join(' '))
+      return
+    }
+
+    setSaving(true)
+
+    try {
+      const payload = {
+        name: basics.name.trim(),
+        category: basics.category,
+        description: basics.description || null,
+        sessions: basics.sessions,
+        symbols: basics.symbols,
+        rr_min: basics.rr_min ? Number(basics.rr_min) : null,
+        active: basics.active,
+        user_id: userId,
+      }
+
+      let currentId = playbookId
+
+      if (!currentId) {
+        const { data, error: insertError } = await supabase
+          .from('playbooks')
+          .insert(payload)
+          .select()
+          .single()
+
+        if (insertError) throw insertError
+        currentId = data.id
+        setPlaybookId(data.id)
+        router.replace(`/playbook/${data.id}`)
+      } else {
+        const { error: updateError } = await supabase
+          .from('playbooks')
+          .update(payload)
+          .eq('id', currentId)
+
+        if (updateError) throw updateError
+      }
+
+      const sortedRules = [...rules].sort((a, b) => a.sort - b.sort)
+      const sortedConfluences = [...confluences].sort((a, b) => a.sort - b.sort)
+
+      if (sortedRules.length > 0) {
+        const rulePayload = sortedRules.map((rule, index) => ({
+          id: rule.id,
+          playbook_id: currentId,
+          label: rule.label.trim(),
+          type: rule.type,
+          weight: Number(rule.weight) || 0,
+          sort: index,
+        }))
+
+        const { error: ruleError } = await supabase.from('playbook_rules').upsert(rulePayload)
+        if (ruleError) throw ruleError
+
+        setRules(rulePayload.map((rule) => ({ ...rule })))
+      }
+
+      if (sortedConfluences.length > 0) {
+        const confluencePayload = sortedConfluences.map((conf, index) => ({
+          id: conf.id,
+          playbook_id: currentId,
+          label: conf.label.trim(),
+          weight: Number(conf.weight) || 0,
+          primary_confluence: conf.primary_confluence,
+          sort: index,
+        }))
+
+        const { error: confError } = await supabase
+          .from('playbook_confluences')
+          .upsert(confluencePayload)
+        if (confError) throw confError
+
+        setConfluences(confluencePayload.map((conf) => ({ ...conf })))
+      }
+
+      if (deletedRuleIds.length > 0) {
+        const { error: deleteRuleError } = await supabase
+          .from('playbook_rules')
+          .delete()
+          .in('id', deletedRuleIds)
+        if (deleteRuleError) throw deleteRuleError
+        setDeletedRuleIds([])
+      }
+
+      if (deletedConfluenceIds.length > 0) {
+        const { error: deleteConfError } = await supabase
+          .from('playbook_confluences')
+          .delete()
+          .in('id', deletedConfluenceIds)
+        if (deleteConfError) throw deleteConfError
+        setDeletedConfluenceIds([])
+      }
+
+      if (currentId) {
+        const rubricPayload: PlaybookRubric = {
+          ...rubric,
+          playbook_id: currentId,
+          grade_cutoffs: Object.fromEntries(
+            Object.entries(rubric.grade_cutoffs).map(([grade, value]) => [
+              grade.trim(),
+              Number(value) || 0,
+            ])
+          ),
+        }
+
+        const { error: rubricError } = await supabase
+          .from('playbook_rubric')
+          .upsert(rubricPayload)
+        if (rubricError) throw rubricError
+
+        setRubric(rubricPayload)
+      }
+
+      persistedRuleIds.current = new Set(sortedRules.map((rule) => rule.id))
+      persistedConfluenceIds.current = new Set(
+        sortedConfluences.map((conf) => conf.id)
+      )
+
+      setStatus('Playbook saved')
+      setDirty(false)
+    } catch (saveError) {
+      const message =
+        saveError instanceof Error ? saveError.message : 'Failed to save playbook.'
+      setError(message)
+      console.error('Failed to save playbook:', saveError)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 rounded-xl border border-slate-200/70 bg-white/80 p-6 dark:border-slate-800/60 dark:bg-slate-900/60">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+              <Link
+                href="/playbook"
+                className="inline-flex items-center gap-1 text-slate-600 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Playbooks
+              </Link>
+              <span>•</span>
+              <span>{mode === 'create' ? 'Create Playbook' : 'Edit Playbook'}</span>
+            </div>
+            <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-50">
+              {basics.name || 'Untitled Playbook'}
+            </h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Design the rules, confluences, and grading rubric for this setup.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            {dirty && (
+              <Badge className="border-amber-300/70 bg-amber-100/60 text-amber-700 dark:border-amber-800/70 dark:bg-amber-900/40 dark:text-amber-300">
+                Unsaved changes
+              </Badge>
+            )}
+            {status && !dirty && (
+              <Badge className="border-emerald-300/70 bg-emerald-100/60 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-900/40 dark:text-emerald-300">
+                {status}
+              </Badge>
+            )}
+            <Button onClick={handleSave} disabled={saving}>
+              <Save className={cn('h-4 w-4', saving && 'animate-spin')} />
+              {mode === 'create' && !playbookId ? 'Create Playbook' : 'Save Changes'}
+            </Button>
+          </div>
+        </div>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="basics">Basics</TabsTrigger>
+          <TabsTrigger value="rules">Rules</TabsTrigger>
+          <TabsTrigger value="confluences">Confluences</TabsTrigger>
+          <TabsTrigger value="scoring">Scoring</TabsTrigger>
+          <TabsTrigger value="preview">Preview</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="basics" className="mt-4 space-y-6">
+          <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+            <div className="space-y-6 rounded-xl border border-slate-200/70 bg-white/80 p-6 dark:border-slate-800/60 dark:bg-slate-900/50">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Playbook Name
+                </label>
+                <Input
+                  value={basics.name}
+                  onChange={(event) => {
+                    setBasics((prev) => ({ ...prev, name: event.target.value }))
+                    markDirty()
+                  }}
+                  placeholder="e.g. London session ICT breaker"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Category
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {categoryOptions.map((category) => (
+                    <button
+                      key={category}
+                      type="button"
+                      onClick={() => {
+                        setBasics((prev) => ({ ...prev, category }))
+                        markDirty()
+                      }}
+                      className={cn(
+                        'rounded-full border px-3 py-1 text-sm transition-colors',
+                        basics.category === category
+                          ? 'border-blue-400 bg-blue-100 text-blue-700 dark:border-blue-700 dark:bg-blue-900/50 dark:text-blue-200'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300'
+                      )}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Description
+                </label>
+                <Textarea
+                  rows={6}
+                  value={basics.description}
+                  onChange={(event) => {
+                    setBasics((prev) => ({ ...prev, description: event.target.value }))
+                    markDirty()
+                  }}
+                  placeholder="Markdown supported. Summarise the setup narrative, the conditions you're looking for, and how it fits your system."
+                />
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-3 rounded-xl border border-slate-200/70 bg-white/80 p-6 dark:border-slate-800/60 dark:bg-slate-900/50">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    Trading Sessions
+                  </h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {sessionOptions.map((session) => {
+                    const selected = basics.sessions.includes(session)
+                    return (
+                      <button
+                        key={session}
+                        type="button"
+                        onClick={() => toggleSession(session)}
+                        className={cn(
+                          'rounded-full border px-3 py-1 text-xs font-medium uppercase transition-colors',
+                          selected
+                            ? 'border-emerald-400 bg-emerald-100 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
+                            : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300'
+                        )}
+                      >
+                        {session}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-3 rounded-xl border border-slate-200/70 bg-white/80 p-6 dark:border-slate-800/60 dark:bg-slate-900/50">
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  Symbols
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Pick the instruments where this setup is valid.
+                </p>
+                <div className="flex max-h-64 flex-wrap gap-2 overflow-auto">
+                  {symbols.map((symbol) => {
+                    const selected = basics.symbols.includes(symbol.code)
+                    return (
+                      <button
+                        key={symbol.id}
+                        type="button"
+                        onClick={() => toggleSymbol(symbol.code)}
+                        className={cn(
+                          'rounded-md border px-2 py-1 text-xs transition-colors',
+                          selected
+                            ? 'border-purple-400 bg-purple-100 text-purple-700 dark:border-purple-700 dark:bg-purple-900/40 dark:text-purple-200'
+                            : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300'
+                        )}
+                        title={symbol.display_name}
+                      >
+                        {symbol.code}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-3 rounded-xl border border-slate-200/70 bg-white/80 p-6 dark:border-slate-800/60 dark:bg-slate-900/50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                      Minimum R:R
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Minimum risk-to-reward for this playbook (optional).
+                    </p>
+                  </div>
+                  <div className="w-24">
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={basics.rr_min}
+                      onChange={(event) => {
+                        setBasics((prev) => ({ ...prev, rr_min: event.target.value }))
+                        markDirty()
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3 rounded-xl border border-slate-200/70 bg-white/80 p-6 dark:border-slate-800/60 dark:bg-slate-900/50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                      Active
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Archived playbooks remain available for historical trades.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={basics.active}
+                    onCheckedChange={(checked) => {
+                      setBasics((prev) => ({ ...prev, active: checked }))
+                      markDirty()
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="rules" className="mt-4">
+          <RulesEditor
+            rules={rules}
+            onAddRule={handleAddRule}
+            onUpdateRule={handleUpdateRule}
+            onRemoveRule={handleRemoveRule}
+            onReorderRules={handleReorderRules}
+          />
+        </TabsContent>
+
+        <TabsContent value="confluences" className="mt-4">
+          <ConfluencesEditor
+            confluences={confluences}
+            onAddConfluence={handleAddConfluence}
+            onUpdateConfluence={handleUpdateConfluence}
+            onRemoveConfluence={handleRemoveConfluence}
+            onReorderConfluences={handleReorderConfluences}
+          />
+        </TabsContent>
+
+        <TabsContent value="scoring" className="mt-4">
+          <ScoringEditor rubric={rubric} onChange={(next) => { setRubric(next); markDirty() }} />
+        </TabsContent>
+
+        <TabsContent value="preview" className="mt-4">
+          <PreviewPanel rules={rules} confluences={confluences} rubric={rubric} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}
