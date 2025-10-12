@@ -563,65 +563,6 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <Separator />
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">Trading Confluences</h3>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const input = prompt("Enter a new confluence:")
-                        if (input?.trim()) {
-                          const currentConfluences = user?.preferences?.confluences || []
-                          useUserStore.getState().updatePreferences({
-                            confluences: [...currentConfluences, input.trim()],
-                          })
-                        }
-                      }}
-                    >
-                      Add Confluence
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {user?.preferences?.confluences && user.preferences.confluences.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {user.preferences.confluences.map((confluence, index) => (
-                          <div
-                            key={index}
-                            className="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-1"
-                          >
-                            <span className="text-sm">{confluence}</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const updated = user.preferences?.confluences?.filter(
-                                  (_, i) => i !== index
-                                )
-                                useUserStore.getState().updatePreferences({
-                                  confluences: updated,
-                                })
-                              }}
-                              className="text-muted-foreground hover:text-foreground"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        No confluences added yet. Click "Add Confluence" to get started.
-                      </p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      Add trading confluences like "200 EMA", "Support/Resistance", "Fibonacci", etc.
-                    </p>
-                  </div>
-                </div>
-
                 <div className="flex justify-end gap-3">
                   <Button type="button" variant="outline">
                     Cancel
