@@ -91,18 +91,18 @@ export default function PlaybookPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 p-6 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <div className="flex-1 bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-50 p-6 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950">
         <div className="mx-auto w-full max-w-6xl animate-pulse space-y-4">
-          <div className="h-8 w-56 rounded-lg bg-slate-200/70 dark:bg-slate-800/60" />
-          <div className="h-10 w-full rounded-lg bg-slate-200/70 dark:bg-slate-800/60" />
+          <div className="h-8 w-56 rounded-lg bg-neutral-200/70 dark:bg-neutral-800/60" />
+          <div className="h-10 w-full rounded-lg bg-neutral-200/70 dark:bg-neutral-800/60" />
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 3 }).map((_, index) => (
               <div
                 key={index}
-                className="rounded-xl border border-slate-200/70 bg-white/70 p-6 dark:border-slate-800/60 dark:bg-slate-900/60"
+                className="rounded-xl border border-neutral-200/70 bg-white/70 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/60"
               >
-                <div className="h-6 w-1/2 rounded bg-slate-200/70 dark:bg-slate-800/60" />
-                <div className="mt-4 h-20 rounded bg-slate-200/70 dark:bg-slate-800/60" />
+                <div className="h-6 w-1/2 rounded bg-neutral-200/70 dark:bg-neutral-800/60" />
+                <div className="mt-4 h-20 rounded bg-neutral-200/70 dark:bg-neutral-800/60" />
               </div>
             ))}
           </div>
@@ -112,7 +112,7 @@ export default function PlaybookPage() {
   }
 
   return (
-    <div className="flex-1 bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 p-6 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="flex-1 bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-50 p-6 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950">
       <div className="mx-auto w-full max-w-6xl">
         <PlaybookListClient initialPlaybooks={playbooks} initialError={error} />
       </div>

@@ -52,13 +52,13 @@ export function FilterBar() {
     filters.dateRange !== 'month'
 
   return (
-    <div className="sticky top-0 z-10 bg-gradient-to-br from-slate-50/95 to-slate-100/95 dark:from-slate-950/95 dark:to-slate-900/95 backdrop-blur-md border-b border-border/50 shadow-sm">
+    <div className="sticky top-0 z-10 bg-gradient-to-br from-gray-50/95 to-gray-100/95 dark:from-neutral-950/95 dark:to-neutral-900/95 backdrop-blur-md border-b border-border/50 shadow-sm">
       <div className="px-8 py-4">
         <div className="flex flex-wrap items-center gap-3">
           {/* Date Range */}
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground">Period:</span>
-            <div className="flex gap-1 bg-white/60 dark:bg-slate-800/60 rounded-lg p-1 shadow-sm">
+            <div className="flex gap-1 bg-white/60 dark:bg-neutral-800/60 rounded-lg p-1 shadow-sm">
               {(['week', 'month', '3m', 'ytd', 'all'] as DateRangePreset[]).map((preset) => (
                 <button
                   key={preset}
@@ -86,7 +86,7 @@ export function FilterBar() {
               <select
                 value={filters.accountId}
                 onChange={(e) => setAccountId(e.target.value)}
-                className="px-3 py-1.5 text-xs font-medium bg-white/60 dark:bg-slate-800/60 border border-border/50 rounded-lg hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+                className="px-3 py-1.5 text-xs font-medium bg-white/60 dark:bg-neutral-800/60 border border-border/50 rounded-lg hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
               >
                 <option value="all">All Accounts</option>
                 {accounts.map(account => (
@@ -109,7 +109,7 @@ export function FilterBar() {
                   const selected = Array.from(e.target.selectedOptions, option => option.value)
                   setSymbols(selected)
                 }}
-                className="px-3 py-1.5 text-xs font-medium bg-white/60 dark:bg-slate-800/60 border border-border/50 rounded-lg hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow-sm min-w-[120px]"
+                className="px-3 py-1.5 text-xs font-medium bg-white/60 dark:bg-neutral-800/60 border border-border/50 rounded-lg hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow-sm min-w-[120px]"
                 size={1}
               >
                 <option value="" disabled>Select symbols...</option>
@@ -138,7 +138,7 @@ export function FilterBar() {
                   const selected = Array.from(e.target.selectedOptions, option => option.value)
                   setStrategies(selected)
                 }}
-                className="px-3 py-1.5 text-xs font-medium bg-white/60 dark:bg-slate-800/60 border border-border/50 rounded-lg hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow-sm min-w-[120px]"
+                className="px-3 py-1.5 text-xs font-medium bg-white/60 dark:bg-neutral-800/60 border border-border/50 rounded-lg hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow-sm min-w-[120px]"
                 size={1}
               >
                 <option value="" disabled>Select strategies...</option>
@@ -159,7 +159,7 @@ export function FilterBar() {
           {/* Session Filter */}
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground">Session:</span>
-            <div className="flex gap-1 bg-white/60 dark:bg-slate-800/60 rounded-lg p-1 shadow-sm">
+            <div className="flex gap-1 bg-white/60 dark:bg-neutral-800/60 rounded-lg p-1 shadow-sm">
               {(['all', 'asia', 'london', 'ny'] as SessionFilter[]).map((session) => (
                 <button
                   key={session}
@@ -195,7 +195,7 @@ export function FilterBar() {
             {/* Units Toggle */}
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground">Units:</span>
-              <div className="flex gap-1 bg-white/60 dark:bg-slate-800/60 rounded-lg p-1 shadow-sm">
+              <div className="flex gap-1 bg-white/60 dark:bg-neutral-800/60 rounded-lg p-1 shadow-sm">
                 <button
                   onClick={() => setUnits('currency')}
                   className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
@@ -220,7 +220,7 @@ export function FilterBar() {
 
               {/* Currency Badge for Single Account */}
               {selectedAccount && filters.units === 'currency' && (
-                <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-md">
+                <span className="px-2 py-1 text-xs font-medium bg-neutral-100 dark:bg-neutral-800/30 text-neutral-700 dark:text-neutral-400 rounded-md">
                   {selectedAccount.currency}
                 </span>
               )}
@@ -233,7 +233,7 @@ export function FilterBar() {
                     <select
                       value={filters.baseCurrency}
                       onChange={(e) => setBaseCurrency(e.target.value as BaseCurrency)}
-                      className="px-2 py-1 text-xs font-medium bg-white/60 dark:bg-slate-800/60 border border-border/50 rounded-md hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+                      className="px-2 py-1 text-xs font-medium bg-white/60 dark:bg-neutral-800/60 border border-border/50 rounded-md hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
                     >
                       <option value="USD">USD</option>
                       <option value="ZAR">ZAR</option>
@@ -259,7 +259,7 @@ export function FilterBar() {
             {hasActiveFilters && (
               <button
                 onClick={resetFilters}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground bg-white/60 dark:bg-slate-800/60 border border-border/50 rounded-lg hover:bg-muted transition-colors shadow-sm"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground bg-white/60 dark:bg-neutral-800/60 border border-border/50 rounded-lg hover:bg-muted transition-colors shadow-sm"
               >
                 <X className="h-3 w-3" />
                 Reset

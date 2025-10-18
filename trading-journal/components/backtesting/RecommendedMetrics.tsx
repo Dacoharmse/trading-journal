@@ -14,8 +14,8 @@ export function RecommendedMetrics({ backtests }: RecommendedMetricsProps) {
 
   if (!recommended) {
     return (
-      <div className="rounded-lg border border-slate-200/70 bg-white/80 p-4 dark:border-slate-800/60 dark:bg-slate-900/60">
-        <h2 className="mb-3 text-base font-semibold text-slate-900 dark:text-slate-50">
+      <div className="rounded-lg border border-neutral-200/70 bg-white/80 p-4 dark:border-neutral-800/60 dark:bg-neutral-900/60">
+        <h2 className="mb-3 text-base font-semibold text-neutral-900 dark:text-neutral-50">
           Recommended Trade Metrics
         </h2>
         <div className="rounded border border-amber-200/70 bg-amber-50/70 p-4 text-center dark:border-amber-800/60 dark:bg-amber-950/30">
@@ -42,7 +42,7 @@ export function RecommendedMetrics({ backtests }: RecommendedMetricsProps) {
     medium: {
       label: 'Medium Confidence',
       color:
-        'border-blue-300/60 bg-blue-100/60 text-blue-700 dark:border-blue-700/60 dark:bg-blue-900/40 dark:text-blue-300',
+        'border-amber-300/60 bg-amber-100/60 text-amber-700 dark:border-amber-700/60 dark:bg-amber-900/40 dark:text-amber-300',
       description: 'Getting reliable (n≥10)',
     },
     high: {
@@ -56,9 +56,9 @@ export function RecommendedMetrics({ backtests }: RecommendedMetricsProps) {
   const config = confidenceConfig[confidence]
 
   return (
-    <div className="rounded-lg border border-slate-200/70 bg-white/80 p-4 dark:border-slate-800/60 dark:bg-slate-900/60">
+    <div className="rounded-lg border border-neutral-200/70 bg-white/80 p-4 dark:border-neutral-800/60 dark:bg-neutral-900/60">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-base font-semibold text-slate-900 dark:text-slate-50">
+        <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-50">
           Recommended Trade Metrics
         </h2>
         <Badge variant="secondary" className={cn('text-xs', config.color)}>
@@ -67,24 +67,24 @@ export function RecommendedMetrics({ backtests }: RecommendedMetricsProps) {
       </div>
 
       <div className="mb-3 grid grid-cols-3 gap-3">
-        <div className="rounded-lg border border-slate-200/70 bg-slate-50/50 p-3 dark:border-slate-800/60 dark:bg-slate-900/50">
-          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+        <div className="rounded-lg border border-neutral-200/70 bg-neutral-50/50 p-3 dark:border-neutral-800/60 dark:bg-neutral-900/50">
+          <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
             Stop Loss
           </div>
-          <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-50">
+          <div className="mt-1 text-2xl font-bold text-neutral-900 dark:text-neutral-50">
             {slPips.toFixed(1)}
           </div>
-          <div className="text-xs text-slate-600 dark:text-slate-400">pips</div>
+          <div className="text-xs text-neutral-600 dark:text-neutral-400">pips</div>
         </div>
 
-        <div className="rounded-lg border border-slate-200/70 bg-slate-50/50 p-3 dark:border-slate-800/60 dark:bg-slate-900/50">
-          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+        <div className="rounded-lg border border-neutral-200/70 bg-neutral-50/50 p-3 dark:border-neutral-800/60 dark:bg-neutral-900/50">
+          <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
             Take Profit
           </div>
-          <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-50">
+          <div className="mt-1 text-2xl font-bold text-neutral-900 dark:text-neutral-50">
             {tpPips.toFixed(1)}
           </div>
-          <div className="text-xs text-slate-600 dark:text-slate-400">pips</div>
+          <div className="text-xs text-neutral-600 dark:text-neutral-400">pips</div>
         </div>
 
         <div className="rounded-lg border border-emerald-200/70 bg-emerald-50/50 p-3 dark:border-emerald-800/60 dark:bg-emerald-900/50">
@@ -98,13 +98,13 @@ export function RecommendedMetrics({ backtests }: RecommendedMetricsProps) {
         </div>
       </div>
 
-      <div className="space-y-1 text-xs text-slate-600 dark:text-slate-400">
+      <div className="space-y-1 text-xs text-neutral-600 dark:text-neutral-400">
         <p>
-          <strong className="text-slate-700 dark:text-slate-300">Based on:</strong> {sampleSize}{' '}
+          <strong className="text-neutral-700 dark:text-neutral-300">Based on:</strong> {sampleSize}{' '}
           backtested {sampleSize === 1 ? 'trade' : 'trades'} with planned metrics
         </p>
         <p>
-          <strong className="text-slate-700 dark:text-slate-300">Method:</strong> Median values
+          <strong className="text-neutral-700 dark:text-neutral-300">Method:</strong> Median values
           (more robust against outliers)
         </p>
         {confidence === 'low' && (

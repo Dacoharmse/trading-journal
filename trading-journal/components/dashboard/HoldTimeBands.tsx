@@ -72,7 +72,7 @@ export function HoldTimeBands({ trades }: HoldTimeBandsProps) {
 
   if (trades.length === 0) {
     return (
-      <Card className="bg-gradient-to-br from-white/80 to-white/60 dark:from-slate-800/80 dark:to-slate-900/60 backdrop-blur-sm border-slate-200 dark:border-slate-700">
+      <Card className="bg-gradient-to-br from-white/80 to-white/60 dark:from-neutral-800/80 dark:to-neutral-900/60 backdrop-blur-sm border-neutral-200 dark:border-neutral-700">
         <CardHeader>
           <CardTitle className="text-sm font-medium flex items-center gap-2">
             <Clock className="h-4 w-4" />
@@ -89,7 +89,7 @@ export function HoldTimeBands({ trades }: HoldTimeBandsProps) {
   }
 
   return (
-    <Card className="bg-gradient-to-br from-white/80 to-white/60 dark:from-slate-800/80 dark:to-slate-900/60 backdrop-blur-sm border-slate-200 dark:border-slate-700">
+    <Card className="bg-gradient-to-br from-white/80 to-white/60 dark:from-neutral-800/80 dark:to-neutral-900/60 backdrop-blur-sm border-neutral-200 dark:border-neutral-700">
       <CardHeader>
         <CardTitle className="text-sm font-medium flex items-center gap-2">
           <Clock className="h-4 w-4" />
@@ -113,7 +113,7 @@ export function HoldTimeBands({ trades }: HoldTimeBandsProps) {
                     <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
                       isExploratory
                         ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300'
                     }`}>
                       n={band.count}
                       {isExploratory && ' • low sample'}
@@ -137,7 +137,7 @@ export function HoldTimeBands({ trades }: HoldTimeBandsProps) {
         </div>
 
         {/* Summary */}
-        <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700">
+        <div className="mt-4 pt-3 border-t border-neutral-200 dark:border-neutral-700">
           <p className="text-xs text-muted-foreground">
             Median R by hold time bucket. Optimal hold time varies by strategy.
           </p>

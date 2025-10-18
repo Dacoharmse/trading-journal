@@ -141,7 +141,7 @@ export function EquityChart({ trades, units, currency }: EquityChartProps) {
 
   if (equityCurve.points.length === 0) {
     return (
-      <Card className="border-0 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm shadow-lg">
+      <Card className="border-0 bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm shadow-lg">
         <CardHeader>
           <CardTitle className="text-sm font-semibold">Equity Curve</CardTitle>
         </CardHeader>
@@ -166,7 +166,7 @@ export function EquityChart({ trades, units, currency }: EquityChartProps) {
   const maxDD = units === 'r' ? drawdownInfo.maxDrawdownR : drawdownInfo.maxDrawdownCurrency
 
   return (
-    <Card className="border-0 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm shadow-lg">
+    <Card className="border-0 bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm shadow-lg">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>

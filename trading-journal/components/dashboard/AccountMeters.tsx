@@ -44,7 +44,7 @@ export function AccountMeters({ account, stats, currency }: AccountMetersProps) 
   const phase = account.phase || 'Phase 1'
 
   return (
-    <Card className="border-0 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm shadow-lg">
+    <Card className="border-0 bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm shadow-lg">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
@@ -180,7 +180,7 @@ export function AccountMeters({ account, stats, currency }: AccountMetersProps) 
                 </>
               ) : (
                 <>
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                  <div className="w-2 h-2 bg-neutral-500 rounded-full animate-pulse" />
                   <span className="text-xs font-medium text-muted-foreground">In Progress</span>
                 </>
               )}

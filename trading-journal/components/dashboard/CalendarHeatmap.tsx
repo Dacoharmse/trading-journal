@@ -114,7 +114,7 @@ export function CalendarHeatmap({ trades, startDate, endDate }: CalendarHeatmapP
     if (pnl > 1000) return 'bg-green-600'
     if (pnl > 500) return 'bg-green-500'
     if (pnl > 0) return 'bg-green-400'
-    if (pnl === 0) return 'bg-slate-400'
+    if (pnl === 0) return 'bg-neutral-400'
     if (pnl > -500) return 'bg-red-400'
     if (pnl > -1000) return 'bg-red-500'
     return 'bg-red-600'
@@ -144,7 +144,7 @@ export function CalendarHeatmap({ trades, startDate, endDate }: CalendarHeatmapP
   }, [calendarDays])
 
   return (
-    <Card className="border-0 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm shadow-lg">
+    <Card className="border-0 bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm shadow-lg">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
@@ -218,7 +218,7 @@ export function CalendarHeatmap({ trades, startDate, endDate }: CalendarHeatmapP
                     title={`${formatDate(day.date)}: ${day.trades} trades, ${formatCurrency(day.pnl)}`}
                   >
                     {/* Tooltip on hover */}
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-neutral-900 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
                       {formatDate(day.date)}<br />
                       {day.trades} trade{day.trades !== 1 ? 's' : ''}<br />
                       {formatCurrency(day.pnl)}
@@ -235,7 +235,7 @@ export function CalendarHeatmap({ trades, startDate, endDate }: CalendarHeatmapP
             <div className="flex gap-1">
               <div className="w-3 h-3 rounded-sm bg-muted/20" />
               <div className="w-3 h-3 rounded-sm bg-red-400" />
-              <div className="w-3 h-3 rounded-sm bg-slate-400" />
+              <div className="w-3 h-3 rounded-sm bg-neutral-400" />
               <div className="w-3 h-3 rounded-sm bg-green-400" />
               <div className="w-3 h-3 rounded-sm bg-green-600" />
             </div>

@@ -95,13 +95,13 @@ export function TradesOverview({ backtests, onEdit, onDelete }: TradesOverviewPr
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="rounded-lg border border-slate-200/70 bg-white/80 p-4 dark:border-slate-800/60 dark:bg-slate-900/60">
+      <div className="rounded-lg border border-neutral-200/70 bg-white/80 p-4 dark:border-neutral-800/60 dark:bg-neutral-900/60">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
           {/* Search */}
           <div>
             <Label className="text-xs">Search</Label>
             <div className="relative mt-1">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-neutral-400" />
               <Input
                 type="text"
                 placeholder="Symbol, session, notes..."
@@ -166,15 +166,15 @@ export function TradesOverview({ backtests, onEdit, onDelete }: TradesOverviewPr
         </div>
 
         {/* Results count */}
-        <div className="mt-3 text-sm text-slate-600 dark:text-slate-400">
+        <div className="mt-3 text-sm text-neutral-600 dark:text-neutral-400">
           Showing {filteredBacktests.length} of {backtests.length} trades
         </div>
       </div>
 
       {/* Trades Grid */}
       {filteredBacktests.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-slate-300 bg-white/80 p-12 text-center dark:border-slate-700 dark:bg-slate-900/60">
-          <p className="text-slate-600 dark:text-slate-400">
+        <div className="rounded-lg border border-dashed border-neutral-300 bg-white/80 p-12 text-center dark:border-neutral-700 dark:bg-neutral-900/60">
+          <p className="text-neutral-600 dark:text-neutral-400">
             No trades match your filters
           </p>
         </div>

@@ -178,24 +178,24 @@ export function TradeDrawer({
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
       {/* Drawer */}
-      <div className="relative w-full max-w-2xl bg-white dark:bg-slate-950 shadow-xl overflow-y-auto">
+      <div className="relative w-full max-w-2xl bg-white dark:bg-neutral-950 shadow-xl overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 px-6 py-4">
+        <div className="sticky top-0 z-10 bg-white dark:bg-neutral-950 border-b border-neutral-200 dark:border-neutral-800 px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-xl font-semibold text-neutral-900 dark:text-white flex items-center gap-2">
                 <span className={getPnLColorClass(r || 0)}>
                   {getDirectionIcon(trade.direction)}
                 </span>
                 {trade.symbol}
               </h2>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+              <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
                 {account?.name} · {trade.exit_date || trade.entry_date}
               </p>
             </div>
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
             >
               <X className="w-6 h-6" />
             </button>
@@ -205,14 +205,14 @@ export function TradeDrawer({
           <div className="flex items-center gap-2 mt-4">
             <button
               onClick={() => onEdit(trade)}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-lg transition-colors"
             >
               <Edit3 className="w-4 h-4" />
               Edit
             </button>
             <button
               onClick={() => onDuplicate(trade)}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-lg transition-colors"
             >
               <Copy className="w-4 h-4" />
               Duplicate
@@ -236,12 +236,12 @@ export function TradeDrawer({
         <div className="px-6 py-6 space-y-6">
           {/* Overview Section */}
           <section>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3 uppercase tracking-wide">
               Overview
             </h3>
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
-                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-xs mb-1">
+              <div className="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-900">
+                <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400 text-xs mb-1">
                   <DollarSign className="w-4 h-4" />
                   P&L (Currency)
                 </div>
@@ -250,8 +250,8 @@ export function TradeDrawer({
                 </div>
               </div>
 
-              <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
-                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-xs mb-1">
+              <div className="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-900">
+                <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400 text-xs mb-1">
                   <Target className="w-4 h-4" />
                   R Multiple
                 </div>
@@ -260,22 +260,22 @@ export function TradeDrawer({
                 </div>
               </div>
 
-              <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
-                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-xs mb-1">
+              <div className="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-900">
+                <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400 text-xs mb-1">
                   <Clock className="w-4 h-4" />
                   Hold Time
                 </div>
-                <div className="text-lg font-semibold text-slate-900 dark:text-white">
+                <div className="text-lg font-semibold text-neutral-900 dark:text-white">
                   {formatHoldTime(holdTime)}
                 </div>
               </div>
 
-              <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
-                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-xs mb-1">
+              <div className="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-900">
+                <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400 text-xs mb-1">
                   <DollarSign className="w-4 h-4" />
                   Fees/Slippage
                 </div>
-                <div className="text-lg font-semibold text-slate-900 dark:text-white">
+                <div className="text-lg font-semibold text-neutral-900 dark:text-white">
                   {formatPnL(totalFees, account?.currency || trade.currency)}
                 </div>
               </div>
@@ -284,27 +284,27 @@ export function TradeDrawer({
 
           {/* Setup Quality */}
           <section>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3 uppercase tracking-wide">
               Setup Quality
             </h3>
             {trade.playbook_id ? (
               playbookLoading ? (
-                <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Loading playbook metrics…
                 </div>
               ) : (
-                <div className="space-y-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-4">
+                <div className="space-y-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      <p className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                         Playbook
                       </p>
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      <p className="text-sm font-semibold text-neutral-900 dark:text-white">
                         {playbookName || 'Unknown playbook'}
                       </p>
                       {playbookCategory && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400">
                           {playbookCategory}
                         </p>
                       )}
@@ -319,28 +319,28 @@ export function TradeDrawer({
                         {gradeDisplay}
                       </span>
                     ) : (
-                      <span className="text-xs text-slate-500 dark:text-slate-400">—</span>
+                      <span className="text-xs text-neutral-500 dark:text-neutral-400">—</span>
                     )}
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-md bg-white/70 dark:bg-slate-950/40 p-3">
-                      <p className="text-xs text-slate-500 dark:text-slate-400">Setup Score</p>
-                      <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                    <div className="rounded-md bg-white/70 dark:bg-neutral-950/40 p-3">
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">Setup Score</p>
+                      <p className="text-lg font-semibold text-neutral-900 dark:text-white">
                         {scoreDisplay !== null ? formatScore(scoreDisplay) : '—'}
                       </p>
                     </div>
-                    <div className="rounded-md bg-white/70 dark:bg-slate-950/40 p-3">
-                      <p className="text-xs text-slate-500 dark:text-slate-400">Must Rules</p>
-                      <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                    <div className="rounded-md bg-white/70 dark:bg-neutral-950/40 p-3">
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">Must Rules</p>
+                      <p className="text-lg font-semibold text-neutral-900 dark:text-white">
                         {scoreSummary
                           ? `${scoreSummary.parts.mustHit}/${scoreSummary.parts.mustCount}`
                           : '—'}
                       </p>
                     </div>
-                    <div className="rounded-md bg-white/70 dark:bg-slate-950/40 p-3">
-                      <p className="text-xs text-slate-500 dark:text-slate-400">Primary Confluences</p>
-                      <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                    <div className="rounded-md bg-white/70 dark:bg-neutral-950/40 p-3">
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">Primary Confluences</p>
+                      <p className="text-lg font-semibold text-neutral-900 dark:text-white">
                         {scoreSummary
                           ? `${scoreSummary.parts.primaryConfHit}/${scoreSummary.parts.primaryConfCount}`
                           : '—'}
@@ -350,15 +350,15 @@ export function TradeDrawer({
 
                   {scoreSummary && (
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-md bg-white/60 dark:bg-slate-950/30 p-3">
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Should Rules</p>
-                        <p className="text-sm font-medium text-slate-900 dark:text-white">
+                      <div className="rounded-md bg-white/60 dark:bg-neutral-950/30 p-3">
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400">Should Rules</p>
+                        <p className="text-sm font-medium text-neutral-900 dark:text-white">
                           {`${scoreSummary.parts.shouldHit}/${scoreSummary.parts.shouldCount}`}
                         </p>
                       </div>
-                      <div className="rounded-md bg-white/60 dark:bg-slate-950/30 p-3">
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Optional Rules</p>
-                        <p className="text-sm font-medium text-slate-900 dark:text-white">
+                      <div className="rounded-md bg-white/60 dark:bg-neutral-950/30 p-3">
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400">Optional Rules</p>
+                        <p className="text-sm font-medium text-neutral-900 dark:text-white">
                           {`${scoreSummary.parts.optionalHit}/${scoreSummary.parts.optionalCount}`}
                         </p>
                       </div>
@@ -374,7 +374,7 @@ export function TradeDrawer({
                 </div>
               )
             ) : (
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
                 No playbook was linked to this trade.
               </p>
             )}
@@ -382,58 +382,58 @@ export function TradeDrawer({
 
           {/* Trade Details */}
           <section>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3 uppercase tracking-wide">
               Trade Details
             </h3>
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-slate-600 dark:text-slate-400">Direction</span>
-                <span className="font-medium text-slate-900 dark:text-white capitalize">
+                <span className="text-neutral-600 dark:text-neutral-400">Direction</span>
+                <span className="font-medium text-neutral-900 dark:text-white capitalize">
                   {getDirectionIcon(trade.direction)} {trade.direction}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-slate-600 dark:text-slate-400">Entry Price</span>
-                <span className="font-medium text-slate-900 dark:text-white">
+                <span className="text-neutral-600 dark:text-neutral-400">Entry Price</span>
+                <span className="font-medium text-neutral-900 dark:text-white">
                   {trade.entry_price?.toFixed(2) || 'N/A'}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-slate-600 dark:text-slate-400">Stop Loss</span>
-                <span className="font-medium text-slate-900 dark:text-white">
+                <span className="text-neutral-600 dark:text-neutral-400">Stop Loss</span>
+                <span className="font-medium text-neutral-900 dark:text-white">
                   {trade.stop_price?.toFixed(2) || 'N/A'}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-slate-600 dark:text-slate-400">Exit Price</span>
-                <span className="font-medium text-slate-900 dark:text-white">
+                <span className="text-neutral-600 dark:text-neutral-400">Exit Price</span>
+                <span className="font-medium text-neutral-900 dark:text-white">
                   {trade.exit_price?.toFixed(2) || 'N/A'}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-slate-600 dark:text-slate-400">Size</span>
-                <span className="font-medium text-slate-900 dark:text-white">
+                <span className="text-neutral-600 dark:text-neutral-400">Size</span>
+                <span className="font-medium text-neutral-900 dark:text-white">
                   {trade.size || 'N/A'}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-slate-600 dark:text-slate-400">Entry Time</span>
-                <span className="font-medium text-slate-900 dark:text-white">
+                <span className="text-neutral-600 dark:text-neutral-400">Entry Time</span>
+                <span className="font-medium text-neutral-900 dark:text-white">
                   {trade.entry_date} {trade.entry_time || ''}
                 </span>
               </div>
               {trade.exit_date && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-600 dark:text-slate-400">Exit Time</span>
-                  <span className="font-medium text-slate-900 dark:text-white">
+                  <span className="text-neutral-600 dark:text-neutral-400">Exit Time</span>
+                  <span className="font-medium text-neutral-900 dark:text-white">
                     {trade.exit_date} {trade.exit_time || ''}
                   </span>
                 </div>
               )}
               {trade.close_reason && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-600 dark:text-slate-400">Close Reason</span>
-                  <span className="font-medium text-slate-900 dark:text-white">
+                  <span className="text-neutral-600 dark:text-neutral-400">Close Reason</span>
+                  <span className="font-medium text-neutral-900 dark:text-white">
                     {CLOSE_REASON_LABELS[trade.close_reason] ?? trade.close_reason}
                   </span>
                 </div>
@@ -444,7 +444,7 @@ export function TradeDrawer({
           {/* MAE/MFE */}
           {(trade.mae_r !== null || trade.mfe_r !== null) && (
             <section>
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 uppercase tracking-wide">
+              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3 uppercase tracking-wide">
                 Excursion
               </h3>
               <div className="grid grid-cols-2 gap-4">
@@ -476,13 +476,13 @@ export function TradeDrawer({
 
           {/* Categorization */}
           <section>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3 uppercase tracking-wide">
               Categorization
             </h3>
             <div className="space-y-3">
               {trade.strategy && (
                 <div>
-                  <span className="text-xs text-slate-600 dark:text-slate-400 block mb-1">Strategy</span>
+                  <span className="text-xs text-neutral-600 dark:text-neutral-400 block mb-1">Strategy</span>
                   <span className="inline-block px-3 py-1 rounded-full text-sm bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
                     {trade.strategy}
                   </span>
@@ -490,7 +490,7 @@ export function TradeDrawer({
               )}
               {trade.session && (
                 <div>
-                  <span className="text-xs text-slate-600 dark:text-slate-400 block mb-1">Session</span>
+                  <span className="text-xs text-neutral-600 dark:text-neutral-400 block mb-1">Session</span>
                   <span className="inline-block px-3 py-1 rounded text-sm bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 capitalize">
                     {trade.session}
                   </span>
@@ -498,12 +498,12 @@ export function TradeDrawer({
               )}
               {confluences.length > 0 && (
                 <div>
-                  <span className="text-xs text-slate-600 dark:text-slate-400 block mb-2">Confluences</span>
+                  <span className="text-xs text-neutral-600 dark:text-neutral-400 block mb-2">Confluences</span>
                   <div className="flex flex-wrap gap-2">
                     {confluences.map((conf, idx) => (
                       <span
                         key={idx}
-                        className="px-3 py-1 rounded-full text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                        className="px-3 py-1 rounded-full text-sm bg-neutral-100 dark:bg-neutral-900/30 text-neutral-700 dark:text-neutral-400"
                       >
                         {conf}
                       </span>
@@ -513,12 +513,12 @@ export function TradeDrawer({
               )}
               {tags.length > 0 && (
                 <div>
-                  <span className="text-xs text-slate-600 dark:text-slate-400 block mb-2">Tags</span>
+                  <span className="text-xs text-neutral-600 dark:text-neutral-400 block mb-2">Tags</span>
                   <div className="flex flex-wrap gap-2">
                     {tags.map((tag, idx) => (
                       <span
                         key={idx}
-                        className="px-3 py-1 rounded-full text-sm bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                        className="px-3 py-1 rounded-full text-sm bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
                       >
                         {tag}
                       </span>
@@ -545,11 +545,11 @@ export function TradeDrawer({
           {/* Notes/Journaling */}
           {trade.notes && (
             <section>
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 uppercase tracking-wide">
+              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3 uppercase tracking-wide">
                 Notes
               </h3>
-              <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
-                <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
+              <div className="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-900">
+                <p className="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">
                   {trade.notes}
                 </p>
               </div>
@@ -559,11 +559,11 @@ export function TradeDrawer({
           {/* Emotions */}
           {trade.emotions && (
             <section>
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 uppercase tracking-wide">
+              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3 uppercase tracking-wide">
                 Emotions
               </h3>
-              <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
-                <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
+              <div className="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-900">
+                <p className="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">
                   {trade.emotions}
                 </p>
               </div>
@@ -573,11 +573,11 @@ export function TradeDrawer({
           {/* Mistakes */}
           {trade.mistakes && (
             <section>
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 uppercase tracking-wide">
+              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3 uppercase tracking-wide">
                 Mistakes & Lessons
               </h3>
-              <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
-                <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
+              <div className="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-900">
+                <p className="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">
                   {trade.mistakes}
                 </p>
               </div>
@@ -587,13 +587,13 @@ export function TradeDrawer({
           {/* Attachments */}
           {trade.attachments && (
             <section>
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 uppercase tracking-wide">
+              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3 uppercase tracking-wide">
                 Attachments
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 {/* Placeholder for attachments - parse JSON and display thumbnails */}
-                <div className="aspect-video rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                  <span className="text-sm text-slate-400">Screenshot</span>
+                <div className="aspect-video rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                  <span className="text-sm text-neutral-400">Screenshot</span>
                 </div>
               </div>
             </section>

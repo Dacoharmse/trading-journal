@@ -71,7 +71,7 @@ export function KpiRow({
   if (trades.length === 0) {
     return (
       <div className="grid gap-4 grid-cols-1">
-        <Card className="border-0 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm shadow-lg">
+        <Card className="border-0 bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm shadow-lg">
           <CardContent className="pt-6 pb-6 text-center">
             <div className="flex flex-col items-center gap-4">
               <TrendingUp className="h-12 w-12 text-muted-foreground/50" />
@@ -108,7 +108,7 @@ export function KpiRow({
     <TooltipProvider>
       <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
         {/* Net P&L */}
-        <Card className="border-0 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm shadow-lg">
+        <Card className="border-0 bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm shadow-lg">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -139,7 +139,7 @@ export function KpiRow({
         </Card>
 
         {/* Win Rate */}
-        <Card className="border-0 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm shadow-lg">
+        <Card className="border-0 bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm shadow-lg">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -174,7 +174,7 @@ export function KpiRow({
         </Card>
 
         {/* Profit Factor */}
-        <Card className="border-0 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm shadow-lg">
+        <Card className="border-0 bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm shadow-lg">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -228,7 +228,7 @@ export function KpiRow({
         </Card>
 
         {/* Day Win % */}
-        <Card className="border-0 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm shadow-lg">
+        <Card className="border-0 bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm shadow-lg">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -258,7 +258,7 @@ export function KpiRow({
         </Card>
 
         {/* Avg Win vs Loss */}
-        <Card className="border-0 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm shadow-lg">
+        <Card className="border-0 bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm shadow-lg">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -306,7 +306,7 @@ export function KpiRow({
         </Card>
 
         {/* Expectancy & Recovery */}
-        <Card className="border-0 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm shadow-lg">
+        <Card className="border-0 bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm shadow-lg">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Metrics

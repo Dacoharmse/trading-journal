@@ -17,14 +17,14 @@ export function OutlierToggle({
   totalCount,
 }: OutlierToggleProps) {
   return (
-    <div className="flex items-center justify-between rounded-lg border border-slate-200/70 bg-white/80 p-4 dark:border-slate-800/60 dark:bg-slate-900/60">
+    <div className="flex items-center justify-between rounded-lg border border-neutral-200/70 bg-white/80 p-4 dark:border-neutral-800/60 dark:bg-neutral-900/60">
       <div className="flex items-center gap-3">
         <Switch checked={enabled} onCheckedChange={onChange} />
         <div>
-          <div className="text-sm font-medium text-slate-900 dark:text-slate-50">
+          <div className="text-sm font-medium text-neutral-900 dark:text-neutral-50">
             Trim Outliers
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">
+          <div className="text-xs text-neutral-500 dark:text-neutral-400">
             Remove top/bottom 2.5% by R multiple
           </div>
         </div>

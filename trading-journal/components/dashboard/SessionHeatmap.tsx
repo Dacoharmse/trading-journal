@@ -105,8 +105,8 @@ export function SessionHeatmap({ trades }: SessionHeatmapProps) {
   }
 
   return (
-    <Card className="border-0 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm shadow-lg">
-      <CardHeader>
+    <Card className="border-0 bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm shadow-lg h-full overflow-visible">
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-semibold">Hour/Session Performance</CardTitle>
           <select
@@ -121,9 +121,9 @@ export function SessionHeatmap({ trades }: SessionHeatmapProps) {
         </div>
       </CardHeader>
 
-      <CardContent>
-        <div className="overflow-x-auto">
-          <div className="min-w-[600px]">
+      <CardContent className="pb-6 overflow-visible">
+        <div className="overflow-x-auto overflow-y-visible pb-2">
+          <div className="min-w-[600px] relative">
             {/* Hour labels */}
             <div className="flex mb-1">
               <div className="w-16" /> {/* Session label space */}
@@ -141,20 +141,28 @@ export function SessionHeatmap({ trades }: SessionHeatmapProps) {
                   <div className="w-16 text-xs font-medium text-muted-foreground">
                     {row[0].session}
                   </div>
-                  {row.map((cell, cellIdx) => (
-                    <div
-                      key={cellIdx}
-                      className={`flex-1 aspect-square rounded-sm ${getColor(cell)} transition-all hover:scale-110 hover:shadow-lg cursor-pointer relative group`}
-                      title={`${cell.session} ${cell.hour}:00 - ${cell.trades.length} trades, ${formatValue(getValue(cell))}`}
-                    >
-                      {/* Tooltip */}
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                        {cell.session} {cell.hour}:00<br />
-                        {cell.trades.length} trade{cell.trades.length !== 1 ? 's' : ''}<br />
-                        {formatValue(getValue(cell))}
+                  {row.map((cell, cellIdx) => {
+                    // For Asia (first row), show tooltip below; others show above
+                    const isFirstRow = rowIdx === 0
+                    const tooltipPosition = isFirstRow
+                      ? "top-full mt-2"
+                      : "bottom-full mb-2"
+
+                    return (
+                      <div
+                        key={cellIdx}
+                        className={`flex-1 aspect-square rounded-sm ${getColor(cell)} transition-all hover:scale-110 hover:shadow-lg cursor-pointer relative group z-10`}
+                        title={`${cell.session} ${cell.hour}:00 - ${cell.trades.length} trades, ${formatValue(getValue(cell))}`}
+                      >
+                        {/* Tooltip */}
+                        <div className={`absolute ${tooltipPosition} left-1/2 transform -translate-x-1/2 px-3 py-2 bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 text-xs font-medium rounded-md shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-[100] border border-neutral-800 dark:border-neutral-200`}>
+                          <div className="font-semibold">{cell.session} {cell.hour.toString().padStart(2, '0')}:00</div>
+                          <div className="text-neutral-300 dark:text-neutral-600">{cell.trades.length} trade{cell.trades.length !== 1 ? 's' : ''}</div>
+                          <div className="font-bold text-sm">{formatValue(getValue(cell))}</div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               ))}
             </div>

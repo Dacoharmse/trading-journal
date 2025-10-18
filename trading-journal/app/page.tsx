@@ -154,7 +154,7 @@ export default function Home() {
   }, [filters.accountId, filters.units, filters.baseCurrency, accounts])
 
   return (
-    <div className="flex-1 min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+    <div className="flex-1 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-neutral-950 dark:to-neutral-900">
       {/* Sticky Filter Bar */}
       <FilterBar />
 
@@ -165,11 +165,11 @@ export default function Home() {
       <div className="p-8 space-y-6">
         {/* Currency Display Badge */}
         {filters.accountId === 'all' && filters.units === 'currency' && (
-          <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg">
-            <span className="text-xs font-medium text-blue-900 dark:text-blue-100">
+          <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-neutral-800/50 border border-gray-200 dark:border-neutral-700 rounded-lg">
+            <span className="text-xs font-medium text-gray-900 dark:text-gray-100">
               All Accounts • Display in: {filters.baseCurrency}
             </span>
-            <span className="text-xs text-blue-700 dark:text-blue-300">
+            <span className="text-xs text-gray-600 dark:text-gray-400">
               (P&L converted using FX rates)
             </span>
           </div>

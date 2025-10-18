@@ -112,7 +112,7 @@ export function TradesTable({
   if (trades.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="text-slate-400 dark:text-slate-600 mb-4">
+        <div className="text-neutral-400 dark:text-neutral-600 mb-4">
           <svg
             className="w-24 h-24 mx-auto"
             fill="none"
@@ -127,10 +127,10 @@ export function TradesTable({
             />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+        <h3 className="text-lg font-semibold text-neutral-900 dark:text-white mb-2">
           No trades found
         </h3>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-6">
           Start by adding your first trade or adjust your filters
         </p>
       </div>
@@ -143,10 +143,10 @@ export function TradesTable({
       <div className="flex-1 overflow-auto">
         <table className="w-full">
           {/* Header */}
-          <thead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+          <thead className="sticky top-0 z-20 bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
             <tr>
               {/* Checkbox column */}
-              <th className="px-4 py-3 text-left sticky left-0 bg-slate-50 dark:bg-slate-900 z-30">
+              <th className="px-4 py-3 text-left sticky left-0 bg-neutral-50 dark:bg-neutral-900 z-30">
                 <input
                   type="checkbox"
                   checked={allSelected}
@@ -154,7 +154,7 @@ export function TradesTable({
                     if (input) input.indeterminate = someSelected
                   }}
                   onChange={handleSelectAll}
-                  className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  className="w-4 h-4 rounded border-neutral-300 text-neutral-600 focus:ring-neutral-500"
                 />
               </th>
 
@@ -163,7 +163,7 @@ export function TradesTable({
                 <th
                   key={column}
                   onClick={() => handleSort(column)}
-                  className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="px-4 py-3 text-left text-xs font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     {COLUMN_HEADERS[column] || column}
@@ -175,7 +175,7 @@ export function TradesTable({
           </thead>
 
           {/* Body */}
-          <tbody className="bg-white dark:bg-slate-950">
+          <tbody className="bg-white dark:bg-neutral-950">
             {trades.map((trade) => {
               const account = accounts.find((a) => a.id === trade.account_id)
               const playbookInfo = trade.playbook_id
@@ -202,34 +202,34 @@ export function TradesTable({
       </div>
 
       {/* Footer with summary stats */}
-      <div className="sticky bottom-0 z-10 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-3">
+      <div className="sticky bottom-0 z-10 bg-neutral-50 dark:bg-neutral-900 border-t border-neutral-200 dark:border-neutral-800 px-4 py-3">
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-6">
-            <span className="text-slate-600 dark:text-slate-400">
-              <strong className="text-slate-900 dark:text-white">{trades.length}</strong> trades
+            <span className="text-neutral-600 dark:text-neutral-400">
+              <strong className="text-neutral-900 dark:text-white">{trades.length}</strong> trades
             </span>
 
             {units === 'currency' && (
-              <span className="text-slate-600 dark:text-slate-400">
+              <span className="text-neutral-600 dark:text-neutral-400">
                 Total: <strong className={totalPnL >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
                   {formatPnL(totalPnL, displayCurrency || 'USD')}
                 </strong>
               </span>
             )}
 
-            <span className="text-slate-600 dark:text-slate-400">
+            <span className="text-neutral-600 dark:text-neutral-400">
               Total R: <strong className={totalR >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
                 {formatR(totalR)}
               </strong>
             </span>
 
-            <span className="text-slate-600 dark:text-slate-400">
-              Win Rate: <strong className="text-slate-900 dark:text-white">
+            <span className="text-neutral-600 dark:text-neutral-400">
+              Win Rate: <strong className="text-neutral-900 dark:text-white">
                 {winRate !== null ? `${winRate.toFixed(1)}%` : 'N/A'}
               </strong>
             </span>
 
-            <span className="text-slate-600 dark:text-slate-400">
+            <span className="text-neutral-600 dark:text-neutral-400">
               PF (R): <strong className={
                 profitFactor !== null && profitFactor >= 1.5
                   ? 'text-green-600 dark:text-green-400'
@@ -243,7 +243,7 @@ export function TradesTable({
               </strong>
             </span>
 
-            <span className="text-slate-600 dark:text-slate-400">
+            <span className="text-neutral-600 dark:text-neutral-400">
               Expectancy (R): <strong className={
                 expectancy !== null && expectancy > 0
                   ? 'text-green-600 dark:text-green-400'
@@ -255,7 +255,7 @@ export function TradesTable({
           </div>
 
           {selectedTradeIds.length > 0 && (
-            <span className="text-blue-600 dark:text-blue-400 font-medium">
+            <span className="text-neutral-600 dark:text-neutral-400 font-medium">
               {selectedTradeIds.length} selected
             </span>
           )}

@@ -173,14 +173,14 @@ export default function BacktestingPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 p-6 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <div className="flex-1 bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-50 p-6 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950">
         <div className="mx-auto w-full max-w-7xl space-y-6">
-          <div className="h-8 w-64 animate-pulse rounded-lg bg-slate-200/70 dark:bg-slate-800/60" />
+          <div className="h-8 w-64 animate-pulse rounded-lg bg-neutral-200/70 dark:bg-neutral-800/60" />
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                className="h-48 animate-pulse rounded-lg bg-slate-200/70 dark:bg-slate-800/60"
+                className="h-48 animate-pulse rounded-lg bg-neutral-200/70 dark:bg-neutral-800/60"
               />
             ))}
           </div>
@@ -190,17 +190,17 @@ export default function BacktestingPage() {
   }
 
   return (
-    <div className="flex-1 bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 p-6 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="flex-1 bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-50 p-6 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950">
       <div className="mx-auto w-full max-w-7xl space-y-6">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <Beaker className="h-8 w-8 text-purple-600 dark:text-purple-400" />
-              <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-50">
+              <h1 className="text-3xl font-semibold text-neutral-900 dark:text-neutral-50">
                 Backtesting Lab
               </h1>
             </div>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">
               Validate and quantify your playbook strategies before going live
             </p>
           </div>
@@ -209,11 +209,11 @@ export default function BacktestingPage() {
         {playbooks.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-16">
-              <Beaker className="h-16 w-16 text-slate-300 dark:text-slate-600" />
-              <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-slate-50">
+              <Beaker className="h-16 w-16 text-neutral-300 dark:text-neutral-600" />
+              <h3 className="mt-4 text-lg font-semibold text-neutral-900 dark:text-neutral-50">
                 No playbooks yet
               </h3>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+              <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
                 Create a playbook first to start backtesting
               </p>
               <Button asChild className="mt-6">
@@ -229,7 +229,7 @@ export default function BacktestingPage() {
             {playbooks.map((playbook) => (
               <Card
                 key={playbook.id}
-                className="border-slate-200/70 bg-white/80 backdrop-blur transition-shadow hover:shadow-lg dark:border-slate-800/60 dark:bg-slate-900/60"
+                className="border-neutral-200/70 bg-white/80 backdrop-blur transition-shadow hover:shadow-lg dark:border-neutral-800/60 dark:bg-neutral-900/60"
               >
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
@@ -243,7 +243,7 @@ export default function BacktestingPage() {
                       className={cn(
                         playbook.active
                           ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                          : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                          : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400'
                       )}
                     >
                       {playbook.active ? 'Active' : 'Archived'}
@@ -255,23 +255,23 @@ export default function BacktestingPage() {
                     <>
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                          <div className="text-xs text-neutral-500 dark:text-neutral-400">
                             Trades
                           </div>
-                          <div className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+                          <div className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
                             {playbook.backtestCount}
                           </div>
                         </div>
                         <div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                          <div className="text-xs text-neutral-500 dark:text-neutral-400">
                             Win Rate
                           </div>
-                          <div className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+                          <div className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
                             {(playbook.winRate * 100).toFixed(0)}%
                           </div>
                         </div>
                         <div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                          <div className="text-xs text-neutral-500 dark:text-neutral-400">
                             Expectancy
                           </div>
                           <div
@@ -287,10 +287,10 @@ export default function BacktestingPage() {
                           </div>
                         </div>
                         <div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                          <div className="text-xs text-neutral-500 dark:text-neutral-400">
                             Profit Factor
                           </div>
-                          <div className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+                          <div className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
                             {playbook.profitFactor > 99 ? '∞' : playbook.profitFactor.toFixed(2)}
                           </div>
                         </div>
@@ -316,7 +316,7 @@ export default function BacktestingPage() {
                     </>
                   ) : (
                     <div className="py-8 text-center">
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                      <p className="text-sm text-neutral-500 dark:text-neutral-400">
                         No backtests yet
                       </p>
                       <Button asChild className="mt-4" size="sm">
@@ -341,7 +341,7 @@ export default function BacktestingPage() {
             <AlertDialogTitle>Delete Backtest Session?</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete ALL backtests for{' '}
-              <span className="font-semibold text-slate-900 dark:text-slate-100">
+              <span className="font-semibold text-neutral-900 dark:text-neutral-100">
                 {playbookToDelete?.name}
               </span>
               ?

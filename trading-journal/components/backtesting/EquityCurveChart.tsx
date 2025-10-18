@@ -10,8 +10,8 @@ interface EquityCurveChartProps {
 export function EquityCurveChart({ data }: EquityCurveChartProps) {
   if (data.length === 0) {
     return (
-      <div className="flex h-64 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40">
-        <p className="text-sm text-slate-500 dark:text-slate-400">No equity data available</p>
+      <div className="flex h-64 items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900/40">
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">No equity data available</p>
       </div>
     )
   }
@@ -30,7 +30,7 @@ export function EquityCurveChart({ data }: EquityCurveChartProps) {
 
   return (
     <div className="space-y-3">
-      <div className="relative h-64 rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40">
+      <div className="relative h-64 rounded-lg border border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900/40">
         <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
           {/* Zero line */}
           <line
@@ -40,7 +40,7 @@ export function EquityCurveChart({ data }: EquityCurveChartProps) {
             y2="50"
             stroke="currentColor"
             strokeDasharray="2 2"
-            className="text-slate-400 dark:text-slate-600"
+            className="text-neutral-400 dark:text-neutral-600"
             vectorEffect="non-scaling-stroke"
           />
 
@@ -70,14 +70,14 @@ export function EquityCurveChart({ data }: EquityCurveChartProps) {
         </svg>
 
         {/* Y-axis labels */}
-        <div className="absolute inset-y-0 left-0 flex w-16 flex-col justify-between py-4 text-xs text-slate-600 dark:text-slate-400">
+        <div className="absolute inset-y-0 left-0 flex w-16 flex-col justify-between py-4 text-xs text-neutral-600 dark:text-neutral-400">
           <span>+{maxR.toFixed(1)}R</span>
           <span>0R</span>
           <span>-{Math.abs(minR).toFixed(1)}R</span>
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-400">
+      <div className="flex items-center justify-between text-sm text-neutral-600 dark:text-neutral-400">
         <span>{data[0]?.date}</span>
         <span
           className={cn(
@@ -93,7 +93,7 @@ export function EquityCurveChart({ data }: EquityCurveChartProps) {
         <span>{data[data.length - 1]?.date}</span>
       </div>
 
-      <p className="text-xs text-slate-500 dark:text-slate-400" role="status">
+      <p className="text-xs text-neutral-500 dark:text-neutral-400" role="status">
         Cumulative R equity curve over {data.length} backtested trades
       </p>
     </div>

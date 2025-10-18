@@ -29,12 +29,12 @@ function KpiCard({ label, value, delta, format = 'number', precision = 2 }: KpiC
   }
 
   return (
-    <div className="rounded-lg border border-slate-200/70 bg-white/80 p-4 dark:border-slate-800/60 dark:bg-slate-900/60">
-      <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+    <div className="rounded-lg border border-neutral-200/70 bg-white/80 p-4 dark:border-neutral-800/60 dark:bg-neutral-900/60">
+      <div className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
         {label}
       </div>
       <div className="mt-2 flex items-end justify-between gap-2">
-        <div className="text-2xl font-semibold text-slate-900 dark:text-slate-50">
+        <div className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50">
           {typeof value === 'number' ? value.toFixed(precision) : value}
         </div>
         {hasDelta && (
@@ -43,7 +43,7 @@ function KpiCard({ label, value, delta, format = 'number', precision = 2 }: KpiC
               'flex items-center gap-1 text-xs font-medium',
               isPositive && 'text-emerald-600 dark:text-emerald-400',
               isNegative && 'text-red-600 dark:text-red-400',
-              !isPositive && !isNegative && 'text-slate-500 dark:text-slate-400'
+              !isPositive && !isNegative && 'text-neutral-500 dark:text-neutral-400'
             )}
           >
             {isPositive && <TrendingUp className="h-3 w-3" />}
@@ -117,7 +117,7 @@ export function KpiStrip({ current, prior }: KpiStripProps) {
 
   return (
     <div className="space-y-3">
-      <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+      <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
         Key Performance Indicators
       </h2>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
@@ -125,7 +125,7 @@ export function KpiStrip({ current, prior }: KpiStripProps) {
           <KpiCard key={kpi.label} {...kpi} />
         ))}
       </div>
-      <p className="text-xs text-slate-500 dark:text-slate-400" role="status">
+      <p className="text-xs text-neutral-500 dark:text-neutral-400" role="status">
         Showing {current.n ?? 0} trades with {current.wins ?? 0} wins and {current.losses ?? 0} losses.
         {prior && ` Prior period: ${prior.n ?? 0} trades.`}
       </p>

@@ -86,7 +86,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900 p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -107,7 +107,7 @@ export default function CalendarPage() {
           {/* Units Toggle */}
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground">Display:</span>
-            <div className="flex gap-1 bg-white/60 dark:bg-slate-800/60 rounded-lg p-1 shadow-sm">
+            <div className="flex gap-1 bg-white/60 dark:bg-neutral-800/60 rounded-lg p-1 shadow-sm">
               <button
                 onClick={() => useDashboardFilters.getState().setUnits('currency')}
                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
@@ -143,7 +143,7 @@ export default function CalendarPage() {
         />
 
         {/* Calendar Grid */}
-        <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-lg border border-slate-200 dark:border-slate-700 p-6 shadow-lg">
+        <div className="bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm rounded-lg border border-neutral-200 dark:border-neutral-700 p-6 shadow-lg">
           <CalendarGrid
             year={currentYear}
             month={currentMonth}

@@ -19,18 +19,22 @@ create table if not exists playbooks (
 -- RLS for playbooks
 alter table playbooks enable row level security;
 
+drop policy if exists "Users can view their own playbooks" on playbooks;
 create policy "Users can view their own playbooks"
   on playbooks for select
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can insert their own playbooks" on playbooks;
 create policy "Users can insert their own playbooks"
   on playbooks for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users can update their own playbooks" on playbooks;
 create policy "Users can update their own playbooks"
   on playbooks for update
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can delete their own playbooks" on playbooks;
 create policy "Users can delete their own playbooks"
   on playbooks for delete
   using (auth.uid() = user_id);
@@ -49,6 +53,7 @@ create table if not exists playbook_rules (
 -- RLS for playbook_rules
 alter table playbook_rules enable row level security;
 
+drop policy if exists "Users can view playbook rules" on playbook_rules;
 create policy "Users can view playbook rules"
   on playbook_rules for select
   using (
@@ -59,6 +64,7 @@ create policy "Users can view playbook rules"
     )
   );
 
+drop policy if exists "Users can manage playbook rules" on playbook_rules;
 create policy "Users can manage playbook rules"
   on playbook_rules for all
   using (
@@ -83,6 +89,7 @@ create table if not exists playbook_confluences (
 -- RLS for playbook_confluences
 alter table playbook_confluences enable row level security;
 
+drop policy if exists "Users can view playbook confluences" on playbook_confluences;
 create policy "Users can view playbook confluences"
   on playbook_confluences for select
   using (
@@ -93,6 +100,7 @@ create policy "Users can view playbook confluences"
     )
   );
 
+drop policy if exists "Users can manage playbook confluences" on playbook_confluences;
 create policy "Users can manage playbook confluences"
   on playbook_confluences for all
   using (
@@ -116,6 +124,7 @@ create table if not exists playbook_rubric (
 -- RLS for playbook_rubric
 alter table playbook_rubric enable row level security;
 
+drop policy if exists "Users can view playbook rubric" on playbook_rubric;
 create policy "Users can view playbook rubric"
   on playbook_rubric for select
   using (
@@ -126,6 +135,7 @@ create policy "Users can view playbook rubric"
     )
   );
 
+drop policy if exists "Users can manage playbook rubric" on playbook_rubric;
 create policy "Users can manage playbook rubric"
   on playbook_rubric for all
   using (
@@ -153,6 +163,7 @@ begin
 end;
 $$ language plpgsql;
 
+drop trigger if exists playbook_updated_at on playbooks;
 create trigger playbook_updated_at
   before update on playbooks
   for each row

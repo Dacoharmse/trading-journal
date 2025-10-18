@@ -130,14 +130,14 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 p-6 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <div className="flex-1 bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-50 p-6 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950">
         <div className="mx-auto w-full max-w-7xl space-y-6">
-          <div className="h-8 w-64 animate-pulse rounded-lg bg-slate-200/70 dark:bg-slate-800/60" />
+          <div className="h-8 w-64 animate-pulse rounded-lg bg-neutral-200/70 dark:bg-neutral-800/60" />
           <div className="grid gap-4 lg:grid-cols-4">
             {Array.from({ length: 7 }).map((_, i) => (
               <div
                 key={i}
-                className="h-24 animate-pulse rounded-lg bg-slate-200/70 dark:bg-slate-800/60"
+                className="h-24 animate-pulse rounded-lg bg-neutral-200/70 dark:bg-neutral-800/60"
               />
             ))}
           </div>
@@ -147,13 +147,13 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="flex-1 bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 p-6 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="flex-1 bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-50 p-6 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950">
       <div className="mx-auto w-full max-w-7xl space-y-6">
         <div className="space-y-2">
-          <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-50">
+          <h1 className="text-3xl font-semibold text-neutral-900 dark:text-neutral-50">
             Analytics
           </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
             Comprehensive performance analysis and insights across all metrics
           </p>
         </div>

@@ -15,9 +15,16 @@ export interface Confluence {
   primary?: boolean
 }
 
+export interface ChecklistItem {
+  id: string
+  weight: number
+  primary?: boolean
+}
+
 export interface Rubric {
-  weight_rules: number // e.g., 0.6 (60%)
-  weight_confluences: number // e.g., 0.4 (40%)
+  weight_rules: number // e.g., 0.5 (50%)
+  weight_confluences: number // e.g., 0.2 (20%)
+  weight_checklist: number // e.g., 0.3 (30%)
   must_rule_penalty: number // e.g., 0.4 (subtract if any must missed)
   min_checks: number // optional minimum checks required
   grade_cutoffs: Record<string, number> // {"A+":0.95,"A":0.9,...}
@@ -28,6 +35,9 @@ export interface ScoreInput {
   rulesChecked: Record<string, boolean>
   confluences: Confluence[]
   confChecked: Record<string, boolean>
+  checklist?: ChecklistItem[]
+  checklistChecked?: Record<string, boolean>
+  invalidations?: string[] // List of invalidation IDs present
   rubric: Rubric
 }
 
@@ -37,7 +47,9 @@ export interface ScoreResult {
   parts: {
     rulesPct: number
     confPct: number
+    checklistPct: number
     missedMust: boolean
+    hasInvalidations: boolean
     mustCount: number
     mustHit: number
     shouldCount: number
@@ -46,16 +58,63 @@ export interface ScoreResult {
     optionalHit: number
     primaryConfCount: number
     primaryConfHit: number
+    checklistCount: number
+    checklistHit: number
+    primaryChecklistCount: number
+    primaryChecklistHit: number
   }
 }
 
 /**
  * Score a trade setup based on playbook compliance
- * @param input Rules, confluences, checked items, and rubric
+ * @param input Rules, confluences, checklist, checked items, and rubric
  * @returns Score (0-1), grade (A+-F), and breakdown
  */
 export function scoreSetup(input: ScoreInput): ScoreResult {
-  const { rules, rulesChecked, confluences, confChecked, rubric } = input
+  const {
+    rules,
+    rulesChecked,
+    confluences,
+    confChecked,
+    checklist = [],
+    checklistChecked = {},
+    invalidations = [],
+    rubric,
+  } = input
+
+  // HARD INVALIDATION: If any invalidations present, auto-fail
+  const hasInvalidations = invalidations.length > 0
+  if (hasInvalidations) {
+    const mustRules = rules.filter((r) => r.type === 'must')
+    const shouldRules = rules.filter((r) => r.type === 'should')
+    const optionalRules = rules.filter((r) => r.type === 'optional')
+    const primaryConfs = confluences.filter((c) => c.primary)
+    const primaryChecklist = checklist.filter((c) => c.primary)
+
+    return {
+      score: 0,
+      grade: 'F',
+      parts: {
+        rulesPct: 0,
+        confPct: 0,
+        checklistPct: 0,
+        missedMust: false,
+        hasInvalidations: true,
+        mustCount: mustRules.length,
+        mustHit: 0,
+        shouldCount: shouldRules.length,
+        shouldHit: 0,
+        optionalCount: optionalRules.length,
+        optionalHit: 0,
+        primaryConfCount: primaryConfs.length,
+        primaryConfHit: 0,
+        checklistCount: checklist.length,
+        checklistHit: 0,
+        primaryChecklistCount: primaryChecklist.length,
+        primaryChecklistHit: 0,
+      },
+    }
+  }
 
   // Calculate rules compliance
   const rTotal = rules.reduce((s, r) => s + r.weight, 0) || 1
@@ -71,8 +130,23 @@ export function scoreSetup(input: ScoreInput): ScoreResult {
   )
   const confPct = cHit / cTotal
 
+  // Calculate checklist compliance (primary items get 1.2x multiplier)
+  let checklistPct = 0
+  if (checklist.length > 0) {
+    const chTotal =
+      checklist.reduce((s, ch) => s + ch.weight * (ch.primary ? 1.2 : 1), 0) || 1
+    const chHit = checklist.reduce(
+      (s, ch) => s + (checklistChecked[ch.id] ? ch.weight * (ch.primary ? 1.2 : 1) : 0),
+      0
+    )
+    checklistPct = chHit / chTotal
+  }
+
   // Combine with weights
-  let score = rubric.weight_rules * rulesPct + rubric.weight_confluences * confPct
+  let score =
+    rubric.weight_rules * rulesPct +
+    rubric.weight_confluences * confPct +
+    rubric.weight_checklist * checklistPct
 
   // Apply must-rule penalty if any must rule is missed
   const missedMust = rules.some((r) => r.type === 'must' && !rulesChecked[r.id])
@@ -92,6 +166,7 @@ export function scoreSetup(input: ScoreInput): ScoreResult {
   const shouldRules = rules.filter((r) => r.type === 'should')
   const optionalRules = rules.filter((r) => r.type === 'optional')
   const primaryConfs = confluences.filter((c) => c.primary)
+  const primaryChecklist = checklist.filter((c) => c.primary)
 
   return {
     score,
@@ -99,7 +174,9 @@ export function scoreSetup(input: ScoreInput): ScoreResult {
     parts: {
       rulesPct,
       confPct,
+      checklistPct,
       missedMust,
+      hasInvalidations: false,
       mustCount: mustRules.length,
       mustHit: mustRules.filter((r) => rulesChecked[r.id]).length,
       shouldCount: shouldRules.length,
@@ -108,6 +185,10 @@ export function scoreSetup(input: ScoreInput): ScoreResult {
       optionalHit: optionalRules.filter((r) => rulesChecked[r.id]).length,
       primaryConfCount: primaryConfs.length,
       primaryConfHit: primaryConfs.filter((c) => confChecked[c.id]).length,
+      checklistCount: checklist.length,
+      checklistHit: checklist.filter((ch) => checklistChecked[ch.id]).length,
+      primaryChecklistCount: primaryChecklist.length,
+      primaryChecklistHit: primaryChecklist.filter((ch) => checklistChecked[ch.id]).length,
     },
   }
 }
@@ -117,8 +198,9 @@ export function scoreSetup(input: ScoreInput): ScoreResult {
  */
 export function getDefaultRubric(): Rubric {
   return {
-    weight_rules: 0.6,
-    weight_confluences: 0.4,
+    weight_rules: 0.5,
+    weight_confluences: 0.2,
+    weight_checklist: 0.3,
     must_rule_penalty: 0.4,
     min_checks: 0,
     grade_cutoffs: {
@@ -162,6 +244,11 @@ export function getGradeExplanation(result: ScoreResult): string {
   const { parts, grade } = result
   const explanations: string[] = []
 
+  if (parts.hasInvalidations) {
+    explanations.push('⚠️ INVALIDATED SETUP → Auto F')
+    return explanations.join(', ')
+  }
+
   if (parts.missedMust) {
     explanations.push(
       `Missed ${parts.mustCount - parts.mustHit}/${parts.mustCount} must-rule(s) → penalty applied`
@@ -182,6 +269,18 @@ export function getGradeExplanation(result: ScoreResult): string {
     )
   }
 
+  if (parts.checklistCount > 0) {
+    explanations.push(
+      `${parts.checklistHit}/${parts.checklistCount} checklist items met`
+    )
+  }
+
+  if (parts.primaryChecklistCount > 0) {
+    explanations.push(
+      `${parts.primaryChecklistHit}/${parts.primaryChecklistCount} primary checks`
+    )
+  }
+
   return explanations.join(', ')
 }
 
@@ -189,11 +288,11 @@ export function getGradeExplanation(result: ScoreResult): string {
  * Validate rubric weights sum to 1.0
  */
 export function validateRubric(rubric: Rubric): { valid: boolean; error?: string } {
-  const sum = rubric.weight_rules + rubric.weight_confluences
+  const sum = rubric.weight_rules + rubric.weight_confluences + rubric.weight_checklist
   if (Math.abs(sum - 1.0) > 0.01) {
     return {
       valid: false,
-      error: `Rule and confluence weights must sum to 1.0 (currently ${sum.toFixed(2)})`,
+      error: `Rule, confluence, and checklist weights must sum to 1.0 (currently ${sum.toFixed(2)})`,
     }
   }
 

@@ -76,12 +76,12 @@ export function ScoringEditor({ rubric, onChange }: ScoringEditorProps) {
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-4 rounded-xl border border-slate-200/70 bg-white/80 p-6 dark:border-slate-800/60 dark:bg-slate-900/50">
+        <div className="space-y-4 rounded-xl border border-neutral-200/70 bg-white/80 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/50">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
               Rule Weight
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
               Share of the score driven by checklist compliance.
             </p>
           </div>
@@ -97,12 +97,12 @@ export function ScoringEditor({ rubric, onChange }: ScoringEditorProps) {
           />
         </div>
 
-        <div className="space-y-4 rounded-xl border border-slate-200/70 bg-white/80 p-6 dark:border-slate-800/60 dark:bg-slate-900/50">
+        <div className="space-y-4 rounded-xl border border-neutral-200/70 bg-white/80 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/50">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
               Confluence Weight
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
               Portion of score contributed by supporting factors.
             </p>
           </div>
@@ -118,12 +118,12 @@ export function ScoringEditor({ rubric, onChange }: ScoringEditorProps) {
           />
         </div>
 
-        <div className="space-y-4 rounded-xl border border-slate-200/70 bg-white/80 p-6 dark:border-slate-800/60 dark:bg-slate-900/50">
+        <div className="space-y-4 rounded-xl border border-neutral-200/70 bg-white/80 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/50">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
               Must Rule Penalty
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
               Deduction applied if any must-rule is missed.
             </p>
           </div>
@@ -139,12 +139,12 @@ export function ScoringEditor({ rubric, onChange }: ScoringEditorProps) {
           />
         </div>
 
-        <div className="space-y-4 rounded-xl border border-slate-200/70 bg-white/80 p-6 dark:border-slate-800/60 dark:bg-slate-900/50">
+        <div className="space-y-4 rounded-xl border border-neutral-200/70 bg-white/80 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/50">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
               Minimum Checks
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
               Optional guardrail for minimum rule/confluence checks.
             </p>
           </div>
@@ -158,13 +158,13 @@ export function ScoringEditor({ rubric, onChange }: ScoringEditorProps) {
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200/70 bg-white/80 p-6 dark:border-slate-800/60 dark:bg-slate-900/50">
+      <div className="rounded-xl border border-neutral-200/70 bg-white/80 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/50">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
               Grade Cutoffs
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
               Scores are mapped to the first grade whose threshold is met.
             </p>
           </div>
@@ -178,10 +178,10 @@ export function ScoringEditor({ rubric, onChange }: ScoringEditorProps) {
           {gradeEntries.map(([grade, cutoff]) => (
             <div
               key={grade}
-              className="grid gap-3 rounded-lg border border-slate-200/70 bg-white/60 p-4 dark:border-slate-800/60 dark:bg-slate-900/40 sm:grid-cols-[150px_1fr_40px]"
+              className="grid gap-3 rounded-lg border border-neutral-200/70 bg-white/60 p-4 dark:border-neutral-800/60 dark:bg-neutral-900/40 sm:grid-cols-[150px_1fr_40px]"
             >
               <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
                   Grade Label
                 </label>
                 <Input
@@ -191,7 +191,7 @@ export function ScoringEditor({ rubric, onChange }: ScoringEditorProps) {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
                   Cutoff (0-1)
                 </label>
                 <Input
@@ -209,7 +209,7 @@ export function ScoringEditor({ rubric, onChange }: ScoringEditorProps) {
               <button
                 type="button"
                 onClick={() => handleRemoveGrade(grade)}
-                className="h-9 w-9 self-end rounded-md border border-slate-200/70 text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:border-slate-800/60 dark:text-slate-400 dark:hover:bg-red-500/10 dark:hover:text-red-300"
+                className="h-9 w-9 self-end rounded-md border border-neutral-200/70 text-neutral-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:border-neutral-800/60 dark:text-neutral-400 dark:hover:bg-red-500/10 dark:hover:text-red-300"
                 aria-label="Remove grade"
                 disabled={gradeEntries.length <= 1}
               >

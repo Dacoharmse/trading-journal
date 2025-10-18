@@ -49,7 +49,7 @@ export function ScatterHoldVsR({ trades }: ScatterHoldVsRProps) {
   }
 
   return (
-    <Card className="border-0 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm shadow-lg">
+    <Card className="border-0 bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm shadow-lg">
       <CardHeader>
         <CardTitle className="text-sm font-semibold">Hold Time vs R</CardTitle>
       </CardHeader>
@@ -128,7 +128,7 @@ export function ScatterHoldVsR({ trades }: ScatterHoldVsRProps) {
                         className="pointer-events-none"
                       >
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                          <div className="bg-slate-900 text-white text-xs rounded shadow-lg p-2 whitespace-nowrap">
+                          <div className="bg-neutral-900 text-white text-xs rounded shadow-lg p-2 whitespace-nowrap">
                             <div className="font-bold">{point.symbol}</div>
                             <div>{formatDate(point.date)}</div>
                             <div>Hold: {formatHoldTime(point.holdMinutes)}</div>

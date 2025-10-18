@@ -152,10 +152,10 @@ export function PlaybookListClient({
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-1">
-            <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-50">
+            <h1 className="text-3xl font-semibold text-neutral-900 dark:text-neutral-50">
               Playbooks
             </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">
               Capture the rules, confluences, and scoring rubric for each setup you trade.
             </p>
           </div>
@@ -170,7 +170,7 @@ export function PlaybookListClient({
 
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="relative w-full lg:max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -tranneutral-y-1/2 text-neutral-400" />
             <Input
               placeholder="Search playbooks"
               value={searchTerm}
@@ -221,17 +221,17 @@ export function PlaybookListClient({
             return (
               <Card
                 key={playbook.id}
-                className="border-slate-200/70 bg-white/70 backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/60"
+                className="border-neutral-200/70 bg-white/70 backdrop-blur dark:border-neutral-800/60 dark:bg-neutral-900/60"
               >
                 <CardHeader className="gap-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-2">
-                      <CardTitle className="text-xl text-slate-900 dark:text-slate-100">
+                      <CardTitle className="text-xl text-neutral-900 dark:text-neutral-100">
                         {playbook.name}
                       </CardTitle>
                       <Badge
                         variant="secondary"
-                        className="bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-200"
+                        className="bg-neutral-100 text-neutral-700 dark:bg-neutral-800/60 dark:text-neutral-200"
                       >
                         {playbook.category}
                       </Badge>
@@ -241,7 +241,7 @@ export function PlaybookListClient({
                         'border px-2 py-1 text-xs font-medium',
                         playbook.active
                           ? 'border-emerald-300/60 bg-emerald-100/70 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-900/30 dark:text-emerald-300'
-                          : 'border-slate-300/60 bg-slate-100/60 text-slate-600 dark:border-slate-700/60 dark:bg-slate-900/40 dark:text-slate-300'
+                          : 'border-neutral-300/60 bg-neutral-100/60 text-neutral-600 dark:border-neutral-700/60 dark:bg-neutral-900/40 dark:text-neutral-300'
                       )}
                     >
                       {playbook.active ? 'Active' : 'Archived'}
@@ -251,7 +251,7 @@ export function PlaybookListClient({
 
                 <CardContent className="space-y-4">
                   {playbook.description && (
-                    <p className="text-sm text-slate-600 dark:text-slate-300/80 line-clamp-3">
+                    <p className="text-sm text-neutral-600 dark:text-neutral-300/80 line-clamp-3">
                       {playbook.description}
                     </p>
                   )}
@@ -262,7 +262,7 @@ export function PlaybookListClient({
                         <Badge
                           key={session}
                           variant="outline"
-                          className="border-slate-300/60 bg-slate-100/40 text-slate-600 dark:border-slate-700/60 dark:bg-slate-900/40 dark:text-slate-300"
+                          className="border-neutral-300/60 bg-neutral-100/40 text-neutral-600 dark:border-neutral-700/60 dark:bg-neutral-900/40 dark:text-neutral-300"
                         >
                           {session}
                         </Badge>
@@ -271,16 +271,16 @@ export function PlaybookListClient({
                   )}
                 </CardContent>
 
-                <CardFooter className="flex-col gap-4 border-t border-slate-200/70 py-4 dark:border-slate-800/60">
-                  <div className="flex w-full items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <CardFooter className="flex-col gap-4 border-t border-neutral-200/70 py-4 dark:border-neutral-800/60">
+                  <div className="flex w-full items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
                     <span>
-                      <span className="font-semibold text-slate-900 dark:text-slate-200">
+                      <span className="font-semibold text-neutral-900 dark:text-neutral-200">
                         {playbook.rules_count}
                       </span>{' '}
                       rules
                     </span>
                     <span>
-                      <span className="font-semibold text-slate-900 dark:text-slate-200">
+                      <span className="font-semibold text-neutral-900 dark:text-neutral-200">
                         {playbook.confluences_count}
                       </span>{' '}
                       confluences
@@ -336,11 +336,11 @@ export function PlaybookListClient({
           })}
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-slate-300/70 p-12 text-center dark:border-slate-700/60">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+        <div className="rounded-xl border border-dashed border-neutral-300/70 p-12 text-center dark:border-neutral-700/60">
+          <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
             {playbooks.length === 0 ? 'No playbooks yet' : 'No playbooks match your filters'}
           </h3>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
             {playbooks.length === 0
               ? 'Create your first playbook to define rules and grading for your setups.'
               : 'Try adjusting your search or filters to see more results.'}

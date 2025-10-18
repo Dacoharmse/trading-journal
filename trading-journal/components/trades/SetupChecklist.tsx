@@ -87,7 +87,7 @@ export function SetupChecklist({
   return (
     <div className="space-y-4">
       {/* Live Score Display */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+      <div className="bg-gradient-to-r from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Setup Quality
@@ -120,7 +120,7 @@ export function SetupChecklist({
             <h4 className="font-semibold text-gray-900 dark:text-gray-100">
               Rules Followed
             </h4>
-            <span className="px-2 py-0.5 text-xs rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+            <span className="px-2 py-0.5 text-xs rounded bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300">
               {Object.values(rulesChecked).filter(Boolean).length}/{rules.length}
             </span>
           </div>
@@ -291,7 +291,7 @@ export function SetupChecklist({
             {confluences.some((c) => c.primary_confluence) && (
               <button
                 onClick={selectAllPrimary}
-                className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                className="text-sm text-neutral-600 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300"
               >
                 Select all primary confluences
               </button>

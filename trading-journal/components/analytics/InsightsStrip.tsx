@@ -12,17 +12,17 @@ export function InsightsStrip({ insights }: InsightsStripProps) {
   }
 
   return (
-    <div className="space-y-3 rounded-lg border border-slate-200/70 bg-white/80 p-6 dark:border-slate-800/60 dark:bg-slate-900/60">
+    <div className="space-y-3 rounded-lg border border-neutral-200/70 bg-white/80 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/60">
       <div className="flex items-center gap-2">
         <Lightbulb className="h-5 w-5 text-amber-500 dark:text-amber-400" />
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Insights</h2>
+        <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">Insights</h2>
       </div>
 
       <ul className="space-y-2">
         {insights.map((insight, i) => (
           <li
             key={i}
-            className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200"
+            className="flex items-start gap-2 text-sm text-neutral-700 dark:text-neutral-200"
           >
             <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
               {i + 1}
@@ -32,7 +32,7 @@ export function InsightsStrip({ insights }: InsightsStripProps) {
         ))}
       </ul>
 
-      <p className="text-xs text-slate-500 dark:text-slate-400" role="status">
+      <p className="text-xs text-neutral-500 dark:text-neutral-400" role="status">
         Auto-generated insights from your trading data (minimum n=15).
       </p>
     </div>

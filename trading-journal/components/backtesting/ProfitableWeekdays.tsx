@@ -49,8 +49,8 @@ export function ProfitableWeekdays({ backtests }: ProfitableWeekdaysProps) {
   const maxNetR = Math.max(...dayMetrics.map((d) => Math.abs(d.netR)), 0.01)
 
   return (
-    <div className="space-y-3 rounded-lg border border-slate-200/70 bg-white/80 p-4 dark:border-slate-800/60 dark:bg-slate-900/60">
-      <h2 className="text-base font-semibold text-slate-900 dark:text-slate-50">
+    <div className="space-y-3 rounded-lg border border-neutral-200/70 bg-white/80 p-4 dark:border-neutral-800/60 dark:bg-neutral-900/60">
+      <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-50">
         Most Profitable Weekdays
       </h2>
 
@@ -63,7 +63,7 @@ export function ProfitableWeekdays({ backtests }: ProfitableWeekdaysProps) {
             <div key={metric.day} className="flex items-center gap-3">
               {/* Day label */}
               <div className="flex w-20 shrink-0 items-center gap-1.5">
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                <span className="text-sm font-medium text-neutral-700 dark:text-neutral-200">
                   {metric.day.substring(0, 3)}
                 </span>
                 {metric.n > 0 && metric.n < 10 && (
@@ -74,11 +74,11 @@ export function ProfitableWeekdays({ backtests }: ProfitableWeekdaysProps) {
               </div>
 
               {/* Chart bar */}
-              <div className="relative h-6 flex-1 overflow-hidden rounded bg-slate-200/80 dark:bg-slate-800/80">
+              <div className="relative h-6 flex-1 overflow-hidden rounded bg-neutral-200/80 dark:bg-neutral-800/80">
                 {metric.n > 0 && (
                   <>
                     {/* Midline */}
-                    <div className="absolute inset-y-0 left-1/2 w-px bg-slate-400/60 dark:bg-slate-600/60" />
+                    <div className="absolute inset-y-0 left-1/2 w-px bg-neutral-400/60 dark:bg-neutral-600/60" />
 
                     {/* Bar */}
                     <div
@@ -104,7 +104,7 @@ export function ProfitableWeekdays({ backtests }: ProfitableWeekdaysProps) {
 
                     {/* Value label */}
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
+                      <span className="text-xs font-medium text-neutral-700 dark:text-neutral-200">
                         {metric.avgR.toFixed(2)}R avg
                       </span>
                     </div>
@@ -116,7 +116,7 @@ export function ProfitableWeekdays({ backtests }: ProfitableWeekdaysProps) {
               <div className="flex w-32 shrink-0 items-center justify-end gap-2 text-xs">
                 {metric.n > 0 && (
                   <>
-                    <span className="text-slate-500 dark:text-slate-400">
+                    <span className="text-neutral-500 dark:text-neutral-400">
                       {(metric.winRate * 100).toFixed(0)}% WR
                     </span>
                     <Badge
@@ -138,7 +138,7 @@ export function ProfitableWeekdays({ backtests }: ProfitableWeekdaysProps) {
                       ? 'text-emerald-700 dark:text-emerald-300'
                       : metric.n > 0
                         ? 'text-red-700 dark:text-red-300'
-                        : 'text-slate-400 dark:text-slate-500'
+                        : 'text-neutral-400 dark:text-neutral-500'
                   )}
                 >
                   {metric.n === 0
@@ -151,7 +151,7 @@ export function ProfitableWeekdays({ backtests }: ProfitableWeekdaysProps) {
         })}
       </div>
 
-      <p className="text-xs text-slate-500 dark:text-slate-400" role="status">
+      <p className="text-xs text-neutral-500 dark:text-neutral-400" role="status">
         * Exploratory (n&lt;10)
       </p>
     </div>

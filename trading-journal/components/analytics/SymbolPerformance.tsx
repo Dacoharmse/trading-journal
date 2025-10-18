@@ -44,7 +44,7 @@ export function SymbolPerformance({ data, displayCurrency }: SymbolPerformancePr
   const SortButton = ({ label, sortKey: key }: { label: string; sortKey: SortKey }) => (
     <button
       onClick={() => handleSort(key)}
-      className="flex items-center gap-1 font-medium hover:text-slate-900 dark:hover:text-slate-50"
+      className="flex items-center gap-1 font-medium hover:text-neutral-900 dark:hover:text-neutral-50"
     >
       {label}
       <ArrowUpDown className="h-3 w-3" />
@@ -52,31 +52,31 @@ export function SymbolPerformance({ data, displayCurrency }: SymbolPerformancePr
   )
 
   return (
-    <div className="space-y-4 rounded-lg border border-slate-200/70 bg-white/80 p-6 dark:border-slate-800/60 dark:bg-slate-900/60">
-      <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+    <div className="space-y-4 rounded-lg border border-neutral-200/70 bg-white/80 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/60">
+      <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
         Symbol Performance
       </h2>
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-200 dark:border-slate-700">
-              <th className="p-2 text-left text-slate-600 dark:text-slate-300">
+            <tr className="border-b border-neutral-200 dark:border-neutral-700">
+              <th className="p-2 text-left text-neutral-600 dark:text-neutral-300">
                 <SortButton label="Symbol" sortKey="symbol" />
               </th>
-              <th className="p-2 text-right text-slate-600 dark:text-slate-300">
+              <th className="p-2 text-right text-neutral-600 dark:text-neutral-300">
                 <SortButton label="Trades" sortKey="n" />
               </th>
-              <th className="p-2 text-right text-slate-600 dark:text-slate-300">
+              <th className="p-2 text-right text-neutral-600 dark:text-neutral-300">
                 <SortButton label="Win %" sortKey="winRate" />
               </th>
-              <th className="p-2 text-right text-slate-600 dark:text-slate-300">
+              <th className="p-2 text-right text-neutral-600 dark:text-neutral-300">
                 <SortButton label="Avg R" sortKey="avgR" />
               </th>
-              <th className="p-2 text-right text-slate-600 dark:text-slate-300">
+              <th className="p-2 text-right text-neutral-600 dark:text-neutral-300">
                 <SortButton label="Expectancy" sortKey="expectancyR" />
               </th>
-              <th className="p-2 text-right text-slate-600 dark:text-slate-300">
+              <th className="p-2 text-right text-neutral-600 dark:text-neutral-300">
                 <SortButton label="Net R" sortKey="netR" />
               </th>
             </tr>
@@ -85,20 +85,20 @@ export function SymbolPerformance({ data, displayCurrency }: SymbolPerformancePr
             {sortedData.map((item) => (
               <tr
                 key={item.symbol}
-                className="border-b border-slate-100 last:border-0 dark:border-slate-800"
+                className="border-b border-neutral-100 last:border-0 dark:border-neutral-800"
               >
-                <td className="p-2 font-medium text-slate-900 dark:text-slate-50">
+                <td className="p-2 font-medium text-neutral-900 dark:text-neutral-50">
                   {item.symbol}
                 </td>
-                <td className="p-2 text-right text-slate-700 dark:text-slate-200">
+                <td className="p-2 text-right text-neutral-700 dark:text-neutral-200">
                   <Badge variant="secondary" className="text-xs">
                     {item.n}
                   </Badge>
                 </td>
-                <td className="p-2 text-right text-slate-700 dark:text-slate-200">
+                <td className="p-2 text-right text-neutral-700 dark:text-neutral-200">
                   {((item.winRate ?? 0) * 100).toFixed(1)}%
                 </td>
-                <td className="p-2 text-right text-slate-700 dark:text-slate-200">
+                <td className="p-2 text-right text-neutral-700 dark:text-neutral-200">
                   {(item.avgR ?? 0).toFixed(2)}R
                 </td>
                 <td
@@ -129,7 +129,7 @@ export function SymbolPerformance({ data, displayCurrency }: SymbolPerformancePr
         </table>
       </div>
 
-      <p className="text-xs text-slate-500 dark:text-slate-400" role="status">
+      <p className="text-xs text-neutral-500 dark:text-neutral-400" role="status">
         Showing {sortedData.length} symbols. Click column headers to sort.
         {displayCurrency && ` Display currency: ${displayCurrency}`}
       </p>

@@ -468,8 +468,8 @@ function TradesPageContent() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-sm text-slate-600 dark:text-slate-400">Loading trades...</p>
+          <div className="w-16 h-16 border-4 border-neutral-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">Loading trades...</p>
         </div>
       </div>
     )
@@ -482,7 +482,7 @@ function TradesPageContent() {
           <p className="text-red-600 dark:text-red-400 mb-4">Error: {error}</p>
           <button
             onClick={fetchData}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
+            className="px-4 py-2 text-sm font-medium text-white bg-neutral-600 hover:bg-neutral-700 rounded-lg"
           >
             Retry
           </button>
@@ -492,7 +492,7 @@ function TradesPageContent() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-screen flex flex-col bg-neutral-50 dark:bg-neutral-950">
       {/* Toolbar */}
       <TradesToolbar
         accounts={accounts}

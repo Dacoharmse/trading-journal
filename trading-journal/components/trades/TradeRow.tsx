@@ -62,23 +62,23 @@ export function TradeRow({
   return (
     <tr
       onClick={handleRowClick}
-      className={`border-b border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer transition-colors ${
-        isSelected ? 'bg-blue-50 dark:bg-blue-950/20' : ''
+      className={`border-b border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 cursor-pointer transition-colors ${
+        isSelected ? 'bg-neutral-50 dark:bg-neutral-950/20' : ''
       }`}
     >
       {/* Checkbox */}
-      <td className="px-4 py-3 sticky left-0 bg-white dark:bg-slate-950 z-10">
+      <td className="px-4 py-3 sticky left-0 bg-white dark:bg-neutral-950 z-10">
         <input
           type="checkbox"
           checked={isSelected}
           onChange={() => onSelect(trade.id)}
-          className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+          className="w-4 h-4 rounded border-neutral-300 text-neutral-600 focus:ring-neutral-500"
         />
       </td>
 
       {/* Date */}
       {visibleColumns.has('date') && (
-        <td className="px-4 py-3 text-sm text-slate-900 dark:text-white whitespace-nowrap">
+        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white whitespace-nowrap">
           {trade.exit_date || trade.entry_date || 'N/A'}
         </td>
       )}
@@ -87,8 +87,8 @@ export function TradeRow({
       {visibleColumns.has('account') && (
         <td className="px-4 py-3">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-900 dark:text-white">{account?.name || 'Unknown'}</span>
-            <span className="text-xs px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+            <span className="text-sm text-neutral-900 dark:text-white">{account?.name || 'Unknown'}</span>
+            <span className="text-xs px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
               {account?.currency || trade.currency}
             </span>
           </div>
@@ -97,7 +97,7 @@ export function TradeRow({
 
       {/* Symbol */}
       {visibleColumns.has('symbol') && (
-        <td className="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white">
+        <td className="px-4 py-3 text-sm font-medium text-neutral-900 dark:text-white">
           {trade.symbol}
         </td>
       )}
@@ -113,28 +113,28 @@ export function TradeRow({
 
       {/* Entry Price */}
       {visibleColumns.has('entry_price') && (
-        <td className="px-4 py-3 text-sm text-slate-900 dark:text-white">
+        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
           {trade.entry_price?.toFixed(2) || 'N/A'}
         </td>
       )}
 
       {/* Stop Loss */}
       {visibleColumns.has('stop_price') && (
-        <td className="px-4 py-3 text-sm text-slate-900 dark:text-white">
+        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
           {trade.stop_price?.toFixed(2) || 'N/A'}
         </td>
       )}
 
       {/* Exit Price */}
       {visibleColumns.has('exit_price') && (
-        <td className="px-4 py-3 text-sm text-slate-900 dark:text-white">
+        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
           {trade.exit_price?.toFixed(2) || 'N/A'}
         </td>
       )}
 
       {/* Size */}
       {visibleColumns.has('size') && (
-        <td className="px-4 py-3 text-sm text-slate-900 dark:text-white">
+        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
           {trade.size?.toFixed(2) || 'N/A'}
         </td>
       )}
@@ -173,17 +173,17 @@ export function TradeRow({
         <td className="px-4 py-3">
           {playbookName ? (
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-slate-900 dark:text-white">
+              <span className="text-sm font-medium text-neutral-900 dark:text-white">
                 {playbookName}
               </span>
               {playbookCategory && (
-                <span className="text-xs text-slate-500 dark:text-slate-400">
+                <span className="text-xs text-neutral-500 dark:text-neutral-400">
                   {playbookCategory}
                 </span>
               )}
             </div>
           ) : (
-            <span className="text-xs text-slate-500 dark:text-slate-400">—</span>
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">—</span>
           )}
         </td>
       )}
@@ -201,14 +201,14 @@ export function TradeRow({
               {trade.setup_grade}
             </span>
           ) : (
-            <span className="text-xs text-slate-500 dark:text-slate-400">—</span>
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">—</span>
           )}
         </td>
       )}
 
       {/* Setup Score */}
       {visibleColumns.has('setup_score') && (
-        <td className="px-4 py-3 text-sm text-slate-900 dark:text-white">
+        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
           {typeof trade.setup_score === 'number' ? formatScore(trade.setup_score) : '—'}
         </td>
       )}
@@ -220,13 +220,13 @@ export function TradeRow({
             {visibleConfluences.map((conf, idx) => (
               <span
                 key={idx}
-                className="text-xs px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                className="text-xs px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-900/30 text-neutral-700 dark:text-neutral-400"
               >
                 {conf}
               </span>
             ))}
             {overflowConfluences > 0 && (
-              <span className="text-xs px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+              <span className="text-xs px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
                 +{overflowConfluences}
               </span>
             )}
@@ -247,7 +247,7 @@ export function TradeRow({
 
       {/* Hold Time */}
       {visibleColumns.has('hold_time') && (
-        <td className="px-4 py-3 text-sm text-slate-900 dark:text-white whitespace-nowrap">
+        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white whitespace-nowrap">
           {formatHoldTime(holdTime)}
         </td>
       )}
@@ -268,28 +268,28 @@ export function TradeRow({
 
       {/* Entry Time */}
       {visibleColumns.has('entry_time') && (
-        <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
+        <td className="px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400">
           {trade.entry_time || 'N/A'}
         </td>
       )}
 
       {/* Exit Time */}
       {visibleColumns.has('exit_time') && (
-        <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
+        <td className="px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400">
           {trade.exit_time || 'N/A'}
         </td>
       )}
 
       {/* Fees */}
       {visibleColumns.has('fees') && (
-        <td className="px-4 py-3 text-sm text-slate-900 dark:text-white">
+        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
           {((trade.commission || 0) + (trade.swap || 0) + (trade.slippage || 0)).toFixed(2)}
         </td>
       )}
 
       {/* Tags */}
       {visibleColumns.has('tags') && (
-        <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400">
+        <td className="px-4 py-3 text-xs text-neutral-600 dark:text-neutral-400">
           {trade.tags || 'N/A'}
         </td>
       )}
@@ -308,7 +308,7 @@ export function TradeRow({
       {/* Notes */}
       {visibleColumns.has('notes') && (
         <td className="px-4 py-3 max-w-xs">
-          <div className="text-xs text-slate-600 dark:text-slate-400 truncate">
+          <div className="text-xs text-neutral-600 dark:text-neutral-400 truncate">
             {trade.notes || 'N/A'}
           </div>
         </td>
@@ -318,7 +318,7 @@ export function TradeRow({
       {visibleColumns.has('attachments') && (
         <td className="px-4 py-3">
           {trade.attachments && (
-            <Paperclip className="w-4 h-4 text-slate-400" />
+            <Paperclip className="w-4 h-4 text-neutral-400" />
           )}
         </td>
       )}

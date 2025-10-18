@@ -71,10 +71,10 @@ export function PreviewPanel({ rules, confluences, rubric }: PreviewPanelProps) 
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-slate-200/70 bg-white/80 p-6 dark:border-slate-800/60 dark:bg-slate-900/50">
+      <div className="rounded-xl border border-neutral-200/70 bg-white/80 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/50">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Preview Grade</p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">Preview Grade</p>
             <div className="mt-2 flex items-center gap-4">
               <div
                 className={`rounded-full border px-5 py-2 text-2xl font-semibold ${getGradeColor(
@@ -84,13 +84,13 @@ export function PreviewPanel({ rules, confluences, rubric }: PreviewPanelProps) 
                 {scoreResult.grade}
               </div>
               <div className="space-y-1 text-sm">
-                <p className="text-slate-600 dark:text-slate-300">
+                <p className="text-neutral-600 dark:text-neutral-300">
                   Score: <span className="font-semibold">{formatScore(scoreResult.score)}</span>
                 </p>
-                <p className="text-slate-500 dark:text-slate-400">
+                <p className="text-neutral-500 dark:text-neutral-400">
                   Rules contribution: {(scoreResult.parts.rulesPct * 100).toFixed(0)}%
                 </p>
-                <p className="text-slate-500 dark:text-slate-400">
+                <p className="text-neutral-500 dark:text-neutral-400">
                   Confluence contribution: {(scoreResult.parts.confPct * 100).toFixed(0)}%
                 </p>
               </div>
@@ -109,11 +109,11 @@ export function PreviewPanel({ rules, confluences, rubric }: PreviewPanelProps) 
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border border-slate-200/70 bg-white/80 p-6 dark:border-slate-800/60 dark:bg-slate-900/50">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Rules</h3>
+        <div className="rounded-xl border border-neutral-200/70 bg-white/80 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/50">
+          <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Rules</h3>
           <div className="mt-4 space-y-2">
             {rules.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
                 Add rules in the previous tab to preview scoring.
               </p>
             ) : (
@@ -131,11 +131,11 @@ export function PreviewPanel({ rules, confluences, rubric }: PreviewPanelProps) 
                       className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
                         checked
                           ? 'border-emerald-300/70 bg-emerald-100/60 text-emerald-800 dark:border-emerald-700/60 dark:bg-emerald-900/30 dark:text-emerald-200'
-                          : 'border-slate-200/70 bg-white/80 text-slate-600 hover:border-slate-300 dark:border-slate-800/60 dark:bg-slate-900/40 dark:text-slate-300'
+                          : 'border-neutral-200/70 bg-white/80 text-neutral-600 hover:border-neutral-300 dark:border-neutral-800/60 dark:bg-neutral-900/40 dark:text-neutral-300'
                       }`}
                     >
                       <span>
-                        <span className="font-medium uppercase text-xs text-slate-500 dark:text-slate-400">
+                        <span className="font-medium uppercase text-xs text-neutral-500 dark:text-neutral-400">
                           {rule.type}
                         </span>
                         <br />
@@ -153,13 +153,13 @@ export function PreviewPanel({ rules, confluences, rubric }: PreviewPanelProps) 
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200/70 bg-white/80 p-6 dark:border-slate-800/60 dark:bg-slate-900/50">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+        <div className="rounded-xl border border-neutral-200/70 bg-white/80 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/50">
+          <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
             Confluences
           </h3>
           <div className="mt-4 space-y-2">
             {confluences.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
                 Add confluences to preview their impact.
               </p>
             ) : (
@@ -176,12 +176,12 @@ export function PreviewPanel({ rules, confluences, rubric }: PreviewPanelProps) 
                       }
                       className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
                         checked
-                          ? 'border-blue-300/70 bg-blue-100/60 text-blue-800 dark:border-blue-700/60 dark:bg-blue-900/30 dark:text-blue-200'
-                          : 'border-slate-200/70 bg-white/80 text-slate-600 hover:border-slate-300 dark:border-slate-800/60 dark:bg-slate-900/40 dark:text-slate-300'
+                          ? 'border-neutral-300/70 bg-neutral-100/60 text-neutral-800 dark:border-neutral-700/60 dark:bg-neutral-800/30 dark:text-neutral-200'
+                          : 'border-neutral-200/70 bg-white/80 text-neutral-600 hover:border-neutral-300 dark:border-neutral-800/60 dark:bg-neutral-900/40 dark:text-neutral-300'
                       }`}
                     >
                       <span>
-                        <span className="font-medium uppercase text-xs text-slate-500 dark:text-slate-400">
+                        <span className="font-medium uppercase text-xs text-neutral-500 dark:text-neutral-400">
                           {conf.primary_confluence ? 'PRIMARY' : 'SECONDARY'}
                         </span>
                         <br />

@@ -311,7 +311,7 @@ export function BacktestEntryModal({
 
           {/* Planned Metrics */}
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">
               Planned Metrics (before trade)
             </h3>
             <div className="grid grid-cols-3 gap-3">
@@ -350,7 +350,7 @@ export function BacktestEntryModal({
 
           {/* Actual Metrics */}
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">
               Actual Results (what happened)
             </h3>
             <div className="grid grid-cols-3 gap-3">
@@ -417,12 +417,12 @@ export function BacktestEntryModal({
           <div>
             <Label>Chart Image</Label>
             <div
-              className="relative mt-2 rounded-lg border-2 border-dashed border-slate-300 p-4 transition-colors hover:border-slate-400 dark:border-slate-700 dark:hover:border-slate-600"
+              className="relative mt-2 rounded-lg border-2 border-dashed border-neutral-300 p-4 transition-colors hover:border-neutral-400 dark:border-neutral-700 dark:hover:border-neutral-600"
               onPaste={handlePaste}
             >
               {uploadingImage ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                  <div className="text-sm text-neutral-500 dark:text-neutral-400">
                     Uploading image...
                   </div>
                 </div>
@@ -431,7 +431,7 @@ export function BacktestEntryModal({
                   <img
                     src={chartPreview}
                     alt="Chart preview"
-                    className="h-auto w-full rounded border border-slate-200 dark:border-slate-700"
+                    className="h-auto w-full rounded border border-neutral-200 dark:border-neutral-700"
                   />
                   <button
                     type="button"
@@ -446,10 +446,10 @@ export function BacktestEntryModal({
                 </div>
               ) : (
                 <div className="py-8 text-center">
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  <p className="text-sm font-medium text-neutral-700 dark:text-neutral-200">
                     Click here and paste your chart (Ctrl+Shift+S)
                   </p>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
                     Copy chart from TradingView and paste directly here
                   </p>
                 </div>
@@ -471,18 +471,18 @@ export function BacktestEntryModal({
 
           <div>
             <Label>Rules Followed</Label>
-            <div className="mt-2 space-y-2 rounded border border-slate-200 p-3 dark:border-slate-700">
+            <div className="mt-2 space-y-2 rounded border border-neutral-200 p-3 dark:border-neutral-700">
               {rules.map((rule) => (
-                <div key={rule.id} className="flex items-center gap-2">
+                <div key={rule.id} className="flex items-start gap-2">
                   <input
                     type="checkbox"
                     checked={rulesChecked[rule.id] ?? false}
                     onChange={(e) =>
                       setRulesChecked((prev) => ({ ...prev, [rule.id]: e.target.checked }))
                     }
-                    className="h-4 w-4 rounded border-slate-300"
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-neutral-300 text-neutral-900 focus:ring-2 focus:ring-neutral-950 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-50 dark:focus:ring-neutral-300"
                   />
-                  <span className="text-sm">{rule.label}</span>
+                  <span className="text-sm leading-5">{rule.label}</span>
                 </div>
               ))}
             </div>
@@ -490,18 +490,18 @@ export function BacktestEntryModal({
 
           <div>
             <Label>Confluences Used</Label>
-            <div className="mt-2 space-y-2 rounded border border-slate-200 p-3 dark:border-slate-700">
+            <div className="mt-2 space-y-2 rounded border border-neutral-200 p-3 dark:border-neutral-700">
               {confluences.map((conf) => (
-                <div key={conf.id} className="flex items-center gap-2">
+                <div key={conf.id} className="flex items-start gap-2">
                   <input
                     type="checkbox"
                     checked={confluencesChecked[conf.id] ?? false}
                     onChange={(e) =>
                       setConfluencesChecked((prev) => ({ ...prev, [conf.id]: e.target.checked }))
                     }
-                    className="h-4 w-4 rounded border-slate-300"
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-neutral-300 text-neutral-900 focus:ring-2 focus:ring-neutral-950 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-50 dark:focus:ring-neutral-300"
                   />
-                  <span className="text-sm">{conf.label}</span>
+                  <span className="text-sm leading-5">{conf.label}</span>
                 </div>
               ))}
             </div>

@@ -24,21 +24,16 @@ import type {
   PlaybookRule,
   PlaybookConfluence,
   PlaybookRubric,
-  PlaybookTradeDetail,
-  PlaybookExample,
   Symbol as SymbolRecord,
 } from '@/types/supabase'
 import { RulesEditor } from './RulesEditor'
 import { ConfluencesEditor } from './ConfluencesEditor'
 import { ScoringEditor } from './ScoringEditor'
 import { PreviewPanel } from './PreviewPanel'
-import { TradeDetailsEditor, type TradeDetailDraft } from './TradeDetailsEditor'
-import { ExamplesEditor, type ExampleDraft } from './ExamplesEditor'
 import type { RuleDraft, ConfluenceDraft } from './types'
 
 const sessionOptions = ['Asia', 'London', 'NY'] as const
 const categoryOptions = ['Breakout', 'Reversion', 'ICT', 'News', 'Other'] as const
-const timeframeOptions = ['1m', '5m', '15m', '30m', '1H', '4H', 'D1', 'W1'] as const
 
 interface PlaybookEditorProps {
   mode: 'create' | 'edit'
@@ -48,8 +43,6 @@ interface PlaybookEditorProps {
   initialConfluences: PlaybookConfluence[]
   initialRubric: PlaybookRubric | null
   symbols: SymbolRecord[]
-  initialTradeDetails?: PlaybookTradeDetail[]
-  initialExamples?: PlaybookExample[]
 }
 
 interface BasicsState {
@@ -60,10 +53,6 @@ interface BasicsState {
   symbols: string[]
   rr_min: string
   active: boolean
-  analyst_tf: string
-  exec_tf: string
-  best_sessions: string[]
-  notes_md: string
 }
 
 export function PlaybookEditor({
@@ -74,8 +63,6 @@ export function PlaybookEditor({
   initialConfluences,
   initialRubric,
   symbols,
-  initialTradeDetails = [],
-  initialExamples = [],
 }: PlaybookEditorProps) {
   const router = useRouter()
   const supabase = React.useMemo(() => createClient(), [])
@@ -92,10 +79,6 @@ export function PlaybookEditor({
     symbols: initialPlaybook?.symbols ?? [],
     rr_min: initialPlaybook?.rr_min != null ? String(initialPlaybook.rr_min) : '',
     active: initialPlaybook?.active ?? true,
-    analyst_tf: initialPlaybook?.analyst_tf ?? '',
-    exec_tf: initialPlaybook?.exec_tf ?? '',
-    best_sessions: initialPlaybook?.best_sessions ?? [],
-    notes_md: initialPlaybook?.notes_md ?? '',
   })
 
   const [rules, setRules] = React.useState<RuleDraft[]>(
@@ -124,32 +107,6 @@ export function PlaybookEditor({
       .sort((a, b) => a.sort - b.sort)
   )
 
-  const [tradeDetails, setTradeDetails] = React.useState<TradeDetailDraft[]>(
-    initialTradeDetails
-      .map((detail) => ({
-        id: detail.id,
-        playbook_id: detail.playbook_id,
-        label: detail.label,
-        type: detail.type,
-        weight: Number(detail.weight) || 1,
-        primary_item: detail.primary_item,
-        sort: detail.sort ?? 0,
-      }))
-      .sort((a, b) => a.sort - b.sort)
-  )
-
-  const [examples, setExamples] = React.useState<ExampleDraft[]>(
-    initialExamples
-      .map((example) => ({
-        id: example.id,
-        playbook_id: example.playbook_id,
-        media_urls: example.media_urls,
-        caption: example.caption,
-        sort: example.sort ?? 0,
-      }))
-      .sort((a, b) => a.sort - b.sort)
-  )
-
   const [rubric, setRubric] = React.useState<PlaybookRubric>(() => {
     const fallback = getDefaultRubric()
     return initialRubric
@@ -162,8 +119,6 @@ export function PlaybookEditor({
 
   const [deletedRuleIds, setDeletedRuleIds] = React.useState<string[]>([])
   const [deletedConfluenceIds, setDeletedConfluenceIds] = React.useState<string[]>([])
-  const [deletedDetailIds, setDeletedDetailIds] = React.useState<string[]>([])
-  const [deletedExampleIds, setDeletedExampleIds] = React.useState<string[]>([])
   const [activeTab, setActiveTab] = React.useState('basics')
   const [saving, setSaving] = React.useState(false)
   const [dirty, setDirty] = React.useState(false)
@@ -174,8 +129,6 @@ export function PlaybookEditor({
   const persistedConfluenceIds = React.useRef(
     new Set(initialConfluences.map((conf) => conf.id))
   )
-  const persistedDetailIds = React.useRef(new Set(initialTradeDetails.map((d) => d.id)))
-  const persistedExampleIds = React.useRef(new Set(initialExamples.map((e) => e.id)))
 
   React.useEffect(() => {
     if (playbookId && rubric.playbook_id !== playbookId) {
@@ -194,16 +147,6 @@ export function PlaybookEditor({
         ? prev.sessions.filter((s) => s !== session)
         : [...prev.sessions, session]
       return { ...prev, sessions: nextSessions }
-    })
-    markDirty()
-  }
-
-  const toggleBestSession = (session: string) => {
-    setBasics((prev) => {
-      const nextBestSessions = prev.best_sessions.includes(session)
-        ? prev.best_sessions.filter((s) => s !== session)
-        : [...prev.best_sessions, session]
-      return { ...prev, best_sessions: nextBestSessions }
     })
     markDirty()
   }
@@ -300,78 +243,6 @@ export function PlaybookEditor({
     markDirty()
   }
 
-  const handleAddDetail = () => {
-    const newDetail: TradeDetailDraft = {
-      id: crypto.randomUUID(),
-      playbook_id: playbookId ?? undefined,
-      label: '',
-      type: 'detail',
-      weight: 1,
-      primary_item: false,
-      sort: tradeDetails.length,
-    }
-    setTradeDetails((prev) => [...prev, newDetail])
-    markDirty()
-  }
-
-  const handleUpdateDetail = (id: string, updates: Partial<TradeDetailDraft>) => {
-    setTradeDetails((prev) =>
-      prev.map((detail) => (detail.id === id ? { ...detail, ...updates } : detail))
-    )
-    markDirty()
-  }
-
-  const handleRemoveDetail = (id: string) => {
-    setTradeDetails((prev) => {
-      const next = prev.filter((detail) => detail.id !== id)
-      return next.map((detail, index) => ({ ...detail, sort: index }))
-    })
-    if (persistedDetailIds.current.has(id)) {
-      setDeletedDetailIds((prev) => [...prev, id])
-    }
-    markDirty()
-  }
-
-  const handleReorderDetails = (fromIndex: number, toIndex: number) => {
-    setTradeDetails((prev) => {
-      const ordered = [...prev].sort((a, b) => a.sort - b.sort)
-      const [moved] = ordered.splice(fromIndex, 1)
-      ordered.splice(toIndex, 0, moved)
-      return ordered.map((detail, index) => ({ ...detail, sort: index }))
-    })
-    markDirty()
-  }
-
-  const handleAddExample = () => {
-    const newExample: ExampleDraft = {
-      id: crypto.randomUUID(),
-      playbook_id: playbookId ?? undefined,
-      media_urls: [],
-      caption: null,
-      sort: examples.length,
-    }
-    setExamples((prev) => [...prev, newExample])
-    markDirty()
-  }
-
-  const handleUpdateExample = (id: string, updates: Partial<ExampleDraft>) => {
-    setExamples((prev) =>
-      prev.map((example) => (example.id === id ? { ...example, ...updates } : example))
-    )
-    markDirty()
-  }
-
-  const handleRemoveExample = (id: string) => {
-    setExamples((prev) => {
-      const next = prev.filter((example) => example.id !== id)
-      return next.map((example, index) => ({ ...example, sort: index }))
-    })
-    if (persistedExampleIds.current.has(id)) {
-      setDeletedExampleIds((prev) => [...prev, id])
-    }
-    markDirty()
-  }
-
   const validationErrors = React.useMemo(() => {
     const issues: string[] = []
     if (!basics.name.trim()) {
@@ -406,10 +277,6 @@ export function PlaybookEditor({
         symbols: basics.symbols,
         rr_min: basics.rr_min ? Number(basics.rr_min) : null,
         active: basics.active,
-        analyst_tf: basics.analyst_tf || null,
-        exec_tf: basics.exec_tf || null,
-        best_sessions: basics.best_sessions,
-        notes_md: basics.notes_md || null,
         user_id: userId,
       }
 
@@ -437,8 +304,6 @@ export function PlaybookEditor({
 
       const sortedRules = [...rules].sort((a, b) => a.sort - b.sort)
       const sortedConfluences = [...confluences].sort((a, b) => a.sort - b.sort)
-      const sortedDetails = [...tradeDetails].sort((a, b) => a.sort - b.sort)
-      const sortedExamples = [...examples].sort((a, b) => a.sort - b.sort)
 
       if (sortedRules.length > 0) {
         const rulePayload = sortedRules.map((rule, index) => ({
@@ -474,46 +339,6 @@ export function PlaybookEditor({
         setConfluences(confluencePayload.map((conf) => ({ ...conf })))
       }
 
-      if (sortedDetails.length > 0) {
-        const detailPayload = sortedDetails.map((detail, index) => ({
-          id: detail.id,
-          playbook_id: currentId,
-          label: detail.label.trim(),
-          type: detail.type,
-          weight: Number(detail.weight) || 1,
-          primary_item: detail.primary_item,
-          sort: index,
-        }))
-
-        const { error: detailError } = await supabase
-          .from('playbook_trade_details')
-          .upsert(detailPayload)
-        if (detailError) throw detailError
-
-        setTradeDetails(detailPayload.map((detail) => ({ ...detail })))
-      }
-
-      if (sortedExamples.length > 0) {
-        const examplePayload = sortedExamples
-          .filter((example) => example.media_urls.length > 0)
-          .map((example, index) => ({
-            id: example.id,
-            playbook_id: currentId,
-            media_urls: example.media_urls,
-            caption: example.caption || null,
-            sort: index,
-          }))
-
-        if (examplePayload.length > 0) {
-          const { error: exampleError } = await supabase
-            .from('playbook_examples')
-            .upsert(examplePayload)
-          if (exampleError) throw exampleError
-
-          setExamples(examplePayload.map((example) => ({ ...example })))
-        }
-      }
-
       if (deletedRuleIds.length > 0) {
         const { error: deleteRuleError } = await supabase
           .from('playbook_rules')
@@ -530,24 +355,6 @@ export function PlaybookEditor({
           .in('id', deletedConfluenceIds)
         if (deleteConfError) throw deleteConfError
         setDeletedConfluenceIds([])
-      }
-
-      if (deletedDetailIds.length > 0) {
-        const { error: deleteDetailError } = await supabase
-          .from('playbook_trade_details')
-          .delete()
-          .in('id', deletedDetailIds)
-        if (deleteDetailError) throw deleteDetailError
-        setDeletedDetailIds([])
-      }
-
-      if (deletedExampleIds.length > 0) {
-        const { error: deleteExampleError } = await supabase
-          .from('playbook_examples')
-          .delete()
-          .in('id', deletedExampleIds)
-        if (deleteExampleError) throw deleteExampleError
-        setDeletedExampleIds([])
       }
 
       if (currentId) {
@@ -574,8 +381,6 @@ export function PlaybookEditor({
       persistedConfluenceIds.current = new Set(
         sortedConfluences.map((conf) => conf.id)
       )
-      persistedDetailIds.current = new Set(sortedDetails.map((d) => d.id))
-      persistedExampleIds.current = new Set(sortedExamples.map((e) => e.id))
 
       setStatus('Playbook saved')
       setDirty(false)
@@ -643,8 +448,6 @@ export function PlaybookEditor({
           <TabsTrigger value="basics">Basics</TabsTrigger>
           <TabsTrigger value="rules">Rules</TabsTrigger>
           <TabsTrigger value="confluences">Confluences</TabsTrigger>
-          <TabsTrigger value="details">Trade Details</TabsTrigger>
-          <TabsTrigger value="examples">Examples</TabsTrigger>
           <TabsTrigger value="scoring">Scoring</TabsTrigger>
           <TabsTrigger value="preview">Preview</TabsTrigger>
         </TabsList>
@@ -706,50 +509,6 @@ export function PlaybookEditor({
                   placeholder="Markdown supported. Summarise the setup narrative, the conditions you're looking for, and how it fits your system."
                 />
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-neutral-700 dark:text-neutral-200">
-                    Analyst Timeframe
-                  </label>
-                  <Input
-                    value={basics.analyst_tf}
-                    onChange={(event) => {
-                      setBasics((prev) => ({ ...prev, analyst_tf: event.target.value }))
-                      markDirty()
-                    }}
-                    placeholder="e.g. 15m"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-neutral-700 dark:text-neutral-200">
-                    Execution Timeframe
-                  </label>
-                  <Input
-                    value={basics.exec_tf}
-                    onChange={(event) => {
-                      setBasics((prev) => ({ ...prev, exec_tf: event.target.value }))
-                      markDirty()
-                    }}
-                    placeholder="e.g. 5m"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-200">
-                  Additional Notes
-                </label>
-                <Textarea
-                  rows={8}
-                  value={basics.notes_md}
-                  onChange={(event) => {
-                    setBasics((prev) => ({ ...prev, notes_md: event.target.value }))
-                    markDirty()
-                  }}
-                  placeholder="Markdown supported. Add entry criteria, exit strategy, specific conditions, or any other notes..."
-                />
-              </div>
             </div>
 
             <div className="space-y-6">
@@ -771,37 +530,6 @@ export function PlaybookEditor({
                           'rounded-full border px-3 py-1 text-xs font-medium uppercase transition-colors',
                           selected
                             ? 'border-emerald-400 bg-emerald-100 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
-                            : 'border-neutral-200 bg-white text-neutral-500 hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300'
-                        )}
-                      >
-                        {session}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white/70 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/60">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">
-                    Best Sessions
-                  </h3>
-                </div>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                  Optimal sessions for this setup
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {sessionOptions.map((session) => {
-                    const selected = basics.best_sessions.includes(session)
-                    return (
-                      <button
-                        key={session}
-                        type="button"
-                        onClick={() => toggleBestSession(session)}
-                        className={cn(
-                          'rounded-full border px-3 py-1 text-xs font-medium uppercase transition-colors',
-                          selected
-                            ? 'border-purple-400 bg-purple-100 text-purple-700 dark:border-purple-700 dark:bg-purple-900/40 dark:text-purple-200'
                             : 'border-neutral-200 bg-white text-neutral-500 hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300'
                         )}
                       >
@@ -906,27 +634,6 @@ export function PlaybookEditor({
             onUpdateConfluence={handleUpdateConfluence}
             onRemoveConfluence={handleRemoveConfluence}
             onReorderConfluences={handleReorderConfluences}
-          />
-        </TabsContent>
-
-        <TabsContent value="details" className="mt-4">
-          <TradeDetailsEditor
-            details={tradeDetails}
-            onAddDetail={handleAddDetail}
-            onUpdateDetail={handleUpdateDetail}
-            onRemoveDetail={handleRemoveDetail}
-            onReorderDetails={handleReorderDetails}
-          />
-        </TabsContent>
-
-        <TabsContent value="examples" className="mt-4">
-          <ExamplesEditor
-            examples={examples}
-            onAddExample={handleAddExample}
-            onUpdateExample={handleUpdateExample}
-            onRemoveExample={handleRemoveExample}
-            userId={userId}
-            playbookId={playbookId}
           />
         </TabsContent>
 

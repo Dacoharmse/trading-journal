@@ -12,8 +12,8 @@ export function BreakdownByDOW({ data }: BreakdownByDOWProps) {
   const maxExpectancy = Math.max(...data.map((d) => Math.abs(d.expectancyR)), 0.01)
 
   return (
-    <div className="space-y-4 rounded-lg border border-slate-200/70 bg-white/80 p-6 dark:border-slate-800/60 dark:bg-slate-900/60">
-      <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+    <div className="space-y-4 rounded-lg border border-neutral-200/70 bg-white/80 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/60">
+      <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
         Performance by Day of Week
       </h2>
 
@@ -27,7 +27,7 @@ export function BreakdownByDOW({ data }: BreakdownByDOWProps) {
             <div key={item.key} className="space-y-1">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  <span className="w-10 font-medium text-slate-700 dark:text-slate-200">
+                  <span className="w-10 font-medium text-neutral-700 dark:text-neutral-200">
                     {item.key}
                   </span>
                   <Badge
@@ -53,7 +53,7 @@ export function BreakdownByDOW({ data }: BreakdownByDOWProps) {
                   {item.expectancyR.toFixed(3)}R
                 </span>
               </div>
-              <div className="relative h-3 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+              <div className="relative h-3 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
                 <div
                   className={cn(
                     'h-full transition-all',
@@ -70,7 +70,7 @@ export function BreakdownByDOW({ data }: BreakdownByDOWProps) {
         })}
       </div>
 
-      <p className="text-xs text-slate-500 dark:text-slate-400" role="status">
+      <p className="text-xs text-neutral-500 dark:text-neutral-400" role="status">
         Days with n&lt;30 are dimmed (exploratory). Bars show expectancy in R.
       </p>
     </div>

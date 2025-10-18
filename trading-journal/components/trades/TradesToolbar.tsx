@@ -57,24 +57,24 @@ export function TradesToolbar({
   }, [searchInput, setSearchQuery])
 
   return (
-    <div className="sticky top-0 z-10 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+    <div className="sticky top-0 z-10 bg-white/80 dark:bg-neutral-950/80 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800">
       <div className="px-4 py-3 space-y-3">
         {/* Row 1: Search + Actions */}
         <div className="flex items-center gap-3">
           {/* Search */}
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
             <input
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search symbol, notes, strategy, tags..."
-              className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500"
             />
             {searchInput && (
               <button
                 onClick={() => setSearchInput('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -84,7 +84,7 @@ export function TradesToolbar({
           {/* Actions */}
           <button
             onClick={onOpenTradeForm}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-neutral-700 hover:bg-neutral-800 rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" />
             New Trade
@@ -93,7 +93,7 @@ export function TradesToolbar({
           <button
             onClick={onBulkEdit}
             disabled={selectedCount === 0}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Edit3 className="w-4 h-4" />
             Bulk Edit {selectedCount > 0 && `(${selectedCount})`}
@@ -101,7 +101,7 @@ export function TradesToolbar({
 
           <button
             onClick={onExport}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-lg transition-colors"
           >
             <Download className="w-4 h-4" />
             Export
@@ -109,7 +109,7 @@ export function TradesToolbar({
 
           <button
             onClick={onColumnPicker}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-lg transition-colors"
           >
             <Columns3 className="w-4 h-4" />
             Columns
@@ -122,7 +122,7 @@ export function TradesToolbar({
           <select
             value={dashboardFilters.dateRange}
             onChange={(e) => setDateRange(e.target.value as DateRangePreset)}
-            className="px-3 py-1.5 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-1.5 text-sm rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500"
           >
             <option value="week">This Week</option>
             <option value="month">This Month</option>
@@ -135,7 +135,7 @@ export function TradesToolbar({
           <select
             value={dashboardFilters.accountId}
             onChange={(e) => setAccountId(e.target.value)}
-            className="px-3 py-1.5 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-1.5 text-sm rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500"
           >
             <option value="all">All Accounts</option>
             {accounts.map((account) => (
@@ -147,18 +147,18 @@ export function TradesToolbar({
 
           {/* Currency Badge or Base Currency Selector */}
           {selectedAccount && dashboardFilters.units === 'currency' && (
-            <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-md">
+            <span className="px-2 py-1 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded-md">
               {selectedAccount.currency}
             </span>
           )}
 
           {isMultiAccount && dashboardFilters.units === 'currency' && (
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Display in:</span>
+              <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400">Display in:</span>
               <select
                 value={dashboardFilters.baseCurrency}
                 onChange={(e) => setBaseCurrency(e.target.value as BaseCurrency)}
-                className="px-2 py-1 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-2 py-1 text-xs rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500"
               >
                 <option value="USD">USD</option>
                 <option value="ZAR">ZAR</option>
@@ -176,7 +176,7 @@ export function TradesToolbar({
               const selected = Array.from(e.target.selectedOptions, (option) => option.value)
               setSymbols(selected)
             }}
-            className="px-3 py-1.5 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 max-h-32 overflow-auto"
+            className="px-3 py-1.5 text-sm rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500 max-h-32 overflow-auto"
             size={1}
           >
             <option value="">All Symbols</option>
@@ -195,7 +195,7 @@ export function TradesToolbar({
               const selected = Array.from(e.target.selectedOptions, (option) => option.value)
               setStrategies(selected)
             }}
-            className="px-3 py-1.5 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 max-h-32 overflow-auto"
+            className="px-3 py-1.5 text-sm rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500 max-h-32 overflow-auto"
             size={1}
           >
             <option value="">All Strategies</option>
@@ -210,7 +210,7 @@ export function TradesToolbar({
           <select
             value={dashboardFilters.session}
             onChange={(e) => setSession(e.target.value as SessionFilter)}
-            className="px-3 py-1.5 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-1.5 text-sm rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500"
           >
             <option value="all">All Sessions</option>
             <option value="asia">Asia</option>
@@ -222,7 +222,7 @@ export function TradesToolbar({
           <select
             value={tradesFilters.direction}
             onChange={(e) => setDirection(e.target.value as DirectionFilter)}
-            className="px-3 py-1.5 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-1.5 text-sm rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500"
           >
             <option value="all">All Directions</option>
             <option value="long">Long</option>
@@ -233,7 +233,7 @@ export function TradesToolbar({
           <select
             value={tradesFilters.result}
             onChange={(e) => setResult(e.target.value as ResultFilter)}
-            className="px-3 py-1.5 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-1.5 text-sm rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500"
           >
             <option value="all">All Results</option>
             <option value="winner">Winners</option>
@@ -242,13 +242,13 @@ export function TradesToolbar({
           </select>
 
           {/* Units Toggle */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900">
             <button
               onClick={() => setUnits('currency')}
               className={`px-2 py-0.5 text-xs font-medium rounded transition-colors ${
                 dashboardFilters.units === 'currency'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  ? 'bg-neutral-700 text-white'
+                  : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
               }`}
             >
               Currency
@@ -257,8 +257,8 @@ export function TradesToolbar({
               onClick={() => setUnits('r')}
               className={`px-2 py-0.5 text-xs font-medium rounded transition-colors ${
                 dashboardFilters.units === 'r'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  ? 'bg-neutral-700 text-white'
+                  : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
               }`}
             >
               R
@@ -271,35 +271,35 @@ export function TradesToolbar({
               type="checkbox"
               checked={dashboardFilters.excludeOutliers}
               onChange={toggleExcludeOutliers}
-              className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              className="w-4 h-4 rounded border-neutral-300 text-neutral-600 focus:ring-neutral-500"
             />
-            <span className="text-slate-700 dark:text-slate-300">Exclude outliers</span>
+            <span className="text-neutral-700 dark:text-neutral-300">Exclude outliers</span>
           </label>
         </div>
 
         {/* Active Filters Summary */}
         {(selectedCount > 0 || tradesFilters.searchQuery || dashboardFilters.symbols.length > 0 || dashboardFilters.strategies.length > 0) && (
-          <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+          <div className="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400">
             {selectedCount > 0 && (
-              <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-md">
+              <span className="px-2 py-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded-md">
                 {selectedCount} selected
-                <button onClick={clearSelection} className="ml-1 hover:text-blue-900">
+                <button onClick={clearSelection} className="ml-1 hover:text-neutral-900">
                   <X className="w-3 h-3 inline" />
                 </button>
               </span>
             )}
             {tradesFilters.searchQuery && (
-              <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-md">
+              <span className="px-2 py-1 bg-neutral-100 dark:bg-neutral-800 rounded-md">
                 Search: {tradesFilters.searchQuery}
               </span>
             )}
             {dashboardFilters.symbols.length > 0 && (
-              <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-md">
+              <span className="px-2 py-1 bg-neutral-100 dark:bg-neutral-800 rounded-md">
                 Symbols: {dashboardFilters.symbols.join(', ')}
               </span>
             )}
             {dashboardFilters.strategies.length > 0 && (
-              <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-md">
+              <span className="px-2 py-1 bg-neutral-100 dark:bg-neutral-800 rounded-md">
                 Strategies: {dashboardFilters.strategies.join(', ')}
               </span>
             )}

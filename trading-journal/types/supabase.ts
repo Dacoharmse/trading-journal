@@ -65,6 +65,11 @@ export interface Playbook {
   symbols: string[]
   rr_min?: number | null
   active: boolean
+  analyst_tf?: string | null
+  exec_tf?: string | null
+  best_sessions?: string[]
+  trading_hours?: { tz: string; windows: string[][] } | null
+  notes_md?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -93,9 +98,30 @@ export interface PlaybookRubric {
   playbook_id: string
   weight_rules: number
   weight_confluences: number
+  weight_checklist: number
   must_rule_penalty: number
   min_checks: number
   grade_cutoffs: Record<string, number>
+}
+
+export interface PlaybookTradeDetail {
+  id: string
+  playbook_id: string
+  label: string
+  type: 'detail' | 'invalidation' | 'consideration' | 'checklist'
+  weight: number
+  primary_item: boolean
+  sort: number
+  created_at?: string
+}
+
+export interface PlaybookExample {
+  id: string
+  playbook_id: string
+  media_urls: string[]
+  caption?: string | null
+  sort: number
+  created_at?: string
 }
 
 export interface Trade {
@@ -150,6 +176,8 @@ export interface Trade {
   // Playbook compliance (NEW)
   rules_checked?: Record<string, boolean> | null     // { "<rule_id>": true/false }
   confluences_checked?: Record<string, boolean> | null  // { "<conf_id>": true/false }
+  checklist_checked?: Record<string, boolean> | null    // { "<detail_id>": true/false }
+  invalidations?: string[] | null                       // List of invalidation IDs present
   setup_score?: number | null        // 0..1 compliance score
   setup_grade?: string | null        // "A+", "A", "B", "C", "D", "F"
 

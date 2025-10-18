@@ -21,9 +21,9 @@ export function BacktestTradeCard({ backtest, onEdit, onDelete }: BacktestTradeC
   })
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200/70 bg-white/80 dark:border-slate-800/60 dark:bg-slate-900/60">
+    <div className="overflow-hidden rounded-lg border border-neutral-200/70 bg-white/80 dark:border-neutral-800/60 dark:bg-neutral-900/60">
       {/* Header */}
-      <div className="border-b border-slate-200/70 bg-slate-50/50 p-3 dark:border-slate-800/60 dark:bg-slate-900/50">
+      <div className="border-b border-neutral-200/70 bg-neutral-50/50 p-3 dark:border-neutral-800/60 dark:bg-neutral-900/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div
@@ -42,7 +42,7 @@ export function BacktestTradeCard({ backtest, onEdit, onDelete }: BacktestTradeC
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-slate-900 dark:text-slate-50">
+                <span className="font-semibold text-neutral-900 dark:text-neutral-50">
                   {backtest.symbol}
                 </span>
                 <Badge
@@ -62,7 +62,7 @@ export function BacktestTradeCard({ backtest, onEdit, onDelete }: BacktestTradeC
                   </Badge>
                 )}
               </div>
-              <div className="mt-0.5 flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+              <div className="mt-0.5 flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-400">
                 <span className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
                   {date}
@@ -87,7 +87,7 @@ export function BacktestTradeCard({ backtest, onEdit, onDelete }: BacktestTradeC
                 {backtest.result_r.toFixed(2)}R
               </div>
               {backtest.setup_score != null && (
-                <div className="text-xs text-slate-500 dark:text-slate-400">
+                <div className="text-xs text-neutral-500 dark:text-neutral-400">
                   {(backtest.setup_score * 100).toFixed(0)}% setup
                 </div>
               )}
@@ -122,7 +122,7 @@ export function BacktestTradeCard({ backtest, onEdit, onDelete }: BacktestTradeC
 
       {/* Chart Image */}
       {backtest.chart_image && (
-        <div className="border-b border-slate-200/70 dark:border-slate-800/60">
+        <div className="border-b border-neutral-200/70 dark:border-neutral-800/60">
           <img
             src={backtest.chart_image}
             alt={`${backtest.symbol} chart`}
@@ -138,30 +138,30 @@ export function BacktestTradeCard({ backtest, onEdit, onDelete }: BacktestTradeC
         {(backtest.planned_sl_pips != null ||
           backtest.planned_tp_pips != null ||
           backtest.planned_rr != null) && (
-          <div className="rounded border border-slate-200/70 bg-slate-50/50 p-2 dark:border-slate-800/60 dark:bg-slate-900/50">
-            <div className="mb-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400">
+          <div className="rounded border border-neutral-200/70 bg-neutral-50/50 p-2 dark:border-neutral-800/60 dark:bg-neutral-900/50">
+            <div className="mb-1.5 text-xs font-semibold text-neutral-600 dark:text-neutral-400">
               Planned
             </div>
             <div className="space-y-1 text-xs">
               {backtest.planned_sl_pips != null && (
                 <div className="flex justify-between">
-                  <span className="text-slate-500 dark:text-slate-400">SL:</span>
-                  <span className="font-medium text-slate-700 dark:text-slate-200">
+                  <span className="text-neutral-500 dark:text-neutral-400">SL:</span>
+                  <span className="font-medium text-neutral-700 dark:text-neutral-200">
                     {backtest.planned_sl_pips.toFixed(1)} pips
                   </span>
                 </div>
               )}
               {backtest.planned_tp_pips != null && (
                 <div className="flex justify-between">
-                  <span className="text-slate-500 dark:text-slate-400">TP:</span>
-                  <span className="font-medium text-slate-700 dark:text-slate-200">
+                  <span className="text-neutral-500 dark:text-neutral-400">TP:</span>
+                  <span className="font-medium text-neutral-700 dark:text-neutral-200">
                     {backtest.planned_tp_pips.toFixed(1)} pips
                   </span>
                 </div>
               )}
               {backtest.planned_rr != null && (
                 <div className="flex justify-between">
-                  <span className="text-slate-500 dark:text-slate-400">R:R:</span>
+                  <span className="text-neutral-500 dark:text-neutral-400">R:R:</span>
                   <span className="font-medium text-emerald-700 dark:text-emerald-300">
                     {backtest.planned_rr.toFixed(1)}
                   </span>
@@ -175,30 +175,30 @@ export function BacktestTradeCard({ backtest, onEdit, onDelete }: BacktestTradeC
         {(backtest.actual_sl_pips != null ||
           backtest.actual_tp_pips != null ||
           backtest.actual_rr != null) && (
-          <div className="rounded border border-slate-200/70 bg-slate-50/50 p-2 dark:border-slate-800/60 dark:bg-slate-900/50">
-            <div className="mb-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400">
+          <div className="rounded border border-neutral-200/70 bg-neutral-50/50 p-2 dark:border-neutral-800/60 dark:bg-neutral-900/50">
+            <div className="mb-1.5 text-xs font-semibold text-neutral-600 dark:text-neutral-400">
               Actual
             </div>
             <div className="space-y-1 text-xs">
               {backtest.actual_sl_pips != null && (
                 <div className="flex justify-between">
-                  <span className="text-slate-500 dark:text-slate-400">SL:</span>
-                  <span className="font-medium text-slate-700 dark:text-slate-200">
+                  <span className="text-neutral-500 dark:text-neutral-400">SL:</span>
+                  <span className="font-medium text-neutral-700 dark:text-neutral-200">
                     {backtest.actual_sl_pips.toFixed(1)} pips
                   </span>
                 </div>
               )}
               {backtest.actual_tp_pips != null && (
                 <div className="flex justify-between">
-                  <span className="text-slate-500 dark:text-slate-400">TP:</span>
-                  <span className="font-medium text-slate-700 dark:text-slate-200">
+                  <span className="text-neutral-500 dark:text-neutral-400">TP:</span>
+                  <span className="font-medium text-neutral-700 dark:text-neutral-200">
                     {backtest.actual_tp_pips.toFixed(1)} pips
                   </span>
                 </div>
               )}
               {backtest.actual_rr != null && (
                 <div className="flex justify-between">
-                  <span className="text-slate-500 dark:text-slate-400">R:R:</span>
+                  <span className="text-neutral-500 dark:text-neutral-400">R:R:</span>
                   <span
                     className={cn(
                       'font-medium',
@@ -219,23 +219,23 @@ export function BacktestTradeCard({ backtest, onEdit, onDelete }: BacktestTradeC
         {!backtest.planned_sl_pips &&
           !backtest.actual_sl_pips &&
           (backtest.stop_pips != null || backtest.target_pips != null) && (
-            <div className="col-span-2 rounded border border-slate-200/70 bg-slate-50/50 p-2 dark:border-slate-800/60 dark:bg-slate-900/50">
-              <div className="mb-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400">
+            <div className="col-span-2 rounded border border-neutral-200/70 bg-neutral-50/50 p-2 dark:border-neutral-800/60 dark:bg-neutral-900/50">
+              <div className="mb-1.5 text-xs font-semibold text-neutral-600 dark:text-neutral-400">
                 Trade Metrics
               </div>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 {backtest.stop_pips != null && (
                   <div className="flex justify-between">
-                    <span className="text-slate-500 dark:text-slate-400">Stop:</span>
-                    <span className="font-medium text-slate-700 dark:text-slate-200">
+                    <span className="text-neutral-500 dark:text-neutral-400">Stop:</span>
+                    <span className="font-medium text-neutral-700 dark:text-neutral-200">
                       {backtest.stop_pips.toFixed(1)} pips
                     </span>
                   </div>
                 )}
                 {backtest.target_pips != null && (
                   <div className="flex justify-between">
-                    <span className="text-slate-500 dark:text-slate-400">Target:</span>
-                    <span className="font-medium text-slate-700 dark:text-slate-200">
+                    <span className="text-neutral-500 dark:text-neutral-400">Target:</span>
+                    <span className="font-medium text-neutral-700 dark:text-neutral-200">
                       {backtest.target_pips.toFixed(1)} pips
                     </span>
                   </div>
@@ -247,11 +247,11 @@ export function BacktestTradeCard({ backtest, onEdit, onDelete }: BacktestTradeC
 
       {/* Notes */}
       {backtest.notes && (
-        <div className="border-t border-slate-200/70 bg-slate-50/30 p-3 dark:border-slate-800/60 dark:bg-slate-900/30">
-          <div className="mb-1 text-xs font-semibold text-slate-600 dark:text-slate-400">
+        <div className="border-t border-neutral-200/70 bg-neutral-50/30 p-3 dark:border-neutral-800/60 dark:bg-neutral-900/30">
+          <div className="mb-1 text-xs font-semibold text-neutral-600 dark:text-neutral-400">
             Notes
           </div>
-          <p className="text-sm text-slate-700 dark:text-slate-300">{backtest.notes}</p>
+          <p className="text-sm text-neutral-700 dark:text-neutral-300">{backtest.notes}</p>
         </div>
       )}
     </div>

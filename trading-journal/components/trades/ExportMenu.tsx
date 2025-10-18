@@ -147,13 +147,13 @@ export function ExportMenu({ open, onClose, trades, visibleColumns, units, displ
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-md mx-4">
+      <div className="bg-white dark:bg-neutral-900 rounded-lg shadow-xl w-full max-w-md mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Export Trades</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-neutral-800">
+          <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">Export Trades</h2>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
           >
             <X className="w-5 h-5" />
           </button>
@@ -161,18 +161,18 @@ export function ExportMenu({ open, onClose, trades, visibleColumns, units, displ
 
         {/* Export Options */}
         <div className="px-6 py-4 space-y-3">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
             Export {trades.length} trade{trades.length !== 1 ? 's' : ''} in your preferred format.
           </p>
 
           <button
             onClick={handleExportCSV}
-            className="w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            className="w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
           >
             <FileSpreadsheet className="w-5 h-5 text-green-600" />
             <div>
-              <div className="text-sm font-medium text-slate-900 dark:text-white">CSV</div>
-              <div className="text-xs text-slate-600 dark:text-slate-400">
+              <div className="text-sm font-medium text-neutral-900 dark:text-white">CSV</div>
+              <div className="text-xs text-neutral-600 dark:text-neutral-400">
                 Compatible with Excel, Google Sheets
               </div>
             </div>
@@ -180,18 +180,18 @@ export function ExportMenu({ open, onClose, trades, visibleColumns, units, displ
 
           <button
             onClick={handleExportJSON}
-            className="w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            className="w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
           >
-            <FileJson className="w-5 h-5 text-blue-600" />
+            <FileJson className="w-5 h-5 text-neutral-600" />
             <div>
-              <div className="text-sm font-medium text-slate-900 dark:text-white">JSON</div>
-              <div className="text-xs text-slate-600 dark:text-slate-400">
+              <div className="text-sm font-medium text-neutral-900 dark:text-white">JSON</div>
+              <div className="text-xs text-neutral-600 dark:text-neutral-400">
                 For developers and data analysis
               </div>
             </div>
           </button>
 
-          <div className="text-xs text-slate-500 dark:text-slate-500 space-y-1">
+          <div className="text-xs text-neutral-500 dark:text-neutral-500 space-y-1">
             <p>Export includes:</p>
             <ul className="list-disc list-inside space-y-0.5">
               <li>All visible columns as currently configured</li>
@@ -202,10 +202,10 @@ export function ExportMenu({ open, onClose, trades, visibleColumns, units, displ
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end px-6 py-4 border-t border-slate-200 dark:border-slate-800">
+        <div className="flex items-center justify-end px-6 py-4 border-t border-neutral-200 dark:border-neutral-800">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
           >
             Cancel
           </button>

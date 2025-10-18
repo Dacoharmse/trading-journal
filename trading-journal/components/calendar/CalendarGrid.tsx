@@ -144,7 +144,7 @@ export function CalendarGrid({
           <span className="text-muted-foreground">Loss</span>
         </div>
         <div className="flex items-center gap-2 text-xs">
-          <div className="w-4 h-4 rounded bg-slate-100 dark:bg-slate-800"></div>
+          <div className="w-4 h-4 rounded bg-neutral-100 dark:bg-neutral-800"></div>
           <span className="text-muted-foreground">No trades</span>
         </div>
       </div>

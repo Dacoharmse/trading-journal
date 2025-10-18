@@ -79,7 +79,7 @@ export function ExpectancyLadder({ trades }: ExpectancyLadderProps) {
   }, [metrics])
 
   return (
-    <Card className="bg-gradient-to-br from-white/80 to-white/60 dark:from-slate-800/80 dark:to-slate-900/60 backdrop-blur-sm border-slate-200 dark:border-slate-700">
+    <Card className="bg-gradient-to-br from-white/80 to-white/60 dark:from-neutral-800/80 dark:to-neutral-900/60 backdrop-blur-sm border-neutral-200 dark:border-neutral-700">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium">Expectancy Breakdown</CardTitle>
@@ -126,7 +126,7 @@ export function ExpectancyLadder({ trades }: ExpectancyLadderProps) {
         </div>
 
         {/* Net R */}
-        <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
+        <div className="pt-2 border-t border-neutral-200 dark:border-neutral-700">
           <div className="flex justify-between text-xs">
             <span className="text-muted-foreground">Net R (Total)</span>
             <span className={`font-semibold ${metrics.netR > 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>

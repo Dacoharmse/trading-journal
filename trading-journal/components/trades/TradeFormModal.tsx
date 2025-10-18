@@ -202,15 +202,15 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 overflow-y-auto">
-      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-4xl mx-4 my-8">
+      <div className="bg-white dark:bg-neutral-900 rounded-lg shadow-xl w-full max-w-4xl mx-4 my-8">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 sticky top-0 bg-white dark:bg-slate-900 z-10">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 sticky top-0 bg-white dark:bg-neutral-900 z-10">
+          <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
             {isEdit ? 'Edit Trade' : 'New Trade'}
           </h2>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
           >
             <X className="w-5 h-5" />
           </button>
@@ -222,7 +222,7 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
             {/* Account & Symbol Row */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Account *
                 </label>
                 <select
@@ -231,8 +231,8 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
                   className={`w-full px-3 py-2 text-sm rounded-lg border ${
                     errors.account_id
                       ? 'border-red-500'
-                      : 'border-slate-200 dark:border-slate-700'
-                  } bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      : 'border-neutral-200 dark:border-neutral-700'
+                  } bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500`}
                 >
                   {accounts.map((acc) => (
                     <option key={acc.id} value={acc.id}>
@@ -246,7 +246,7 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Symbol *
                 </label>
                 <input
@@ -257,8 +257,8 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
                   className={`w-full px-3 py-2 text-sm rounded-lg border ${
                     errors.symbol
                       ? 'border-red-500'
-                      : 'border-slate-200 dark:border-slate-700'
-                  } bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      : 'border-neutral-200 dark:border-neutral-700'
+                  } bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500`}
                 />
                 {errors.symbol && (
                   <p className="text-xs text-red-600 mt-1">{errors.symbol}</p>
@@ -268,7 +268,7 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
 
             {/* Direction */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                 Direction *
               </label>
               <div className="flex gap-4">
@@ -280,7 +280,7 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
                     onChange={(e) => updateField('direction', e.target.value)}
                     className="w-4 h-4 text-green-600 focus:ring-green-500"
                   />
-                  <span className="text-sm text-slate-700 dark:text-slate-300">Long ▲</span>
+                  <span className="text-sm text-neutral-700 dark:text-neutral-300">Long ▲</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -290,7 +290,7 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
                     onChange={(e) => updateField('direction', e.target.value)}
                     className="w-4 h-4 text-red-600 focus:ring-red-500"
                   />
-                  <span className="text-sm text-slate-700 dark:text-slate-300">Short ▼</span>
+                  <span className="text-sm text-neutral-700 dark:text-neutral-300">Short ▼</span>
                 </label>
               </div>
             </div>
@@ -298,7 +298,7 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
             {/* Prices Row */}
             <div className="grid grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Entry Price
                 </label>
                 <input
@@ -309,8 +309,8 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
                   className={`w-full px-3 py-2 text-sm rounded-lg border ${
                     errors.entry_price
                       ? 'border-red-500'
-                      : 'border-slate-200 dark:border-slate-700'
-                  } bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      : 'border-neutral-200 dark:border-neutral-700'
+                  } bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500`}
                 />
                 {errors.entry_price && (
                   <p className="text-xs text-red-600 mt-1">{errors.entry_price}</p>
@@ -318,7 +318,7 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Stop Loss
                 </label>
                 <input
@@ -329,8 +329,8 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
                   className={`w-full px-3 py-2 text-sm rounded-lg border ${
                     errors.stop_price
                       ? 'border-red-500'
-                      : 'border-slate-200 dark:border-slate-700'
-                  } bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      : 'border-neutral-200 dark:border-neutral-700'
+                  } bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500`}
                 />
                 {errors.stop_price && (
                   <p className="text-xs text-red-600 mt-1">{errors.stop_price}</p>
@@ -338,7 +338,7 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Exit Price
                 </label>
                 <input
@@ -349,8 +349,8 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
                   className={`w-full px-3 py-2 text-sm rounded-lg border ${
                     errors.exit_price
                       ? 'border-red-500'
-                      : 'border-slate-200 dark:border-slate-700'
-                  } bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      : 'border-neutral-200 dark:border-neutral-700'
+                  } bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500`}
                 />
                 {errors.exit_price && (
                   <p className="text-xs text-red-600 mt-1">{errors.exit_price}</p>
@@ -358,7 +358,7 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Size
                 </label>
                 <input
@@ -369,8 +369,8 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
                   className={`w-full px-3 py-2 text-sm rounded-lg border ${
                     errors.size
                       ? 'border-red-500'
-                      : 'border-slate-200 dark:border-slate-700'
-                  } bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      : 'border-neutral-200 dark:border-neutral-700'
+                  } bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500`}
                 />
                 {errors.size && (
                   <p className="text-xs text-red-600 mt-1">{errors.size}</p>
@@ -380,21 +380,21 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
 
             {/* Preview */}
             {(formData.entry_price && formData.stop_price && formData.exit_price) && (
-              <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900">
-                <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400 text-sm font-medium mb-2">
+              <div className="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-950/30 border border-neutral-200 dark:border-neutral-900">
+                <div className="flex items-center gap-2 text-neutral-700 dark:text-neutral-400 text-sm font-medium mb-2">
                   <AlertCircle className="w-4 h-4" />
                   Preview
                 </div>
                 <div className="flex gap-6 text-sm">
                   <div>
-                    <span className="text-blue-600 dark:text-blue-400">R Multiple: </span>
+                    <span className="text-neutral-600 dark:text-neutral-400">R Multiple: </span>
                     <span className={`font-bold ${previewR && previewR > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                       {formatR(previewR)}
                     </span>
                   </div>
                   {formData.size && (
                     <div>
-                      <span className="text-blue-600 dark:text-blue-400">P&L: </span>
+                      <span className="text-neutral-600 dark:text-neutral-400">P&L: </span>
                       <span className={`font-bold ${previewPnL > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                         {formatPnL(previewPnL, account?.currency || 'USD')}
                       </span>
@@ -407,7 +407,7 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
             {/* Date/Time Row */}
             <div className="grid grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Entry Date *
                 </label>
                 <input
@@ -417,8 +417,8 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
                   className={`w-full px-3 py-2 text-sm rounded-lg border ${
                     errors.entry_date
                       ? 'border-red-500'
-                      : 'border-slate-200 dark:border-slate-700'
-                  } bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      : 'border-neutral-200 dark:border-neutral-700'
+                  } bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500`}
                 />
                 {errors.entry_date && (
                   <p className="text-xs text-red-600 mt-1">{errors.entry_date}</p>
@@ -426,19 +426,19 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Entry Time
                 </label>
                 <input
                   type="time"
                   value={formData.entry_time}
                   onChange={(e) => updateField('entry_time', e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Exit Date
                 </label>
                 <input
@@ -448,8 +448,8 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
                   className={`w-full px-3 py-2 text-sm rounded-lg border ${
                     errors.exit_date
                       ? 'border-red-500'
-                      : 'border-slate-200 dark:border-slate-700'
-                  } bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      : 'border-neutral-200 dark:border-neutral-700'
+                  } bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500`}
                 />
                 {errors.exit_date && (
                   <p className="text-xs text-red-600 mt-1">{errors.exit_date}</p>
@@ -457,14 +457,14 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Exit Time
                 </label>
                 <input
                   type="time"
                   value={formData.exit_time}
                   onChange={(e) => updateField('exit_time', e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500"
                 />
               </div>
             </div>
@@ -472,7 +472,7 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
             {/* Strategy & Session */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Strategy
                 </label>
                 <input
@@ -480,18 +480,18 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
                   value={formData.strategy}
                   onChange={(e) => updateField('strategy', e.target.value)}
                   placeholder="Scalp, Swing, Breakout, etc."
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Session
                 </label>
                 <select
                   value={formData.session || ''}
                   onChange={(e) => updateField('session', e.target.value || null)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500"
                 >
                   <option value="">-- Select --</option>
                   <option value="asia">Asia</option>
@@ -504,7 +504,7 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
             {/* Confluences & Tags */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Confluences (comma-separated)
                 </label>
                 <input
@@ -512,12 +512,12 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
                   value={formData.confluences}
                   onChange={(e) => updateField('confluences', e.target.value)}
                   placeholder="EMA bounce, support level, etc."
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Tags (comma-separated)
                 </label>
                 <input
@@ -525,7 +525,7 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
                   value={formData.tags}
                   onChange={(e) => updateField('tags', e.target.value)}
                   placeholder="breakout, momentum, etc."
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500"
                 />
               </div>
             </div>
@@ -533,7 +533,7 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
             {/* Fees Row */}
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Commission
                 </label>
                 <input
@@ -541,12 +541,12 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
                   step="0.01"
                   value={formData.commission || ''}
                   onChange={(e) => updateField('commission', e.target.value ? parseFloat(e.target.value) : null)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Swap
                 </label>
                 <input
@@ -554,12 +554,12 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
                   step="0.01"
                   value={formData.swap || ''}
                   onChange={(e) => updateField('swap', e.target.value ? parseFloat(e.target.value) : null)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Slippage
                 </label>
                 <input
@@ -567,14 +567,14 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
                   step="0.01"
                   value={formData.slippage || ''}
                   onChange={(e) => updateField('slippage', e.target.value ? parseFloat(e.target.value) : null)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500"
                 />
               </div>
             </div>
 
             {/* Notes */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                 Notes
               </label>
               <textarea
@@ -582,13 +582,13 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
                 onChange={(e) => updateField('notes', e.target.value)}
                 rows={4}
                 placeholder="Trade setup, reasoning, market conditions, etc."
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500"
               />
             </div>
 
             {/* Rule Breaks */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                 Rule Breaks (comma-separated)
               </label>
               <input
@@ -596,25 +596,25 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
                 value={formData.rule_breaks}
                 onChange={(e) => updateField('rule_breaks', e.target.value)}
                 placeholder="FOMO Entry, Moved Stop, etc."
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500"
               />
             </div>
           </div>
         </form>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-slate-800 sticky bottom-0 bg-white dark:bg-slate-900">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-neutral-200 dark:border-neutral-800 sticky bottom-0 bg-white dark:bg-neutral-900">
           <button
             onClick={onClose}
             type="button"
-            className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             type="submit"
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-white bg-neutral-700 hover:bg-neutral-800 rounded-lg transition-colors"
           >
             {isEdit ? 'Save Changes' : 'Create Trade'}
           </button>

@@ -53,13 +53,13 @@ export function ColumnPicker({ open, onClose }: ColumnPickerProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-md mx-4">
+      <div className="bg-white dark:bg-neutral-900 rounded-lg shadow-xl w-full max-w-md mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Customize Columns</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-neutral-800">
+          <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">Customize Columns</h2>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
           >
             <X className="w-5 h-5" />
           </button>
@@ -71,17 +71,17 @@ export function ColumnPicker({ open, onClose }: ColumnPickerProps) {
             {AVAILABLE_COLUMNS.map((column) => (
               <label
                 key={column.id}
-                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-neutral-50 dark:hover:bg-neutral-800 cursor-pointer"
               >
                 <input
                   type="checkbox"
                   checked={visibleColumns.has(column.id)}
                   onChange={() => toggleColumn(column.id)}
-                  className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  className="w-4 h-4 rounded border-neutral-300 text-neutral-600 focus:ring-neutral-500"
                 />
-                <span className="text-sm text-slate-700 dark:text-slate-300">{column.label}</span>
+                <span className="text-sm text-neutral-700 dark:text-neutral-300">{column.label}</span>
                 {column.default && (
-                  <span className="ml-auto text-xs text-slate-400">(default)</span>
+                  <span className="ml-auto text-xs text-neutral-400">(default)</span>
                 )}
               </label>
             ))}
@@ -89,16 +89,16 @@ export function ColumnPicker({ open, onClose }: ColumnPickerProps) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-slate-800">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-neutral-200 dark:border-neutral-800">
           <button
             onClick={handleReset}
-            className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
           >
             Reset to Default
           </button>
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-white bg-neutral-700 hover:bg-neutral-800 rounded-lg transition-colors"
           >
             Done
           </button>

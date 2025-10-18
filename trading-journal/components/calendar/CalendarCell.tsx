@@ -36,7 +36,7 @@ export function CalendarCell({
   const isTodayDate = isToday(date)
 
   const value = displayUnit === 'r' ? stats?.totalR || 0 : stats?.totalPnL || 0
-  const colorClass = stats ? getPnLColor(value, maxAbsValue) : 'bg-slate-50 dark:bg-slate-900/50'
+  const colorClass = stats ? getPnLColor(value, maxAbsValue) : 'bg-neutral-50 dark:bg-neutral-900/50'
 
   const formattedValue = React.useMemo(() => {
     if (!stats) return null
@@ -59,8 +59,8 @@ export function CalendarCell({
               aspect-square flex flex-col items-center justify-center rounded-lg text-sm transition-all
               ${colorClass}
               ${isInCurrentMonth ? 'opacity-100' : 'opacity-30'}
-              ${isTodayDate ? 'ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-slate-900' : ''}
-              ${isHighlightedBest ? 'ring-2 ring-amber-400 ring-offset-2 dark:ring-offset-slate-900' : ''}
+              ${isTodayDate ? 'ring-2 ring-neutral-500 ring-offset-2 dark:ring-offset-neutral-900' : ''}
+              ${isHighlightedBest ? 'ring-2 ring-amber-400 ring-offset-2 dark:ring-offset-neutral-900' : ''}
               ${stats ? 'hover:scale-105 hover:shadow-lg cursor-pointer' : 'cursor-default'}
             `}
           >

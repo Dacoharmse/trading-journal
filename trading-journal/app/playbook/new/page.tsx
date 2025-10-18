@@ -58,10 +58,10 @@ export default function NewPlaybookPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 p-6 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <div className="flex-1 bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-50 p-6 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950">
         <div className="mx-auto w-full max-w-5xl animate-pulse space-y-4">
-          <div className="h-8 w-64 rounded-lg bg-slate-200/70 dark:bg-slate-800/60" />
-          <div className="h-32 rounded-lg bg-slate-200/70 dark:bg-slate-800/60" />
+          <div className="h-8 w-64 rounded-lg bg-neutral-200/70 dark:bg-neutral-800/60" />
+          <div className="h-32 rounded-lg bg-neutral-200/70 dark:bg-neutral-800/60" />
         </div>
       </div>
     )
@@ -72,7 +72,7 @@ export default function NewPlaybookPage() {
   }
 
   return (
-    <div className="flex-1 bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 p-6 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="flex-1 bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-50 p-6 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950">
       <div className="mx-auto w-full max-w-5xl">
         <PlaybookEditor
           mode="create"

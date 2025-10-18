@@ -141,7 +141,7 @@ export function ChartPaste({
           transition-colors duration-200
           ${
             dragOver
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
+              ? 'border-neutral-500 bg-neutral-50 dark:bg-neutral-950'
               : 'border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'
           }
           ${uploading ? 'opacity-50 pointer-events-none' : ''}
@@ -190,7 +190,7 @@ export function ChartPaste({
         {uploading && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-900/80 rounded-lg">
             <div className="flex items-center gap-2">
-              <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent" />
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-neutral-500 border-t-transparent" />
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 Uploading...
               </span>
@@ -225,11 +225,11 @@ export function ChartPaste({
                   href={item.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex flex-col items-center justify-center w-full h-full bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
+                  className="flex flex-col items-center justify-center w-full h-full bg-neutral-50 dark:bg-neutral-950 hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <LinkIcon className="w-8 h-8 text-blue-500 mb-2" />
-                  <span className="text-xs text-blue-600 dark:text-blue-400 px-2 text-center line-clamp-2">
+                  <LinkIcon className="w-8 h-8 text-neutral-500 mb-2" />
+                  <span className="text-xs text-neutral-600 dark:text-neutral-400 px-2 text-center line-clamp-2">
                     TradingView Chart
                   </span>
                 </a>

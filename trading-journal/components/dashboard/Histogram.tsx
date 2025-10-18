@@ -53,7 +53,7 @@ export function Histogram({ trades }: HistogramProps) {
   }
 
   return (
-    <Card className="border-0 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm shadow-lg">
+    <Card className="border-0 bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm shadow-lg">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
@@ -98,7 +98,7 @@ export function Histogram({ trades }: HistogramProps) {
                       <div
                         className={`w-full rounded-t transition-all hover:opacity-80 ${
                           isZeroBin
-                            ? 'bg-slate-500'
+                            ? 'bg-neutral-500'
                             : isPositive
                             ? 'bg-green-500'
                             : 'bg-red-500'
@@ -106,7 +106,7 @@ export function Histogram({ trades }: HistogramProps) {
                         style={{ height: `${height}%` }}
                       >
                         {/* Tooltip */}
-                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-neutral-900 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
                           {bin.min.toFixed(1)}R to {bin.max.toFixed(1)}R<br />
                           {bin.count} trade{bin.count !== 1 ? 's' : ''}
                         </div>

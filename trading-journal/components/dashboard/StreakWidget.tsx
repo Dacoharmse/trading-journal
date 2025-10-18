@@ -167,7 +167,7 @@ export function StreakWidget({ trades, startDate, endDate }: StreakWidgetProps) 
   }
 
   return (
-    <Card className="bg-gradient-to-br from-white/80 to-white/60 dark:from-slate-800/80 dark:to-slate-900/60 backdrop-blur-sm border-slate-200 dark:border-slate-700">
+    <Card className="bg-gradient-to-br from-white/80 to-white/60 dark:from-neutral-800/80 dark:to-neutral-900/60 backdrop-blur-sm border-neutral-200 dark:border-neutral-700">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium">Streaks & Recovery</CardTitle>
       </CardHeader>
@@ -234,7 +234,7 @@ export function StreakWidget({ trades, startDate, endDate }: StreakWidgetProps) 
               <span>Recovery Time</span>
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+              <span className="text-2xl font-bold text-neutral-600 dark:text-neutral-400">
                 {streaks.daysToRecover || '—'}
               </span>
               <span className="text-xs text-muted-foreground">

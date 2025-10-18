@@ -493,9 +493,9 @@ export function NewTradeSheet({
       />
 
       {/* Sheet */}
-      <div className="absolute right-0 top-0 bottom-0 w-full max-w-2xl bg-white dark:bg-gray-900 shadow-xl overflow-y-auto">
+      <div className="absolute right-0 top-0 bottom-0 w-full max-w-2xl bg-white dark:bg-neutral-800 shadow-xl overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4">
+        <div className="sticky top-0 z-10 bg-white dark:bg-neutral-800 border-b border-gray-200 dark:border-neutral-700 px-6 py-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
               {editingTrade ? 'Edit Trade' : 'New Trade'}
@@ -504,14 +504,25 @@ export function NewTradeSheet({
               <button
                 onClick={handleSubmit}
                 disabled={saving}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  backgroundColor: '#374151',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '0.5rem'
+                }}
+                className="disabled:opacity-50 disabled:cursor-not-allowed"
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1f2937'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#374151'}
               >
                 <Save className="w-4 h-4" />
                 {saving ? 'Saving...' : 'Save'}
               </button>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -534,7 +545,7 @@ export function NewTradeSheet({
                 <select
                   value={accountId}
                   onChange={(e) => setAccountId(e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 ${errors.accountId ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
+                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-700 ${errors.accountId ? 'border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
                 >
                   <option value="">Select account...</option>
                   {accounts.map((acc) => (
@@ -555,7 +566,7 @@ export function NewTradeSheet({
                 <select
                   value={playbookId}
                   onChange={(e) => handlePlaybookChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
                 >
                   <option value="">No playbook</option>
                   {playbooks.map((pb) => (
@@ -576,7 +587,7 @@ export function NewTradeSheet({
                   value={symbolId}
                   onChange={(e) => setSymbolId(e.target.value)}
                   disabled={!accountId}
-                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 ${errors.symbolId ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-700 ${errors.symbolId ? 'border-red-500' : 'border-gray-300 dark:border-neutral-600'} disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   <option value="">Select symbol...</option>
                   {symbols.map((sym) => (
@@ -598,7 +609,7 @@ export function NewTradeSheet({
                   <select
                     value={strategyId}
                     onChange={(e) => setStrategyId(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
                   >
                     <option value="">None</option>
                     {strategies.map((strat) => (
@@ -622,7 +633,7 @@ export function NewTradeSheet({
                 <button
                   type="button"
                   onClick={() => setDirection('long')}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border-2 transition-colors ${direction === 'long' ? 'border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300' : 'border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'}`}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border-2 transition-colors ${direction === 'long' ? 'border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300' : 'border-gray-300 dark:border-neutral-600 hover:border-gray-400 dark:hover:border-neutral-500'}`}
                 >
                   <TrendingUp className="w-4 h-4" />
                   Long
@@ -630,7 +641,7 @@ export function NewTradeSheet({
                 <button
                   type="button"
                   onClick={() => setDirection('short')}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border-2 transition-colors ${direction === 'short' ? 'border-red-500 bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300' : 'border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'}`}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border-2 transition-colors ${direction === 'short' ? 'border-red-500 bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300' : 'border-gray-300 dark:border-neutral-600 hover:border-gray-400 dark:hover:border-neutral-500'}`}
                 >
                   <TrendingDown className="w-4 h-4" />
                   Short
@@ -647,7 +658,7 @@ export function NewTradeSheet({
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 ${errors.date ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
+                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-700 ${errors.date ? 'border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
                 />
                 {errors.date && (
                   <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.date}</p>
@@ -662,7 +673,7 @@ export function NewTradeSheet({
                   type="time"
                   value={openTime}
                   onChange={(e) => setOpenTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
                 />
               </div>
             </div>
@@ -676,7 +687,7 @@ export function NewTradeSheet({
               Track which rules and confluences were met for this setup. These selections are saved with the trade.
             </p>
             {playbookId ? (
-              <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+              <div className="rounded-lg border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-750 p-4">
                 {playbookLoading ? (
                   <div className="flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -699,7 +710,7 @@ export function NewTradeSheet({
                 )}
               </div>
             ) : (
-              <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-700 bg-white/60 dark:bg-gray-900/30 p-4 text-sm text-gray-500 dark:text-gray-400">
+              <div className="rounded-lg border border-dashed border-gray-300 dark:border-neutral-600 bg-white/60 dark:bg-neutral-800/50 p-4 text-sm text-gray-500 dark:text-gray-400">
                 Select a playbook above to record your checklist progress.
               </div>
             )}
@@ -723,7 +734,7 @@ export function NewTradeSheet({
                             setSelectedConfluences([...selectedConfluences, conf.id])
                           }
                         }}
-                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selected ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selected ? 'bg-neutral-600 text-white' : 'bg-gray-100 dark:bg-neutral-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-neutral-600'}`}
                       >
                         {conf.label}
                       </button>
@@ -767,7 +778,7 @@ export function NewTradeSheet({
                   value={stopPips}
                   onChange={(e) => setStopPips(e.target.value)}
                   placeholder="e.g. 20"
-                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 ${errors.stopPips ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
+                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-700 ${errors.stopPips ? 'border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
                 />
                 {errors.stopPips && (
                   <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.stopPips}</p>
@@ -785,7 +796,7 @@ export function NewTradeSheet({
                   value={targetPips}
                   onChange={(e) => setTargetPips(e.target.value)}
                   placeholder="e.g. 40"
-                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 ${errors.targetPips ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
+                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-700 ${errors.targetPips ? 'border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
                 />
               </div>
 
@@ -800,7 +811,7 @@ export function NewTradeSheet({
                   value={rrPlanned}
                   onChange={(e) => setRrPlanned(e.target.value)}
                   placeholder="e.g. 2 for 1:2"
-                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 ${errors.rrPlanned ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
+                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-700 ${errors.rrPlanned ? 'border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
                 />
               </div>
 
@@ -815,7 +826,7 @@ export function NewTradeSheet({
                   max="5"
                   value={riskR}
                   onChange={(e) => setRiskR(e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 ${errors.riskR ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
+                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-700 ${errors.riskR ? 'border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
                 />
                 {errors.riskR && (
                   <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.riskR}</p>
@@ -840,7 +851,7 @@ export function NewTradeSheet({
                   value={pips}
                   onChange={(e) => setPips(e.target.value)}
                   placeholder="e.g. +45.2 or -12.5"
-                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 ${errors.pips ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
+                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-700 ${errors.pips ? 'border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
                 />
                 {errors.pips && (
                   <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.pips}</p>
@@ -854,7 +865,7 @@ export function NewTradeSheet({
                 <select
                   value={closeReason}
                   onChange={(event) => setCloseReason(event.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
                 >
                   {CLOSE_REASON_OPTIONS.map((option) => (
                     <option key={option.value || 'none'} value={option.value}>
@@ -872,7 +883,7 @@ export function NewTradeSheet({
                   type="time"
                   value={closeTime}
                   onChange={(e) => setCloseTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
                 />
               </div>
             </div>
@@ -905,7 +916,7 @@ export function NewTradeSheet({
                 <select
                   value={session}
                   onChange={(e) => setSession(e.target.value as 'Asia' | 'London' | 'NY' | '')}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
                 >
                   <option value="">None</option>
                   <option value="Asia">Asia</option>
@@ -920,7 +931,7 @@ export function NewTradeSheet({
               onChange={(e) => setNotes(e.target.value)}
               rows={4}
               placeholder="Trade notes, observations, lessons learned..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 resize-none"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700 resize-none"
             />
           </section>
 
