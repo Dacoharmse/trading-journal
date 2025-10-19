@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
+import { Logo } from "@/components/logo"
 
 // Trading Journal Navigation Items
 const mainNavItems = [
@@ -144,17 +145,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <Link href="/">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <TrendingUp className="size-4" />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Trading Journal</span>
-                  <span className="truncate text-xs">Pro Trader</span>
-                </div>
-              </Link>
-            </SidebarMenuButton>
+            <Link href="/" className="flex items-center justify-center w-full py-4">
+              <Logo width={140} height={38} />
+            </Link>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
