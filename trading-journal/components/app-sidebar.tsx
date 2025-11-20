@@ -369,18 +369,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenuItem>
           )}
 
-          {/* Apply to be a Mentor - Show if not a mentor */}
-          {userProfile && !userProfile.is_mentor && (
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link href="/mentor/apply">
-                  <GraduationCap />
-                  <span>Become a Mentor</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          )}
-
           {userEmail && (
             <SidebarMenuItem>
               <div className="px-2 py-2 text-xs text-muted-foreground truncate">
