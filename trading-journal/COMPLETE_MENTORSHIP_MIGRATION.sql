@@ -1016,8 +1016,15 @@ GRANT ALL ON public.system_settings TO authenticated;
 -- SECTION 13: CREATE INITIAL ADMIN USER
 -- =====================================================
 
--- Automatically set the first user (oldest account) as admin
--- This will be the account that was created first in your Supabase project
+-- Set admin role for dacoharmse13.dh@gmail.com
+UPDATE public.user_profiles
+SET
+    role = 'admin',
+    is_active = true,
+    full_name = 'Dacoharmse'
+WHERE email = 'dacoharmse13.dh@gmail.com';
+
+-- Fallback: If the email doesn't exist yet, set the first user as admin
 UPDATE public.user_profiles
 SET
     role = 'admin',
@@ -1028,15 +1035,10 @@ WHERE id = (
     FROM auth.users
     ORDER BY created_at ASC
     LIMIT 1
+)
+AND NOT EXISTS (
+    SELECT 1 FROM public.user_profiles WHERE email = 'dacoharmse13.dh@gmail.com'
 );
-
--- Alternative: If you know your email, use this instead (uncomment and replace email):
--- UPDATE public.user_profiles
--- SET
---     role = 'admin',
---     is_active = true,
---     full_name = 'Dacoharmse'
--- WHERE email = 'dscoharmse13.ah@gmail.com';
 
 -- =====================================================
 -- COMMIT TRANSACTION
