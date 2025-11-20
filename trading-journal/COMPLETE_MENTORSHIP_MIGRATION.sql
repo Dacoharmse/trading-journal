@@ -1004,10 +1004,22 @@ GRANT ALL ON public.mentor_applications TO authenticated;
 GRANT ALL ON public.system_settings TO authenticated;
 
 -- =====================================================
--- SECTION 13: CREATE INITIAL ADMIN USER
+-- SECTION 13: CREATE INITIAL ADMIN USER & POPULATE PROFILES
 -- =====================================================
 
--- Set admin role for dacoharmse13.dh@gmail.com
+-- First, populate user_profiles from existing auth.users if they don't have profiles yet
+INSERT INTO public.user_profiles (id, email, full_name, role)
+SELECT
+    au.id,
+    au.email,
+    COALESCE(au.raw_user_meta_data->>'full_name', au.email),
+    'trader'
+FROM auth.users au
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.user_profiles up WHERE up.id = au.id
+);
+
+-- Now set admin role for dacoharmse13.dh@gmail.com
 UPDATE public.user_profiles
 SET
     role = 'admin',
@@ -1015,7 +1027,7 @@ SET
     full_name = 'Dacoharmse'
 WHERE email = 'dacoharmse13.dh@gmail.com';
 
--- Fallback: If the email doesn't exist yet, set the first user as admin
+-- Fallback: If that email doesn't exist, set the first user as admin
 UPDATE public.user_profiles
 SET
     role = 'admin',
