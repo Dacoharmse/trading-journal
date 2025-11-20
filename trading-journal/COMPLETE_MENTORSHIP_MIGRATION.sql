@@ -429,37 +429,28 @@ CREATE TABLE IF NOT EXISTS public.mentor_applications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES public.user_profiles(id) ON DELETE CASCADE,
 
-    -- Application details
-    bio TEXT NOT NULL,
+    -- Application details (matching the form fields)
+    trading_experience TEXT NOT NULL,
     specialties TEXT[] NOT NULL,
-    experience_years INTEGER NOT NULL,
-    trading_style TEXT NOT NULL,
-    reason_for_mentoring TEXT NOT NULL,
-    availability_hours_per_week INTEGER,
-
-    -- Verification
-    verified_trading_account TEXT,
-    proof_of_experience_urls TEXT[],
-    reference_contacts TEXT[],
-
-    -- Social media / portfolio
-    website_url TEXT,
-    twitter_handle TEXT,
-    linkedin_url TEXT,
+    why_mentor TEXT NOT NULL,
+    teaching_experience TEXT,
+    availability TEXT,
+    certifications TEXT,
 
     -- Status
-    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'under_review')),
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
     reviewed_by UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
-    review_notes TEXT,
+    admin_notes TEXT,
     reviewed_at TIMESTAMPTZ,
+    submitted_at TIMESTAMPTZ DEFAULT NOW(),
 
     -- Timestamps
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
 
     -- Constraints
-    CHECK (experience_years >= 0),
-    CHECK (LENGTH(bio) >= 100),
+    CHECK (LENGTH(trading_experience) >= 50),
+    CHECK (LENGTH(why_mentor) >= 50),
     CHECK (array_length(specialties, 1) >= 1),
     UNIQUE(user_id)
 );
