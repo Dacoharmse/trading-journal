@@ -109,6 +109,24 @@ export interface Trade {
   /** Asset class (stocks, options, futures, crypto, forex) */
   asset_class?: 'stocks' | 'options' | 'futures' | 'crypto' | 'forex';
 
+  /** Profit/Loss amount in account currency (USD, ZAR, etc.) */
+  pnl_amount?: number;
+
+  /** Currency for the profit/loss amount */
+  pnl_currency?: string;
+
+  /** Actual risk/reward ratio achieved */
+  actual_rr?: number;
+
+  /** Trade outcome classification */
+  outcome?: 'win' | 'loss' | 'breakeven';
+
+  /** Entry timeframe */
+  entry_timeframe?: string;
+
+  /** Analysis/confirmation timeframe */
+  analysis_timeframe?: string;
+
   /** Timestamp when record was created */
   created_at?: Date | string;
 

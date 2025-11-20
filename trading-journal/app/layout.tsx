@@ -4,6 +4,7 @@ import "./globals.css";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ToastProvider } from "@/components/ui/toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,17 +32,19 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider>
-          <SidebarProvider>
-            <AppSidebar />
-            <main className="flex-1 w-full">
-              <div className="flex items-center gap-2 border-b px-4 py-2">
-                <SidebarTrigger />
-              </div>
-              <div className="flex-1">
-                {children}
-              </div>
-            </main>
-          </SidebarProvider>
+          <ToastProvider>
+            <SidebarProvider>
+              <AppSidebar />
+              <main className="flex-1 w-full">
+                <div className="flex items-center gap-2 border-b px-4 py-2">
+                  <SidebarTrigger />
+                </div>
+                <div className="flex-1">
+                  {children}
+                </div>
+              </main>
+            </SidebarProvider>
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

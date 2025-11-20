@@ -13,6 +13,7 @@ import type {
   PlaybookRule,
   PlaybookConfluence,
   PlaybookRubric,
+  RiskViolation,
 } from '@/types/supabase'
 import { ChartPaste, type MediaItem } from './ChartPaste'
 import {
@@ -24,6 +25,7 @@ import {
 } from '@/lib/trade-math'
 import { SetupChecklist } from '@/components/trades/SetupChecklist'
 import { scoreSetup, getDefaultRubric } from '@/lib/playbook-scoring'
+import { RiskWarningDialog, type RiskViolationDetails } from '@/components/risk-management/RiskWarningDialog'
 
 type PlaybookOption = Pick<Playbook, 'id' | 'name' | 'category' | 'active'>
 
@@ -72,6 +74,15 @@ export function NewTradeSheet({
   const [rrPlanned, setRrPlanned] = React.useState<string>('')
   const [riskR, setRiskR] = React.useState<string>('1.0')
 
+  // Trade outcome fields
+  const [pnlAmount, setPnlAmount] = React.useState<string>('')
+  const [actualRr, setActualRr] = React.useState<string>('')
+  const [outcome, setOutcome] = React.useState<'win' | 'loss' | 'breakeven' | ''>('')
+
+  // Timeframe fields
+  const [entryTimeframe, setEntryTimeframe] = React.useState<string>('')
+  const [analysisTimeframe, setAnalysisTimeframe] = React.useState<string>('')
+
   // Strategy & Playbook
   const [strategyId, setStrategyId] = React.useState<string>('')
   const [playbooks, setPlaybooks] = React.useState<PlaybookOption[]>([])
@@ -89,6 +100,11 @@ export function NewTradeSheet({
   const [notes, setNotes] = React.useState('')
   const [closeReason, setCloseReason] = React.useState<string>('')
 
+  // Risk management
+  const [riskWarningOpen, setRiskWarningOpen] = React.useState(false)
+  const [riskViolation, setRiskViolation] = React.useState<RiskViolationDetails | null>(null)
+  const [pendingTradeData, setPendingTradeData] = React.useState<Partial<Trade> | null>(null)
+
   // Data
   const [symbols, setSymbols] = React.useState<Symbol[]>([])
   const [strategies, setStrategies] = React.useState<Strategy[]>([])
@@ -97,6 +113,12 @@ export function NewTradeSheet({
   // UI state
   const [saving, setSaving] = React.useState(false)
   const [errors, setErrors] = React.useState<Record<string, string>>({})
+
+  // Computed values
+  const selectedAccount = React.useMemo(() =>
+    accounts.find(acc => acc.id === accountId),
+    [accounts, accountId]
+  )
 
   const rubricForChecklist = React.useMemo<PlaybookRubric>(() => {
     if (playbookRubric) return playbookRubric
@@ -359,23 +381,65 @@ export function NewTradeSheet({
     return Object.keys(errs).length === 0
   }
 
-  const handleSubmit = async () => {
-    if (!validate()) return
+  // Helper function to check risk violations
+  const checkRiskViolation = async (
+    riskRNum: number
+  ): Promise<RiskViolationDetails | null> => {
+    const account = accounts.find((a) => a.id === accountId)
+    if (!account || !account.session_risk_enabled) {
+      return null // No risk limits enabled
+    }
 
-    setSaving(true)
+    // Calculate risk for this trade
+    const tradeRisk = account.riskLimitType === 'percentage'
+      ? (riskRNum / 100) * account.initial_balance
+      : riskRNum
 
-    try {
-      // Compute R-multiple
-      const pipsNum = pips ? parseFloat(pips) : null
-      const stopPipsNum = stopPips ? parseFloat(stopPips) : null
-      const riskRNum = riskR ? parseFloat(riskR) : 1.0
-      const rMultiple = rFromPips(pipsNum, stopPipsNum, riskRNum)
+    // Get today's trades to calculate session/daily risk
+    const today = new Date().toISOString().split('T')[0]
+    const { data: todayTrades } = await supabase
+      .from('trades')
+      .select('risk_r')
+      .eq('account_id', accountId)
+      .gte('entry_date', today)
+      .lt('entry_date', new Date(Date.now() + 86400000).toISOString().split('T')[0])
 
-      // Compute planned R:R if not provided
-      let rrPlannedNum = rrPlanned ? parseFloat(rrPlanned) : null
-      if (!rrPlannedNum && targetPips && stopPips) {
-        rrPlannedNum = calculatePlannedRR(parseFloat(targetPips), parseFloat(stopPips))
+    const todayRiskSum = (todayTrades || []).reduce(
+      (sum, t) => sum + (t.risk_r || 0),
+      0
+    )
+
+    const totalRisk = todayRiskSum + riskRNum
+    const riskLimit = account.riskLimitValue || 2.0
+
+    // Check if exceeding limit
+    if (totalRisk > riskLimit) {
+      return {
+        accountName: account.name,
+        accountCurrency: account.currency,
+        riskLimit: riskLimit,
+        actualRisk: totalRisk,
+        limitType: account.riskLimitType || 'percentage',
+        violationType: 'session_limit',
       }
+    }
+
+    return null
+  }
+
+  // Function to save trade with optional risk violation reason
+  const saveTradeWithRisk = async (violationReason: string | null) => {
+    // Compute R-multiple
+    const pipsNum = pips ? parseFloat(pips) : null
+    const stopPipsNum = stopPips ? parseFloat(stopPips) : null
+    const riskRNum = riskR ? parseFloat(riskR) : 1.0
+    const rMultiple = rFromPips(pipsNum, stopPipsNum, riskRNum)
+
+    // Compute planned R:R if not provided
+    let rrPlannedNum = rrPlanned ? parseFloat(rrPlanned) : null
+    if (!rrPlannedNum && targetPips && stopPips) {
+      rrPlannedNum = calculatePlannedRR(parseFloat(targetPips), parseFloat(stopPips))
+    }
 
       let setupScore: number | null = null
       let setupGrade: string | null = null
@@ -415,47 +479,112 @@ export function NewTradeSheet({
         }
       }
 
-      const tradeData: Partial<Trade> = {
-        ...(editingTrade?.id ? { id: editingTrade.id } : {}),
+    const tradeData: Partial<Trade> = {
+      ...(editingTrade?.id ? { id: editingTrade.id } : {}),
+      account_id: accountId,
+      symbol_id: symbolId,
+      direction,
+      entry_date: date,
+      open_time: openTime || null,
+      close_time: closeTime || null,
+      session: session || null,
+      pips: pipsNum,
+      stop_pips: stopPipsNum,
+      target_pips: targetPips ? parseFloat(targetPips) : null,
+      rr_planned: rrPlannedNum,
+      risk_r: riskRNum,
+      r_multiple: rMultiple,
+      strategy_id: strategyId || null,
+      playbook_id: playbookId || null,
+      rules_checked: playbookId ? rulesSnapshot : null,
+      confluences_checked: playbookId ? confluencesSnapshot : null,
+      setup_score: playbookId ? setupScore : null,
+      setup_grade: playbookId ? setupGrade : null,
+      close_reason: closeReason || null,
+      notes: notes || null,
+      media_urls: media.map((m) => m.url),
+      pnl_amount: pnlAmount ? parseFloat(pnlAmount) : null,
+      pnl_currency: selectedAccount?.currency || 'USD',
+      actual_rr: actualRr ? parseFloat(actualRr) : null,
+      outcome: outcome || null,
+      entry_timeframe: entryTimeframe || null,
+      analysis_timeframe: analysisTimeframe || null,
+    }
+
+    await onSave(tradeData)
+
+    // Save risk violation if reason provided
+    if (violationReason && riskViolation) {
+      const account = accounts.find((a) => a.id === accountId)
+      await supabase.from('risk_violations').insert({
+        user_id: userId,
         account_id: accountId,
-        symbol_id: symbolId,
-        direction,
-        entry_date: date,
-        open_time: openTime || null,
-        close_time: closeTime || null,
-        session: session || null,
-        pips: pipsNum,
-        stop_pips: stopPipsNum,
-        target_pips: targetPips ? parseFloat(targetPips) : null,
-        rr_planned: rrPlannedNum,
-        risk_r: riskRNum,
-        r_multiple: rMultiple,
-        strategy_id: strategyId || null,
-        playbook_id: playbookId || null,
-        rules_checked: playbookId ? rulesSnapshot : null,
-        confluences_checked: playbookId ? confluencesSnapshot : null,
-        setup_score: playbookId ? setupScore : null,
-        setup_grade: playbookId ? setupGrade : null,
-        close_reason: closeReason || null,
-        notes: notes || null,
-        media_urls: media.map((m) => m.url),
+        trade_id: tradeData.id || null,
+        violation_type: riskViolation.violationType,
+        risk_limit: riskViolation.riskLimit,
+        actual_risk: riskViolation.actualRisk,
+        limit_type: riskViolation.limitType,
+        reason: violationReason,
+        override_approved: true,
+      })
+    }
+
+    // Save confluences separately
+    if (selectedConfluences.length > 0 && tradeData.id) {
+      await saveConfluences(tradeData.id, selectedConfluences)
+    }
+
+    onClose()
+    resetForm()
+  }
+
+  const handleSubmit = async () => {
+    if (!validate()) return
+
+    setSaving(true)
+
+    try {
+      // Compute risk to check violations
+      const riskRNum = riskR ? parseFloat(riskR) : 1.0
+
+      // Check for risk violations
+      const violation = await checkRiskViolation(riskRNum)
+      if (violation) {
+        // Store violation and show warning dialog
+        setSaving(false)
+        setRiskViolation(violation)
+        setRiskWarningOpen(true)
+        return
       }
 
-      await onSave(tradeData)
-
-      // Save confluences separately
-      if (selectedConfluences.length > 0 && tradeData.id) {
-        await saveConfluences(tradeData.id, selectedConfluences)
-      }
-
-      onClose()
-      resetForm()
+      // No violation, proceed with save
+      await saveTradeWithRisk(null)
     } catch (err) {
       console.error('Save error:', err)
       alert('Failed to save trade')
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleRiskWarningProceed = async (reason: string) => {
+    setRiskWarningOpen(false)
+    setSaving(true)
+
+    try {
+      await saveTradeWithRisk(reason)
+    } catch (err) {
+      console.error('Save error:', err)
+      alert('Failed to save trade')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleRiskWarningCancel = () => {
+    setRiskWarningOpen(false)
+    setRiskViolation(null)
+    setPendingTradeData(null)
   }
 
   const saveConfluences = async (tradeId: string, confIds: string[]) => {
@@ -677,6 +806,55 @@ export function NewTradeSheet({
                 />
               </div>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Entry Timeframe *
+                </label>
+                <select
+                  value={entryTimeframe}
+                  onChange={(e) => setEntryTimeframe(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
+                >
+                  <option value="">Select timeframe...</option>
+                  <option value="1m">1 Minute</option>
+                  <option value="5m">5 Minutes</option>
+                  <option value="15m">15 Minutes</option>
+                  <option value="30m">30 Minutes</option>
+                  <option value="1h">1 Hour</option>
+                  <option value="4h">4 Hours</option>
+                  <option value="1d">Daily</option>
+                  <option value="1w">Weekly</option>
+                  <option value="1M">Monthly</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Analysis Timeframe <span className="text-xs text-gray-500">(Optional)</span>
+                </label>
+                <select
+                  value={analysisTimeframe}
+                  onChange={(e) => setAnalysisTimeframe(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
+                >
+                  <option value="">None</option>
+                  <option value="1m">1 Minute</option>
+                  <option value="5m">5 Minutes</option>
+                  <option value="15m">15 Minutes</option>
+                  <option value="30m">30 Minutes</option>
+                  <option value="1h">1 Hour</option>
+                  <option value="4h">4 Hours</option>
+                  <option value="1d">Daily</option>
+                  <option value="1w">Weekly</option>
+                  <option value="1M">Monthly</option>
+                </select>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Higher timeframe used for analysis/confirmation
+                </p>
+              </div>
+            </div>
           </section>
 
           <section className="space-y-4">
@@ -886,6 +1064,50 @@ export function NewTradeSheet({
                   className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
                 />
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  P/L Amount ({selectedAccount?.currency || 'USD'})
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={pnlAmount}
+                  onChange={(e) => setPnlAmount(e.target.value)}
+                  placeholder="0.00"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Actual R:R
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={actualRr}
+                  onChange={(e) => setActualRr(e.target.value)}
+                  placeholder="e.g. 2.5"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Outcome
+                </label>
+                <select
+                  value={outcome}
+                  onChange={(e) => setOutcome(e.target.value as 'win' | 'loss' | 'breakeven' | '')}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
+                >
+                  <option value="">Select...</option>
+                  <option value="win">Win</option>
+                  <option value="loss">Loss</option>
+                  <option value="breakeven">Break-even</option>
+                </select>
+              </div>
             </div>
 
             {realizedR !== null && (
@@ -943,6 +1165,15 @@ export function NewTradeSheet({
           </section>
         </div>
       </div>
+
+      {/* Risk Warning Dialog */}
+      <RiskWarningDialog
+        open={riskWarningOpen}
+        onOpenChange={setRiskWarningOpen}
+        violation={riskViolation}
+        onProceed={handleRiskWarningProceed}
+        onCancel={handleRiskWarningCancel}
+      />
     </div>
   )
 }

@@ -9,8 +9,25 @@ export interface Account {
   name: string
   currency: 'USD' | 'ZAR' | 'EUR' | 'GBP'
   initial_balance: number
+  risk_limit_type?: 'percentage' | 'monetary'
+  risk_limit_value?: number
+  session_risk_enabled?: boolean
   created_at?: string
   updated_at?: string
+}
+
+export interface RiskViolation {
+  id: string
+  user_id: string
+  account_id?: string | null
+  trade_id?: string | null
+  violation_type: 'session_limit' | 'daily_limit' | 'position_size'
+  risk_limit: number
+  actual_risk: number
+  limit_type: 'percentage' | 'monetary'
+  reason: string
+  override_approved: boolean
+  created_at: string
 }
 
 export interface Strategy {

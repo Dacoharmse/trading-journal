@@ -39,6 +39,9 @@ export interface TradingAccount {
   isActive: boolean;
   notes?: string;
   propFirmSettings?: PropFirmSettings;
+  riskLimitType?: 'percentage' | 'monetary';
+  riskLimitValue?: number;
+  sessionRiskEnabled?: boolean;
   metrics: AccountMetrics;
 }
 

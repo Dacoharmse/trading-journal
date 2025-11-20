@@ -129,6 +129,20 @@ CREATE TABLE IF NOT EXISTS public.trades (
     -- Asset Classification
     asset_class TEXT CHECK (asset_class IN ('stocks', 'options', 'futures', 'crypto', 'forex')),
 
+    -- P/L Amount and Currency
+    pnl_amount NUMERIC(15, 2),
+    pnl_currency TEXT,
+
+    -- Actual Risk/Reward Ratio
+    actual_rr NUMERIC(10, 2),
+
+    -- Trade Outcome
+    outcome TEXT CHECK (outcome IN ('win', 'loss', 'breakeven')),
+
+    -- Timeframes
+    entry_timeframe TEXT,
+    analysis_timeframe TEXT,
+
     -- Timestamps
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),

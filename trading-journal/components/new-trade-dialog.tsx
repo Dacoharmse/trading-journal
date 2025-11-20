@@ -112,10 +112,16 @@ export function NewTradeDialog({ trigger }: NewTradeDialogProps) {
     const stopLoss = parseNumber(formData.get("stop_loss"))
     const takeProfit = parseNumber(formData.get("take_profit"))
     const notes = (formData.get("notes") as string) || undefined
+    const pnlAmount = parseNumber(formData.get("pnl_amount"))
+    const actualRr = parseNumber(formData.get("actual_rr"))
+    const outcome = (formData.get("outcome") as "win" | "loss" | "breakeven") || undefined
 
     const symbolValue = symbol || ((formData.get("symbol") as string) ?? "").toUpperCase()
 
     const pnl = calculatePnl(entryPrice, exitPrice, quantity, fees, tradeType)
+
+    // Use account currency for pnl_currency
+    const pnlCurrency = selectedAccount?.currency || "USD"
 
     const trade: Trade = {
       id: generateId(),
@@ -141,6 +147,10 @@ export function NewTradeDialog({ trigger }: NewTradeDialogProps) {
       stop_loss: stopLoss,
       take_profit: takeProfit,
       asset_class: assetClass as Trade["asset_class"],
+      pnl_amount: pnlAmount,
+      pnl_currency: pnlCurrency,
+      actual_rr: actualRr,
+      outcome,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
@@ -340,6 +350,58 @@ export function NewTradeDialog({ trigger }: NewTradeDialogProps) {
           <div className="space-y-2">
             <Label htmlFor="exit_details">Exit Details</Label>
             <Textarea id="exit_details" name="exit_details" placeholder="Exit reasoning, outcome analysis..." rows={3} />
+          </div>
+
+          <div className="space-y-4">
+            <Label className="text-base font-semibold">Trade Outcome</Label>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="pnl_amount">
+                  P/L Amount ({selectedAccount?.currency || "USD"})
+                </Label>
+                <Input
+                  id="pnl_amount"
+                  name="pnl_amount"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Actual profit/loss
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="actual_rr">Actual R:R</Label>
+                <Input
+                  id="actual_rr"
+                  name="actual_rr"
+                  type="number"
+                  step="0.01"
+                  placeholder="e.g. 2.5"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Realized risk/reward
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="outcome">Outcome</Label>
+                <Select name="outcome">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="win">Win</SelectItem>
+                    <SelectItem value="loss">Loss</SelectItem>
+                    <SelectItem value="breakeven">Break-even</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Win/Loss/BE
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-3">

@@ -33,6 +33,7 @@ import {
 } from "@/types"
 import { Broker } from "@/types"
 import { useAccountStore, useTradeStore } from "@/stores"
+import { useToast } from "@/components/ui/toast"
 
 type AccountFormState = {
   name: string
@@ -50,6 +51,9 @@ type AccountFormState = {
   accountStatus: "new" | "profits" | "drawdown"
   currentProfits: string
   currentDrawdown: string
+  riskLimitType: 'percentage' | 'monetary'
+  riskLimitValue: string
+  sessionRiskEnabled: boolean
 }
 
 const brokerOptions = [
@@ -99,6 +103,9 @@ const initialFormState: AccountFormState = {
   accountStatus: "new",
   currentProfits: "",
   currentDrawdown: "",
+  riskLimitType: "percentage",
+  riskLimitValue: "2.0",
+  sessionRiskEnabled: false,
 }
 
 const formatCurrency = (value: number, currency: string) => {
@@ -115,6 +122,7 @@ const formatCurrency = (value: number, currency: string) => {
 }
 
 export default function AccountsPage() {
+  const { addToast } = useToast()
   const accounts = useAccountStore((state) => state.accounts)
   const addAccount = useAccountStore((state) => state.addAccount)
   const updateAccount = useAccountStore((state) => state.updateAccount)
@@ -134,6 +142,7 @@ export default function AccountsPage() {
 
   const [formState, setFormState] = React.useState<AccountFormState>(initialFormState)
   const [editingAccountId, setEditingAccountId] = React.useState<string | null>(null)
+  const formRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
     recalculateMetrics(trades)
@@ -163,26 +172,34 @@ export default function AccountsPage() {
       accountStatus: account.propFirmSettings?.status ?? "new",
       currentProfits: account.propFirmSettings?.currentProfits?.toString() ?? "",
       currentDrawdown: account.propFirmSettings?.currentDrawdown?.toString() ?? "",
+      riskLimitType: account.riskLimitType ?? "percentage",
+      riskLimitValue: account.riskLimitValue?.toString() ?? "2.0",
+      sessionRiskEnabled: account.sessionRiskEnabled ?? false,
     })
     setEditingAccountId(account.id)
     selectAccount(account.id)
+
+    // Scroll to form
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
   }
 
   const handleAccountSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     if (!formState.name || !formState.currency || !formState.startingBalance) {
-      alert("Please fill in all required fields: Account Name, Currency, and Starting Balance")
+      addToast("Please fill in all required fields: Account Name, Currency, and Starting Balance", "error")
       return
     }
 
     if (!formState.selectedBroker) {
-      alert("Please select a broker")
+      addToast("Please select a broker", "error")
       return
     }
 
     if (formState.selectedBroker === Broker.OTHER && !formState.customBrokerName.trim()) {
-      alert("Please enter a custom broker/prop firm name")
+      addToast("Please enter a custom broker/prop firm name", "error")
       return
     }
 
@@ -204,6 +221,9 @@ export default function AccountsPage() {
       startingBalance: parseFloat(formState.startingBalance) || 0,
       tradingPairs,
       isActive: formState.isActive,
+      riskLimitType: formState.riskLimitType,
+      riskLimitValue: parseFloat(formState.riskLimitValue) || 2.0,
+      sessionRiskEnabled: formState.sessionRiskEnabled,
       propFirmSettings:
         formState.accountType === "prop-firm"
           ? {
@@ -232,15 +252,15 @@ export default function AccountsPage() {
       if (editingAccountId) {
         await updateAccount(editingAccountId, input)
         await fetchAccounts()
-        alert("Account updated successfully!")
+        addToast("Account updated successfully!", "success")
       } else {
         const created = await addAccount(input)
         if (created) {
           selectAccount(created.id)
           await fetchAccounts()
-          alert("Account added successfully!")
+          addToast("Account added successfully!", "success")
         } else {
-          alert("Failed to add account. You may not be authenticated. Check browser console for details.")
+          addToast("Failed to add account. You may not be authenticated. Check browser console for details.", "error")
           console.error("Account creation failed - likely authentication issue")
           return
         }
@@ -249,7 +269,7 @@ export default function AccountsPage() {
       recalculateMetrics(trades)
       resetForm()
     } catch (error: any) {
-      alert(`Error: ${error.message}`)
+      addToast(`Error: ${error.message}`, "error")
       console.error("Account operation error:", error)
     }
   }
@@ -287,27 +307,36 @@ export default function AccountsPage() {
             View and manage all your trading accounts
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent>
           {accounts.length === 0 && (
             <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
               No accounts yet. Add your first account below to start tracking performance.
             </div>
           )}
 
-          {accounts.map((account) => (
-            <div
-              key={account.id}
-              className="flex flex-col gap-4 rounded-lg border p-4 md:flex-row md:items-start md:justify-between"
-            >
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-base font-semibold">{account.name}</h3>
-                  <Badge variant="outline">{account.accountType}</Badge>
-                  {account.isActive ? (
-                    <Badge variant="default">Active</Badge>
-                  ) : (
-                    <Badge variant="secondary">Inactive</Badge>
-                  )}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {accounts.map((account) => (
+              <div
+                key={account.id}
+                className="flex flex-col gap-4 rounded-lg border p-4"
+              >
+              <div className="space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="space-y-2 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-base font-semibold">{account.name}</h3>
+                      {account.isActive ? (
+                        <Badge variant="default">Active</Badge>
+                      ) : (
+                        <Badge variant="secondary">Inactive</Badge>
+                      )}
+                    </div>
+                    <Badge variant="outline" className="text-xs">{account.accountType}</Badge>
+                  </div>
+                  <Switch
+                    checked={account.isActive}
+                    onCheckedChange={() => handleToggleActive(account)}
+                  />
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {account.broker} • Starting Balance: {formatCurrency(account.startingBalance, account.currency)}
@@ -321,28 +350,28 @@ export default function AccountsPage() {
                   </p>
                 )}
 
-                <div className="grid gap-2 text-xs sm:text-sm md:grid-cols-2">
-                  <div className="rounded-md bg-muted/40 p-3">
-                    <p className="text-muted-foreground">Best Day</p>
-                    <p className="font-semibold">
+                <div className="grid gap-2 text-xs grid-cols-2">
+                  <div className="rounded-md bg-muted/40 p-2">
+                    <p className="text-muted-foreground text-xs">Best Day</p>
+                    <p className="font-semibold text-sm">
                       {formatCurrency(account.metrics.bestDay, account.currency)}
                     </p>
                   </div>
-                  <div className="rounded-md bg-muted/40 p-3">
-                    <p className="text-muted-foreground">Worst Day</p>
-                    <p className="font-semibold">
+                  <div className="rounded-md bg-muted/40 p-2">
+                    <p className="text-muted-foreground text-xs">Worst Day</p>
+                    <p className="font-semibold text-sm">
                       {formatCurrency(account.metrics.worstDay, account.currency)}
                     </p>
                   </div>
-                  <div className="rounded-md bg-muted/40 p-3">
-                    <p className="text-muted-foreground">Max Drawdown</p>
-                    <p className="font-semibold">
+                  <div className="rounded-md bg-muted/40 p-2">
+                    <p className="text-muted-foreground text-xs">Max DD</p>
+                    <p className="font-semibold text-sm">
                       {formatCurrency(account.metrics.maxDrawdown, account.currency)}
                     </p>
                   </div>
-                  <div className="rounded-md bg-muted/40 p-3">
-                    <p className="text-muted-foreground">Daily Drawdown</p>
-                    <p className="font-semibold">
+                  <div className="rounded-md bg-muted/40 p-2">
+                    <p className="text-muted-foreground text-xs">Daily DD</p>
+                    <p className="font-semibold text-sm">
                       {formatCurrency(account.metrics.dailyDrawdown, account.currency)}
                     </p>
                   </div>
@@ -407,30 +436,28 @@ export default function AccountsPage() {
                 )}
               </div>
 
-              <div className="flex flex-col items-end gap-2">
-                <Switch
-                  checked={account.isActive}
-                  onCheckedChange={() => handleToggleActive(account)}
-                />
-                <div className="flex gap-2">
-                  <Button variant="outline" size="icon" onClick={() => startEditAccount(account)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleDeleteAccount(account.id)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
+              <div className="flex gap-2 pt-2 border-t">
+                <Button variant="outline" size="sm" className="flex-1" onClick={() => startEditAccount(account)}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => handleDeleteAccount(account.id)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2 text-destructive" />
+                  Delete
+                </Button>
               </div>
             </div>
-          ))}
+            ))}
+          </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card ref={formRef}>
         <CardHeader>
           <CardTitle>{editingAccountId ? "Edit Account" : "Add New Account"}</CardTitle>
           <CardDescription>
@@ -560,6 +587,66 @@ export default function AccountsPage() {
                     }))
                   }
                 />
+              </div>
+
+              <Separator className="md:col-span-2" />
+
+              {/* Risk Management Section */}
+              <div className="space-y-2 md:col-span-2">
+                <Label className="text-base font-semibold">Risk Management Settings</Label>
+                <p className="text-sm text-muted-foreground">
+                  Set risk limits per session/day for this account
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="risk-limit-type">Risk Limit Type</Label>
+                <Select
+                  value={formState.riskLimitType}
+                  onValueChange={(value: 'percentage' | 'monetary') =>
+                    setFormState((prev) => ({ ...prev, riskLimitType: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="percentage">Percentage of Balance</SelectItem>
+                    <SelectItem value="monetary">Fixed Amount ({formState.currency})</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="risk-limit-value">
+                  Risk Limit {formState.riskLimitType === 'percentage' ? '(%)' : `(${formState.currency})`}
+                </Label>
+                <Input
+                  id="risk-limit-value"
+                  type="number"
+                  step="0.1"
+                  placeholder={formState.riskLimitType === 'percentage' ? '2.0' : '500'}
+                  value={formState.riskLimitValue}
+                  onChange={(event) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      riskLimitValue: event.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="flex items-center gap-2 md:col-span-2">
+                <Switch
+                  id="session-risk-enabled"
+                  checked={formState.sessionRiskEnabled}
+                  onCheckedChange={(checked) =>
+                    setFormState((prev) => ({ ...prev, sessionRiskEnabled: checked }))
+                  }
+                />
+                <Label htmlFor="session-risk-enabled" className="cursor-pointer">
+                  Enable session-based risk limits (require reason when exceeded)
+                </Label>
               </div>
 
               {formState.accountType === "prop-firm" && (
