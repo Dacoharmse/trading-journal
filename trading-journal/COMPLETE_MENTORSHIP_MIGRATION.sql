@@ -440,7 +440,7 @@ CREATE TABLE IF NOT EXISTS public.mentor_applications (
     -- Verification
     verified_trading_account TEXT,
     proof_of_experience_urls TEXT[],
-    references TEXT[],
+    reference_contacts TEXT[],
 
     -- Social media / portfolio
     website_url TEXT,
