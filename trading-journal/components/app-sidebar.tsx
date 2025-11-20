@@ -17,8 +17,17 @@ import {
   Users,
   LogOut,
   Beaker,
+  Shield,
+  UserCheck,
+  GraduationCap,
+  MessageSquare,
+  Bell,
+  Eye,
+  Share2,
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { getCurrentUserProfile } from "@/lib/auth-utils"
+import type { UserProfile } from "@/types/mentorship"
 
 import {
   Sidebar,
@@ -102,6 +111,60 @@ const dataTools = [
   },
 ]
 
+const adminNavItems = [
+  {
+    title: "Admin Dashboard",
+    url: "/admin",
+    icon: Shield,
+    description: "Admin control panel",
+  },
+  {
+    title: "Manage Users",
+    url: "/admin/users",
+    icon: Users,
+    description: "User management",
+  },
+  {
+    title: "Mentor Applications",
+    url: "/admin/mentors/applications",
+    icon: GraduationCap,
+    description: "Review mentor applications",
+  },
+]
+
+const mentorNavItems = [
+  {
+    title: "Mentor Dashboard",
+    url: "/mentor",
+    icon: UserCheck,
+    description: "Your mentor dashboard",
+  },
+  {
+    title: "Trade Reviews",
+    url: "/mentor/reviews",
+    icon: MessageSquare,
+    description: "Review student trades",
+  },
+  {
+    title: "My Students",
+    url: "/mentor/students",
+    icon: Users,
+    description: "Manage students",
+  },
+  {
+    title: "Share Playbook",
+    url: "/mentor/playbooks",
+    icon: Share2,
+    description: "Share playbooks with students",
+  },
+  {
+    title: "Publish Trade",
+    url: "/mentor/publish",
+    icon: Eye,
+    description: "Publish educational trades",
+  },
+]
+
 const bottomItems = [
   {
     title: "Community",
@@ -118,17 +181,40 @@ const bottomItems = [
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter()
   const [userEmail, setUserEmail] = React.useState<string | null>(null)
+  const [userProfile, setUserProfile] = React.useState<UserProfile | null>(null)
+  const [unreadNotifications, setUnreadNotifications] = React.useState(0)
 
   React.useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setUserEmail(user?.email || null)
+
+      if (user) {
+        // Get user profile with role information
+        const profile = await getCurrentUserProfile()
+        setUserProfile(profile)
+
+        // Get unread notifications count
+        if (profile) {
+          const { count } = await supabase
+            .from('notifications')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', profile.id)
+            .eq('is_read', false)
+
+          setUnreadNotifications(count || 0)
+        }
+      }
     }
     checkUser()
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUserEmail(session?.user?.email || null)
+      if (!session) {
+        setUserProfile(null)
+        setUnreadNotifications(0)
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -163,6 +249,48 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             New Trade
           </Button>
         </SidebarGroup>
+
+        {/* Admin Section - Only visible to admins */}
+        {userProfile?.role === 'admin' && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Administration</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminNavItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild tooltip={item.description}>
+                      <Link href={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Mentor Section - Only visible to approved mentors */}
+        {userProfile?.is_mentor && userProfile?.mentor_approved && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Mentorship</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {mentorNavItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild tooltip={item.description}>
+                      <Link href={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         {/* Main Navigation */}
         <SidebarGroup>
@@ -224,6 +352,35 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarFooter>
         <SidebarMenu>
+          {/* Notifications */}
+          {userProfile && (
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link href="/notifications" className="relative">
+                  <Bell />
+                  <span>Notifications</span>
+                  {unreadNotifications > 0 && (
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 bg-red-500 text-white text-xs rounded-full h-5 min-w-5 flex items-center justify-center px-1">
+                      {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                    </span>
+                  )}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
+
+          {/* Apply to be a Mentor - Show if not a mentor */}
+          {userProfile && !userProfile.is_mentor && (
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link href="/mentor/apply">
+                  <GraduationCap />
+                  <span>Become a Mentor</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
+
           {userEmail && (
             <SidebarMenuItem>
               <div className="px-2 py-2 text-xs text-muted-foreground truncate">
