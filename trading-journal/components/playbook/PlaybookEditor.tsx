@@ -37,7 +37,7 @@ import { ExamplesEditor, type ExampleDraft } from './ExamplesEditor'
 import type { RuleDraft, ConfluenceDraft } from './types'
 
 const sessionOptions = ['Asia', 'London', 'NY'] as const
-const categoryOptions = ['Breakout', 'Reversion', 'ICT', 'News', 'Other'] as const
+const tradeTypeOptions = ['continuation', 'reversal'] as const
 const timeframeOptions = ['1m', '5m', '15m', '30m', '1H', '4H', 'D1', 'W1'] as const
 
 interface PlaybookEditorProps {
@@ -54,7 +54,7 @@ interface PlaybookEditorProps {
 
 interface BasicsState {
   name: string
-  category: (typeof categoryOptions)[number]
+  trade_type: (typeof tradeTypeOptions)[number] | ''
   description: string
   sessions: string[]
   symbols: string[]
@@ -86,7 +86,7 @@ export function PlaybookEditor({
 
   const [basics, setBasics] = React.useState<BasicsState>({
     name: initialPlaybook?.name ?? '',
-    category: (initialPlaybook?.category as BasicsState['category']) ?? 'Other',
+    trade_type: (initialPlaybook?.trade_type as BasicsState['trade_type']) ?? '',
     description: initialPlaybook?.description ?? '',
     sessions: initialPlaybook?.sessions ?? [],
     symbols: initialPlaybook?.symbols ?? [],
@@ -300,12 +300,12 @@ export function PlaybookEditor({
     markDirty()
   }
 
-  const handleAddDetail = () => {
+  const handleAddDetail = (type: TradeDetailDraft['type'] = 'detail') => {
     const newDetail: TradeDetailDraft = {
       id: crypto.randomUUID(),
       playbook_id: playbookId ?? undefined,
       label: '',
-      type: 'detail',
+      type,
       weight: 1,
       primary_item: false,
       sort: tradeDetails.length,
@@ -396,11 +396,12 @@ export function PlaybookEditor({
     }
 
     setSaving(true)
+    console.log('[PlaybookEditor] Starting save process...')
 
     try {
       const payload = {
         name: basics.name.trim(),
-        category: basics.category,
+        trade_type: basics.trade_type || null,
         description: basics.description || null,
         sessions: basics.sessions,
         symbols: basics.symbols,
@@ -475,22 +476,26 @@ export function PlaybookEditor({
       }
 
       if (sortedDetails.length > 0) {
-        const detailPayload = sortedDetails.map((detail, index) => ({
-          id: detail.id,
-          playbook_id: currentId,
-          label: detail.label.trim(),
-          type: detail.type,
-          weight: Number(detail.weight) || 1,
-          primary_item: detail.primary_item,
-          sort: index,
-        }))
+        const detailPayload = sortedDetails
+          .filter((detail) => detail.label.trim().length > 0)
+          .map((detail, index) => ({
+            id: detail.id,
+            playbook_id: currentId,
+            label: detail.label.trim(),
+            type: detail.type,
+            weight: Number(detail.weight) || 1,
+            primary_item: detail.primary_item,
+            sort: index,
+          }))
 
-        const { error: detailError } = await supabase
-          .from('playbook_trade_details')
-          .upsert(detailPayload)
-        if (detailError) throw detailError
+        if (detailPayload.length > 0) {
+          const { error: detailError } = await supabase
+            .from('playbook_trade_details')
+            .upsert(detailPayload)
+          if (detailError) throw detailError
 
-        setTradeDetails(detailPayload.map((detail) => ({ ...detail })))
+          setTradeDetails(detailPayload.map((detail) => ({ ...detail })))
+        }
       }
 
       if (sortedExamples.length > 0) {
@@ -554,12 +559,12 @@ export function PlaybookEditor({
         const rubricPayload: PlaybookRubric = {
           ...rubric,
           playbook_id: currentId,
-          grade_cutoffs: Object.fromEntries(
+          grade_cutoffs: rubric.grade_cutoffs ? Object.fromEntries(
             Object.entries(rubric.grade_cutoffs).map(([grade, value]) => [
               grade.trim(),
               Number(value) || 0,
             ])
-          ),
+          ) : {},
         }
 
         const { error: rubricError } = await supabase
@@ -577,21 +582,24 @@ export function PlaybookEditor({
       persistedDetailIds.current = new Set(sortedDetails.map((d) => d.id))
       persistedExampleIds.current = new Set(sortedExamples.map((e) => e.id))
 
+      console.log('[PlaybookEditor] Save successful!')
       setStatus('Playbook saved')
       setDirty(false)
     } catch (saveError) {
+      console.error('[PlaybookEditor] Save failed:', saveError)
       const message =
         saveError instanceof Error ? saveError.message : 'Failed to save playbook.'
       setError(message)
       console.error('Failed to save playbook:', saveError)
     } finally {
+      console.log('[PlaybookEditor] Save process completed, setting saving to false')
       setSaving(false)
     }
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 rounded-xl border border-neutral-200/70 bg-white/70 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/60">
+      <div className="flex flex-col gap-3 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-black">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
@@ -651,7 +659,7 @@ export function PlaybookEditor({
 
         <TabsContent value="basics" className="mt-4 space-y-6">
           <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-            <div className="space-y-6 rounded-xl border border-neutral-200/70 bg-white/70 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/60">
+            <div className="space-y-6 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-black">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-neutral-700 dark:text-neutral-200">
                   Playbook Name
@@ -666,27 +674,34 @@ export function PlaybookEditor({
                 />
               </div>
 
+              {/* Trade Type - For Performance Tracking */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-neutral-700 dark:text-neutral-200">
-                  Category
+                  Trade Type
                 </label>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                  Is this a trend-following or counter-trend strategy?
+                </p>
                 <div className="flex flex-wrap gap-2">
-                  {categoryOptions.map((category) => (
+                  {tradeTypeOptions.map((tradeType) => (
                     <button
-                      key={category}
+                      key={tradeType}
                       type="button"
                       onClick={() => {
-                        setBasics((prev) => ({ ...prev, category }))
+                        setBasics((prev) => ({
+                          ...prev,
+                          trade_type: prev.trade_type === tradeType ? '' : tradeType
+                        }))
                         markDirty()
                       }}
                       className={cn(
-                        'rounded-full border px-3 py-1 text-sm transition-colors',
-                        basics.category === category
-                          ? 'border-neutral-400 bg-neutral-100 text-neutral-700 dark:border-neutral-700 dark:bg-neutral-800/50 dark:text-neutral-200'
+                        'rounded-full border px-3 py-1 text-sm capitalize transition-colors',
+                        basics.trade_type === tradeType
+                          ? 'border-blue-400 bg-blue-100 text-blue-700 dark:border-blue-700 dark:bg-blue-900/50 dark:text-blue-200'
                           : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300'
                       )}
                     >
-                      {category}
+                      {tradeType}
                     </button>
                   ))}
                 </div>
@@ -753,7 +768,7 @@ export function PlaybookEditor({
             </div>
 
             <div className="space-y-6">
-              <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white/70 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/60">
+              <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-black">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">
                     Trading Sessions
@@ -771,7 +786,7 @@ export function PlaybookEditor({
                           'rounded-full border px-3 py-1 text-xs font-medium uppercase transition-colors',
                           selected
                             ? 'border-emerald-400 bg-emerald-100 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
-                            : 'border-neutral-200 bg-white text-neutral-500 hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300'
+                            : 'border-neutral-200 bg-white text-neutral-500 hover:border-neutral-300 dark:border-neutral-800 dark:bg-black dark:text-neutral-300'
                         )}
                       >
                         {session}
@@ -781,7 +796,7 @@ export function PlaybookEditor({
                 </div>
               </div>
 
-              <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white/70 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/60">
+              <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-black">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">
                     Best Sessions
@@ -802,7 +817,7 @@ export function PlaybookEditor({
                           'rounded-full border px-3 py-1 text-xs font-medium uppercase transition-colors',
                           selected
                             ? 'border-purple-400 bg-purple-100 text-purple-700 dark:border-purple-700 dark:bg-purple-900/40 dark:text-purple-200'
-                            : 'border-neutral-200 bg-white text-neutral-500 hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300'
+                            : 'border-neutral-200 bg-white text-neutral-500 hover:border-neutral-300 dark:border-neutral-800 dark:bg-black dark:text-neutral-300'
                         )}
                       >
                         {session}
@@ -812,7 +827,7 @@ export function PlaybookEditor({
                 </div>
               </div>
 
-              <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white/70 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/60">
+              <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-black">
                 <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">
                   Symbols
                 </h3>
@@ -831,7 +846,7 @@ export function PlaybookEditor({
                           'rounded-md border px-2 py-1 text-xs transition-colors',
                           selected
                             ? 'border-purple-400 bg-purple-100 text-purple-700 dark:border-purple-700 dark:bg-purple-900/40 dark:text-purple-200'
-                            : 'border-neutral-200 bg-white text-neutral-500 hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300'
+                            : 'border-neutral-200 bg-white text-neutral-500 hover:border-neutral-300 dark:border-neutral-800 dark:bg-black dark:text-neutral-300'
                         )}
                         title={symbol.display_name}
                       >
@@ -842,7 +857,7 @@ export function PlaybookEditor({
                 </div>
               </div>
 
-              <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white/70 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/60">
+              <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-black">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">
@@ -866,7 +881,7 @@ export function PlaybookEditor({
                 </div>
               </div>
 
-              <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white/70 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/60">
+              <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-black">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">

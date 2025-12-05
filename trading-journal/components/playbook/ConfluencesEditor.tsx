@@ -76,12 +76,12 @@ export function ConfluencesEditor({
               onDragStart={(event) => handleDragStart(event, index)}
               onDragOver={(event) => event.preventDefault()}
               onDrop={(event) => handleDrop(event, index)}
-              className="bg-white/70 dark:bg-neutral-900/40 flex flex-col gap-3 rounded-lg border border-neutral-200/70 p-4 transition-shadow dark:border-neutral-800/60"
+              className="bg-white dark:bg-black flex flex-col gap-3 rounded-lg border border-neutral-200/70 p-4 transition-shadow dark:border-neutral-800/60"
             >
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
                 <button
                   type="button"
-                  className="flex h-9 w-9 items-center justify-center rounded-md border border-neutral-200/80 bg-neutral-100/60 text-neutral-500 dark:border-neutral-700/70 dark:bg-neutral-900/60 dark:text-neutral-400"
+                  className="flex h-9 w-9 items-center justify-center rounded-md border border-neutral-200/80 bg-neutral-100 text-neutral-500 dark:border-neutral-700/70 dark:bg-neutral-900 dark:text-neutral-400"
                   aria-label="Drag to reorder"
                 >
                   <GripVertical className="h-4 w-4" />
@@ -101,37 +101,20 @@ export function ConfluencesEditor({
                 </div>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-[200px_1fr_40px] sm:items-end">
-                <div className="space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex-1 space-y-2">
                   <label className="flex items-center justify-between text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                    Primary Confluence
+                    <span>Primary Confluence {confluence.primary_confluence ? '(Weight: 10)' : '(Weight: 3)'}</span>
                     <Switch
                       checked={confluence.primary_confluence}
-                      onCheckedChange={(checked) =>
-                        onUpdateConfluence(confluence.id, { primary_confluence: checked })
-                      }
+                      onCheckedChange={(checked) => {
+                        const weight = checked ? 10 : 3
+                        onUpdateConfluence(confluence.id, { primary_confluence: checked, weight })
+                      }}
                     />
                   </label>
                   <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                    Primary confluences receive extra weight in scoring.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                    Weight
-                  </label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    value={Number.isFinite(confluence.weight) ? confluence.weight : 0}
-                    onChange={(event) =>
-                      onUpdateConfluence(confluence.id, { weight: Number(event.target.value) })
-                    }
-                  />
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                    Relative contribution when checked.
+                    Primary confluences automatically receive higher weight (10 vs 3).
                   </p>
                 </div>
 

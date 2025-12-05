@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, RefreshCw, Info } from 'lucide-react'
 import type { PlaybookRubric } from '@/types/supabase'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -13,8 +13,24 @@ interface ScoringEditorProps {
   onChange: (rubric: PlaybookRubric) => void
 }
 
+const RECOMMENDED_SETTINGS = {
+  weight_rules: 0.7,
+  weight_confluences: 0.3,
+  weight_checklist: 0.0,
+  must_rule_penalty: 0.4,
+  min_checks: 0,
+  grade_cutoffs: {
+    'A+': 0.95,
+    'A': 0.9,
+    'B': 0.8,
+    'C': 0.7,
+    'D': 0.6,
+  }
+}
+
 export function ScoringEditor({ rubric, onChange }: ScoringEditorProps) {
   const [customIndex, setCustomIndex] = React.useState(1)
+  const [showAdvanced, setShowAdvanced] = React.useState(false)
 
   const gradeEntries = React.useMemo(
     () => Object.entries(rubric.grade_cutoffs).sort((a, b) => b[1] - a[1]),
@@ -67,6 +83,10 @@ export function ScoringEditor({ rubric, onChange }: ScoringEditorProps) {
     })
   }
 
+  const useRecommendedSettings = () => {
+    updateRubric(RECOMMENDED_SETTINGS)
+  }
+
   return (
     <div className="space-y-6">
       {!validation.valid && (
@@ -75,7 +95,56 @@ export function ScoringEditor({ rubric, onChange }: ScoringEditorProps) {
         </Alert>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="rounded-xl border border-amber-200/70 bg-amber-50/50 p-4 dark:border-amber-900/60 dark:bg-amber-950/30">
+        <div className="flex items-start gap-3">
+          <Info className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+          <div className="space-y-1">
+            <h3 className="font-semibold text-amber-900 dark:text-amber-100">
+              Scoring Setup
+            </h3>
+            <p className="text-sm text-amber-700 dark:text-amber-300">
+              Use the <strong>recommended settings</strong> below for automated scoring (70% rules, 30% confluences),
+              or expand <strong>Advanced Settings</strong> to manually configure weights and grade cutoffs.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between rounded-xl border border-blue-200/70 bg-blue-50/50 p-4 dark:border-blue-900/60 dark:bg-blue-950/30">
+        <div>
+          <h3 className="font-semibold text-blue-900 dark:text-blue-100">
+            Quick Setup
+          </h3>
+          <p className="text-sm text-blue-700 dark:text-blue-300">
+            Use recommended scoring settings optimized for most playbooks
+          </p>
+        </div>
+        <Button variant="outline" onClick={useRecommendedSettings}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Use Recommended
+        </Button>
+      </div>
+
+      <div className="space-y-4">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="flex w-full items-center justify-between rounded-lg border border-neutral-200/70 bg-white p-4 text-left transition-colors hover:bg-neutral-50 dark:border-neutral-800/60 dark:bg-black dark:hover:bg-neutral-900"
+        >
+          <div>
+            <h3 className="font-semibold text-neutral-900 dark:text-neutral-100">
+              Advanced Scoring Settings
+            </h3>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              Customize weights, penalties, and grade cutoffs
+            </p>
+          </div>
+          <span className="text-neutral-500">{showAdvanced ? '▼' : '▶'}</span>
+        </button>
+
+        {showAdvanced && (
+          <>
+            <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-4 rounded-xl border border-neutral-200/70 bg-white/80 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/50">
           <div>
             <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
@@ -178,7 +247,7 @@ export function ScoringEditor({ rubric, onChange }: ScoringEditorProps) {
           {gradeEntries.map(([grade, cutoff]) => (
             <div
               key={grade}
-              className="grid gap-3 rounded-lg border border-neutral-200/70 bg-white/60 p-4 dark:border-neutral-800/60 dark:bg-neutral-900/40 sm:grid-cols-[150px_1fr_40px]"
+              className="grid gap-3 rounded-lg border border-neutral-200/70 bg-white p-4 dark:border-neutral-800/60 dark:bg-black sm:grid-cols-[150px_1fr_40px]"
             >
               <div className="space-y-2">
                 <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
@@ -218,6 +287,9 @@ export function ScoringEditor({ rubric, onChange }: ScoringEditorProps) {
             </div>
           ))}
         </div>
+      </div>
+          </>
+        )}
       </div>
     </div>
   )

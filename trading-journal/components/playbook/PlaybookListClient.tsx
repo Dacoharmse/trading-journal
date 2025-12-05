@@ -28,18 +28,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { PlaybookMiniDashboard, type PlaybookStats } from './PlaybookMiniDashboard'
 
 export interface PlaybookSummary extends Playbook {
   rules_count: number
   confluences_count: number
+  stats?: PlaybookStats | null
 }
 
 interface PlaybookListClientProps {
   initialPlaybooks: PlaybookSummary[]
   initialError?: string | null
 }
-
-const categories = ['All', 'Breakout', 'Reversion', 'ICT', 'News', 'Other'] as const
 
 type StatusFilter = 'active' | 'all'
 
@@ -50,7 +50,6 @@ export function PlaybookListClient({
   const supabase = React.useMemo(() => createClient(), [])
   const [playbooks, setPlaybooks] = React.useState(initialPlaybooks)
   const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('active')
-  const [categoryFilter, setCategoryFilter] = React.useState<(typeof categories)[number]>('All')
   const [searchTerm, setSearchTerm] = React.useState('')
   const [actionStates, setActionStates] = React.useState<Record<string, boolean>>({})
   const [error, setError] = React.useState<string | null>(initialError)
@@ -62,12 +61,10 @@ export function PlaybookListClient({
       const matchesSearch = playbook.name.toLowerCase().includes(searchTerm.trim().toLowerCase())
       const matchesStatus =
         statusFilter === 'all' ? true : statusFilter === 'active' ? playbook.active : true
-      const matchesCategory =
-        categoryFilter === 'All' ? true : playbook.category === categoryFilter
 
-      return matchesSearch && matchesStatus && matchesCategory
+      return matchesSearch && matchesStatus
     })
-  }, [playbooks, searchTerm, statusFilter, categoryFilter])
+  }, [playbooks, searchTerm, statusFilter])
 
   const setActionLoading = (id: string, loading: boolean) => {
     setActionStates((prev) => {
@@ -179,22 +176,6 @@ export function PlaybookListClient({
             />
           </div>
 
-          <Select
-            value={categoryFilter}
-            onValueChange={(value) => setCategoryFilter(value as (typeof categories)[number])}
-          >
-            <SelectTrigger className="w-full lg:w-fit">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category === 'All' ? 'All Categories' : category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
           <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
             <SelectTrigger className="w-full lg:w-fit">
               <SelectValue placeholder="Status" />
@@ -221,7 +202,7 @@ export function PlaybookListClient({
             return (
               <Card
                 key={playbook.id}
-                className="border-neutral-200/70 bg-white/70 backdrop-blur dark:border-neutral-800/60 dark:bg-neutral-900/60"
+                className="border-neutral-200/70 bg-white dark:border-neutral-800/60 dark:bg-black"
               >
                 <CardHeader className="gap-3">
                   <div className="flex items-start justify-between gap-3">
@@ -229,16 +210,23 @@ export function PlaybookListClient({
                       <CardTitle className="text-xl text-neutral-900 dark:text-neutral-100">
                         {playbook.name}
                       </CardTitle>
-                      <Badge
-                        variant="secondary"
-                        className="bg-neutral-100 text-neutral-700 dark:bg-neutral-800/60 dark:text-neutral-200"
-                      >
-                        {playbook.category}
-                      </Badge>
+                      {playbook.trade_type && (
+                        <Badge
+                          variant="secondary"
+                          className={cn(
+                            'capitalize',
+                            playbook.trade_type === 'continuation'
+                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+                              : 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300'
+                          )}
+                        >
+                          {playbook.trade_type}
+                        </Badge>
+                      )}
                     </div>
                     <Badge
                       className={cn(
-                        'border px-2 py-1 text-xs font-medium',
+                        'border px-2 py-1 text-xs font-medium flex-shrink-0',
                         playbook.active
                           ? 'border-emerald-300/60 bg-emerald-100/70 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-900/30 dark:text-emerald-300'
                           : 'border-neutral-300/60 bg-neutral-100/60 text-neutral-600 dark:border-neutral-700/60 dark:bg-neutral-900/40 dark:text-neutral-300'
@@ -251,10 +239,13 @@ export function PlaybookListClient({
 
                 <CardContent className="space-y-4">
                   {playbook.description && (
-                    <p className="text-sm text-neutral-600 dark:text-neutral-300/80 line-clamp-3">
+                    <p className="text-sm text-neutral-600 dark:text-neutral-300/80 line-clamp-2">
                       {playbook.description}
                     </p>
                   )}
+
+                  {/* Mini Dashboard Stats */}
+                  <PlaybookMiniDashboard stats={playbook.stats || null} compact />
 
                   {playbook.sessions.length > 0 && (
                     <div className="flex flex-wrap gap-2">
@@ -360,17 +351,21 @@ export function PlaybookListClient({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Playbook?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete &quot;{playbookToDelete?.name}&quot;? This will permanently
-              delete:
-              <ul className="mt-2 list-inside list-disc space-y-1 text-sm">
-                <li>{playbookToDelete?.rules_count || 0} rules</li>
-                <li>{playbookToDelete?.confluences_count || 0} confluences</li>
-                <li>Associated scoring rubric</li>
-              </ul>
-              <p className="mt-3 font-semibold text-destructive">
-                This action cannot be undone.
-              </p>
+            <AlertDialogDescription asChild>
+              <div>
+                <p>
+                  Are you sure you want to delete &quot;{playbookToDelete?.name}&quot;? This will permanently
+                  delete:
+                </p>
+                <ul className="mt-2 list-inside list-disc space-y-1 text-sm">
+                  <li>{playbookToDelete?.rules_count || 0} rules</li>
+                  <li>{playbookToDelete?.confluences_count || 0} confluences</li>
+                  <li>Associated scoring rubric</li>
+                </ul>
+                <p className="mt-3 font-semibold text-destructive">
+                  This action cannot be undone.
+                </p>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

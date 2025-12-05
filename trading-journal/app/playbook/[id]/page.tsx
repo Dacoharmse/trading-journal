@@ -4,6 +4,7 @@ import * as React from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { PlaybookEditor } from '@/components/playbook/PlaybookEditor'
+import { PlaybookMiniDashboard, calculatePlaybookStats, type PlaybookStats } from '@/components/playbook/PlaybookMiniDashboard'
 import type {
   Playbook,
   PlaybookRule,
@@ -13,6 +14,15 @@ import type {
   PlaybookExample,
   Symbol,
 } from '@/types/supabase'
+
+interface TradeRecord {
+  id: string
+  playbook_id: string | null
+  pnl: number
+  r_multiple: number | null
+  closed_at: string | null
+  opened_at: string | null
+}
 
 export default function EditPlaybookPage() {
   const supabase = React.useMemo(() => createClient(), [])
@@ -28,6 +38,7 @@ export default function EditPlaybookPage() {
   const [examples, setExamples] = React.useState<PlaybookExample[]>([])
   const [rubric, setRubric] = React.useState<PlaybookRubric | null>(null)
   const [symbols, setSymbols] = React.useState<Symbol[]>([])
+  const [stats, setStats] = React.useState<PlaybookStats | null>(null)
   const [loading, setLoading] = React.useState(true)
   const [missing, setMissing] = React.useState(false)
 
@@ -54,7 +65,7 @@ export default function EditPlaybookPage() {
 
         setUserId(userData.user.id)
 
-        const [playbookRes, rulesRes, confRes, detailsRes, examplesRes, rubricRes, symbolsRes] = await Promise.all([
+        const [playbookRes, rulesRes, confRes, detailsRes, examplesRes, rubricRes, symbolsRes, tradesRes] = await Promise.all([
           supabase.from('playbooks').select('*').eq('id', playbookId).maybeSingle(),
           supabase
             .from('playbook_rules')
@@ -78,6 +89,10 @@ export default function EditPlaybookPage() {
             .order('sort'),
           supabase.from('playbook_rubric').select('*').eq('playbook_id', playbookId).maybeSingle(),
           supabase.from('symbols').select('id, code, display_name').order('code'),
+          supabase
+            .from('trades')
+            .select('id, playbook_id, pnl, r_multiple, closed_at, opened_at')
+            .eq('playbook_id', playbookId),
         ])
 
         if (playbookRes.error) throw playbookRes.error
@@ -94,6 +109,11 @@ export default function EditPlaybookPage() {
           setExamples((examplesRes.data as PlaybookExample[] | null) ?? [])
           setRubric((rubricRes.data as PlaybookRubric | null) ?? null)
           setSymbols((symbolsRes.data as Symbol[] | null) ?? [])
+
+          // Calculate playbook stats
+          const trades = (tradesRes.data as TradeRecord[] | null) ?? []
+          const calculatedStats = calculatePlaybookStats(playbookId, trades)
+          setStats(calculatedStats.total_trades > 0 ? calculatedStats : null)
         }
       } catch (error) {
         if (!cancelled) {
@@ -116,7 +136,7 @@ export default function EditPlaybookPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-50 p-6 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950">
+      <div className="flex-1 bg-neutral-50 p-6 dark:bg-black">
         <div className="mx-auto w-full max-w-5xl animate-pulse space-y-4">
           <div className="h-8 w-64 rounded-lg bg-neutral-200/70 dark:bg-neutral-800/60" />
           <div className="h-32 rounded-lg bg-neutral-200/70 dark:bg-neutral-800/60" />
@@ -131,8 +151,13 @@ export default function EditPlaybookPage() {
   }
 
   return (
-    <div className="flex-1 bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-50 p-6 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950">
-      <div className="mx-auto w-full max-w-5xl">
+    <div className="flex-1 bg-neutral-50 p-6 dark:bg-black">
+      <div className="mx-auto w-full max-w-5xl space-y-6">
+        {/* Playbook Performance Dashboard */}
+        <div className="rounded-xl border border-neutral-200/70 bg-white/70 p-6 backdrop-blur dark:border-neutral-800/60 dark:bg-neutral-900/60">
+          <PlaybookMiniDashboard stats={stats} showTitle />
+        </div>
+
         <PlaybookEditor
           mode="edit"
           userId={userId}

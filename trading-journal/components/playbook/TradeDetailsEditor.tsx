@@ -19,7 +19,7 @@ export interface TradeDetailDraft {
 
 interface TradeDetailsEditorProps {
   details: TradeDetailDraft[]
-  onAddDetail: () => void
+  onAddDetail: (type?: TradeDetailDraft['type']) => void
   onUpdateDetail: (id: string, updates: Partial<TradeDetailDraft>) => void
   onRemoveDetail: (id: string) => void
   onReorderDetails: (fromIndex: number, toIndex: number) => void
@@ -70,8 +70,8 @@ export function TradeDetailsEditor({
       onDragOver={(e) => handleDragOver(e, index)}
       onDragEnd={handleDragEnd}
       className={cn(
-        'flex items-center gap-2 rounded-lg border border-neutral-200/70 bg-white/70 p-3',
-        'dark:border-neutral-800/60 dark:bg-neutral-900/60',
+        'flex items-center gap-2 rounded-lg border border-neutral-200/70 bg-white p-3',
+        'dark:border-neutral-800/60 dark:bg-black',
         draggedIndex === index && 'opacity-50'
       )}
     >
@@ -107,7 +107,7 @@ export function TradeDetailsEditor({
   return (
     <div className="space-y-8">
       {/* Trade Details */}
-      <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white/70 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/60">
+      <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-black">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
@@ -118,13 +118,7 @@ export function TradeDetailsEditor({
             </p>
           </div>
           <Button
-            onClick={() => {
-              onAddDetail()
-              setTimeout(() => {
-                const newDetail = details[details.length - 1]
-                if (newDetail) onUpdateDetail(newDetail.id, { type: 'detail' })
-              }, 0)
-            }}
+            onClick={() => onAddDetail('detail')}
             variant="outline"
             size="sm"
           >
@@ -144,7 +138,7 @@ export function TradeDetailsEditor({
       </div>
 
       {/* Invalidations */}
-      <div className="space-y-3 rounded-xl border border-red-200/70 bg-red-50/50 p-6 dark:border-red-900/60 dark:bg-red-950/20">
+      <div className="space-y-3 rounded-xl border border-red-200/70 bg-red-50/50 p-6 dark:border-red-900/60 dark:bg-black">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
@@ -156,13 +150,7 @@ export function TradeDetailsEditor({
             </p>
           </div>
           <Button
-            onClick={() => {
-              onAddDetail()
-              setTimeout(() => {
-                const newDetail = details[details.length - 1]
-                if (newDetail) onUpdateDetail(newDetail.id, { type: 'invalidation' })
-              }, 0)
-            }}
+            onClick={() => onAddDetail('invalidation')}
             variant="outline"
             size="sm"
           >
@@ -182,7 +170,7 @@ export function TradeDetailsEditor({
       </div>
 
       {/* Considerations */}
-      <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white/70 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/60">
+      <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-black">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
@@ -193,13 +181,7 @@ export function TradeDetailsEditor({
             </p>
           </div>
           <Button
-            onClick={() => {
-              onAddDetail()
-              setTimeout(() => {
-                const newDetail = details[details.length - 1]
-                if (newDetail) onUpdateDetail(newDetail.id, { type: 'consideration' })
-              }, 0)
-            }}
+            onClick={() => onAddDetail('consideration')}
             variant="outline"
             size="sm"
           >
@@ -219,7 +201,7 @@ export function TradeDetailsEditor({
       </div>
 
       {/* Checklist */}
-      <div className="space-y-3 rounded-xl border border-emerald-200/70 bg-emerald-50/50 p-6 dark:border-emerald-900/60 dark:bg-emerald-950/20">
+      <div className="space-y-3 rounded-xl border border-emerald-200/70 bg-emerald-50/50 p-6 dark:border-emerald-900/60 dark:bg-black">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
@@ -230,13 +212,7 @@ export function TradeDetailsEditor({
             </p>
           </div>
           <Button
-            onClick={() => {
-              onAddDetail()
-              setTimeout(() => {
-                const newDetail = details[details.length - 1]
-                if (newDetail) onUpdateDetail(newDetail.id, { type: 'checklist' })
-              }, 0)
-            }}
+            onClick={() => onAddDetail('checklist')}
             variant="outline"
             size="sm"
           >

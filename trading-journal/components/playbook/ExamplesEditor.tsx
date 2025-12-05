@@ -43,7 +43,7 @@ export function ExamplesEditor({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-neutral-200/70 bg-white/70 p-6 dark:border-neutral-800/60 dark:bg-neutral-900/60">
+      <div className="rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-black">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">

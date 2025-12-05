@@ -82,12 +82,12 @@ export function RulesEditor({
               onDragStart={(event) => handleDragStart(event, index)}
               onDragOver={(event) => event.preventDefault()}
               onDrop={(event) => handleDrop(event, index)}
-              className="bg-white/70 dark:bg-neutral-900/40 relative flex flex-col gap-3 rounded-lg border border-neutral-200/70 p-4 transition-shadow dark:border-neutral-800/60"
+              className="bg-white dark:bg-black relative flex flex-col gap-3 rounded-lg border border-neutral-200/70 p-4 transition-shadow dark:border-neutral-800/60"
             >
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
                 <button
                   type="button"
-                  className="flex h-9 w-9 items-center justify-center rounded-md border border-neutral-200/80 bg-neutral-100/60 text-neutral-500 dark:border-neutral-700/70 dark:bg-neutral-900/60 dark:text-neutral-400"
+                  className="flex h-9 w-9 items-center justify-center rounded-md border border-neutral-200/80 bg-neutral-100 text-neutral-500 dark:border-neutral-700/70 dark:bg-neutral-900 dark:text-neutral-400"
                   aria-label="Drag to reorder"
                 >
                   <GripVertical className="h-4 w-4" />
@@ -112,36 +112,23 @@ export function RulesEditor({
                   </label>
                   <Select
                     value={rule.type}
-                    onValueChange={(value) =>
-                      onUpdateRule(rule.id, { type: value as RuleDraft['type'] })
-                    }
+                    onValueChange={(value) => {
+                      const type = value as RuleDraft['type']
+                      const weight = type === 'must' ? 10 : type === 'should' ? 5 : 1
+                      onUpdateRule(rule.id, { type, weight })
+                    }}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="must">Must</SelectItem>
-                      <SelectItem value="should">Should</SelectItem>
-                      <SelectItem value="optional">Optional</SelectItem>
+                      <SelectItem value="must">Must (Weight: 10)</SelectItem>
+                      <SelectItem value="should">Should (Weight: 5)</SelectItem>
+                      <SelectItem value="optional">Optional (Weight: 1)</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                    Weight
-                  </label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    value={Number.isFinite(rule.weight) ? rule.weight : 0}
-                    onChange={(event) =>
-                      onUpdateRule(rule.id, { weight: Number(event.target.value) })
-                    }
-                  />
                   <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                    Relative contribution to the setup score.
+                    Weight is automatically assigned based on type.
                   </p>
                 </div>
 
