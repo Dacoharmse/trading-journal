@@ -1,12 +1,16 @@
 'use client'
 
 import * as React from 'react'
+import { format } from 'date-fns'
+import { Calendar as CalendarIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { Calendar } from '@/components/ui/calendar'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   Select,
   SelectContent,
@@ -14,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { cn } from '@/lib/utils'
 import { scoreSetup } from '@/lib/playbook-scoring'
 import { uploadTradeMedia, compressImage } from '@/lib/storage'
 import type { PlaybookRule, PlaybookConfluence, PlaybookRubric } from '@/types/supabase'
@@ -44,13 +49,12 @@ export function BacktestEntryModal({
   symbols,
   editingBacktest,
 }: BacktestEntryModalProps) {
-  const supabase = React.useMemo(() => createClient(), [])
 
   const [loading, setLoading] = React.useState(false)
   const [symbol, setSymbol] = React.useState('')
   const [session, setSession] = React.useState<string>('')
   const [direction, setDirection] = React.useState<'long' | 'short'>('long')
-  const [entryDate, setEntryDate] = React.useState(new Date().toISOString().split('T')[0])
+  const [entryDate, setEntryDate] = React.useState<Date>(new Date())
   // Planned metrics
   const [plannedSlPips, setPlannedSlPips] = React.useState('')
   const [plannedTpPips, setPlannedTpPips] = React.useState('')
@@ -79,7 +83,7 @@ export function BacktestEntryModal({
       setSymbol(editingBacktest.symbol)
       setSession(editingBacktest.session || '')
       setDirection(editingBacktest.direction)
-      setEntryDate(editingBacktest.entry_date)
+      setEntryDate(new Date(editingBacktest.entry_date))
       setPlannedSlPips(editingBacktest.planned_sl_pips?.toString() || '')
       setPlannedTpPips(editingBacktest.planned_tp_pips?.toString() || '')
       setPlannedRR(editingBacktest.planned_rr?.toString() || '')
@@ -119,11 +123,14 @@ export function BacktestEntryModal({
 
     setLoading(true)
     try {
+      // Create fresh Supabase client for this request
+      const supabase = createClient()
+
       const data = {
         symbol,
         session: session || null,
         direction,
-        entry_date: entryDate,
+        entry_date: format(entryDate, 'yyyy-MM-dd'),
         // Planned metrics
         planned_sl_pips: plannedSlPips ? Number(plannedSlPips) : null,
         planned_tp_pips: plannedTpPips ? Number(plannedTpPips) : null,
@@ -171,6 +178,7 @@ export function BacktestEntryModal({
       onClose()
     } catch (error) {
       console.error('Failed to save backtest:', error)
+      alert(`Failed to save backtest: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setLoading(false)
     }
@@ -192,7 +200,7 @@ export function BacktestEntryModal({
             // Compress image before upload
             const compressedFile = await compressImage(file)
 
-            // Upload to Supabase storage
+            // Upload to Supabase storage (uploadTradeMedia creates its own client)
             const result = await uploadTradeMedia(compressedFile, userId, 'backtests')
 
             if (result.error) {
@@ -231,7 +239,7 @@ export function BacktestEntryModal({
     setSymbol('')
     setSession('')
     setDirection('long')
-    setEntryDate(new Date().toISOString().split('T')[0])
+    setEntryDate(new Date())
     setPlannedSlPips('')
     setPlannedTpPips('')
     setPlannedRR('')
@@ -305,7 +313,28 @@ export function BacktestEntryModal({
 
             <div>
               <Label>Entry Date</Label>
-              <Input type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      'w-full justify-start text-left font-normal',
+                      !entryDate && 'text-muted-foreground'
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {entryDate ? format(entryDate, 'PPP') : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={entryDate}
+                    onSelect={(date) => date && setEntryDate(date)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
