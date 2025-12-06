@@ -119,8 +119,17 @@ function TradesPageContent() {
     setError(null)
 
     try {
-      const { data: userData } = await supabase.auth.getUser()
-      setUserId(userData.user?.id ?? '')
+      const { data: userData, error: authError } = await supabase.auth.getUser()
+
+      if (authError) {
+        throw new Error(`Authentication error: ${authError.message}`)
+      }
+
+      if (!userData.user) {
+        throw new Error('You must be logged in to view trades. Please sign in to continue.')
+      }
+
+      setUserId(userData.user.id)
 
       // Only fetch accounts and playbooks on initial load
       if (!loadMore) {
@@ -211,9 +220,36 @@ function TradesPageContent() {
       setHasMore(totalLoaded < (count || 0))
 
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred'
-      setError(errorMessage)
       console.error('Error fetching data:', err)
+
+      // Enhanced error logging for debugging
+      console.error('Error details:', {
+        message: err instanceof Error ? err.message : 'Unknown error',
+        stack: err instanceof Error ? err.stack : undefined,
+        // Supabase PostgrestError properties
+        code: (err as any)?.code,
+        details: (err as any)?.details,
+        hint: (err as any)?.hint,
+        // Full error object
+        fullError: err
+      })
+
+      // Extract meaningful error message
+      let errorMessage = 'Failed to load trades. Please try again.'
+
+      if (err instanceof Error) {
+        errorMessage = err.message
+      } else if (typeof err === 'object' && err !== null) {
+        // Handle Supabase PostgrestError
+        const postgrestError = err as any
+        if (postgrestError.message) {
+          errorMessage = postgrestError.message
+        } else if (postgrestError.details) {
+          errorMessage = postgrestError.details
+        }
+      }
+
+      setError(errorMessage)
     } finally {
       setLoading(false)
       setLoadingMore(false)
