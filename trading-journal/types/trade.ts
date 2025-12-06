@@ -1,7 +1,16 @@
 /**
  * Trading Journal Type Definitions
- * Comprehensive types for managing trades, analytics, and filtering
+ *
+ * DEPRECATION NOTICE:
+ * The Trade interface in this file is deprecated.
+ * Please use Trade from '@/types/supabase' instead.
+ *
+ * This file maintains backward compatibility by re-exporting from supabase.ts
+ * and providing additional helper types for trade statistics and filtering.
  */
+
+// Re-export the correct Trade type from supabase
+export type { Trade } from './supabase'
 
 /**
  * Enum for common trading brokers
@@ -24,6 +33,7 @@ export enum Broker {
 
 /**
  * Trade type - long or short position
+ * @deprecated Use 'direction' field from Trade interface instead
  */
 export type TradeType = 'long' | 'short';
 
@@ -31,108 +41,6 @@ export type TradeType = 'long' | 'short';
  * Trade status
  */
 export type TradeStatus = 'open' | 'closed';
-
-/**
- * Main Trade interface
- * Represents a single trade with all relevant data
- */
-export interface Trade {
-  /** Unique identifier for the trade */
-  id: string;
-
-  /** Trading symbol/ticker (e.g., AAPL, TSLA) */
-  symbol: string;
-
-  /** Account ID the trade is associated with */
-  account_id?: string;
-
-  /** Account display name */
-  account_name?: string;
-
-  /** Entry price per share/unit */
-  entry_price: number;
-
-  /** Exit price per share/unit (null if trade is still open) */
-  exit_price: number | null;
-
-  /** Number of shares/contracts traded */
-  quantity: number;
-
-  /** Type of trade - long or short */
-  trade_type: TradeType;
-
-  /** Date and time when the trade was entered */
-  entry_date: Date | string;
-
-  /** Date and time when the trade was exited (null if still open) */
-  exit_date: Date | string | null;
-
-  /** Profit and loss for the trade */
-  pnl: number;
-
-  /** Trading fees and commissions */
-  fees: number;
-
-  /** Additional notes about the trade */
-  notes?: string;
-
-  /** Tags for categorizing trades (e.g., 'breakout', 'earnings', 'momentum') */
-  tags?: string[];
-
-  /** Trading strategy used (e.g., 'scalping', 'swing trade', 'day trade') */
-  strategy?: string;
-
-  /** URL to screenshot or chart image */
-  image_url?: string;
-
-  /** ID of the user who created this trade */
-  user_id: string;
-
-  /** Broker used for this trade */
-  broker?: Broker;
-
-  /** Trade status */
-  status?: TradeStatus;
-
-  /** Reason the trade was closed */
-  close_reason?: string | null;
-
-  /** Risk/reward ratio */
-  risk_reward_ratio?: number;
-
-  /** Stop loss price */
-  stop_loss?: number;
-
-  /** Take profit price */
-  take_profit?: number;
-
-  /** Asset class (stocks, options, futures, crypto, forex) */
-  asset_class?: 'stocks' | 'options' | 'futures' | 'crypto' | 'forex';
-
-  /** Profit/Loss amount in account currency (USD, ZAR, etc.) */
-  pnl_amount?: number;
-
-  /** Currency for the profit/loss amount */
-  pnl_currency?: string;
-
-  /** Actual risk/reward ratio achieved */
-  actual_rr?: number;
-
-  /** Trade outcome classification */
-  outcome?: 'win' | 'loss' | 'breakeven';
-
-  /** Entry timeframe */
-  entry_timeframe?: string;
-
-  /** Analysis/confirmation timeframe */
-  analysis_timeframe?: string;
-
-  /** Timestamp when record was created */
-  created_at?: Date | string;
-
-  /** Timestamp when record was last updated */
-  updated_at?: Date | string;
-}
 
 /**
  * TradeStats interface
