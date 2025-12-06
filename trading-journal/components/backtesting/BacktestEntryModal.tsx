@@ -126,6 +126,8 @@ export function BacktestEntryModal({
       // Create fresh Supabase client for this request
       const supabase = createClient()
 
+      console.log('Submitting backtest with entry date:', entryDate, 'formatted:', format(entryDate, 'yyyy-MM-dd'))
+
       const data = {
         symbol,
         session: session || null,
@@ -156,28 +158,46 @@ export function BacktestEntryModal({
 
       if (editingBacktest) {
         // Update existing backtest
+        console.log('Updating backtest:', editingBacktest.id, data)
         const result = await supabase
           .from('backtests')
           .update(data)
           .eq('id', editingBacktest.id)
         error = result.error
+        console.log('Update result:', { error, data: result.data })
       } else {
         // Insert new backtest
-        const result = await supabase.from('backtests').insert({
+        const insertData = {
           user_id: userId,
           playbook_id: playbookId,
           ...data,
-        })
+        }
+        console.log('Inserting backtest:', insertData)
+        const result = await supabase.from('backtests').insert(insertData)
         error = result.error
+        console.log('Insert result:', { error, data: result.data })
       }
 
-      if (error) throw error
+      if (error) {
+        console.error('Supabase error:', error)
+        throw error
+      }
 
+      console.log('Backtest saved successfully')
       onSuccess()
       resetForm()
       onClose()
     } catch (error) {
-      console.error('Failed to save backtest:', error)
+      console.error('=== BACKTEST SAVE ERROR ===')
+      console.error('Error:', error)
+      console.error('Error type:', typeof error)
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown',
+        code: (error as any)?.code,
+        details: (error as any)?.details,
+        hint: (error as any)?.hint,
+      })
+      console.error('=== END ERROR ===')
       alert(`Failed to save backtest: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setLoading(false)
