@@ -33,7 +33,7 @@ interface PlaybookWithStats {
 }
 
 export default function BacktestingPage() {
-  const supabase = React.useMemo(() => createClient(), [])
+  const supabase = createClient()
   const [loading, setLoading] = React.useState(true)
   const [playbooks, setPlaybooks] = React.useState<PlaybookWithStats[]>([])
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
