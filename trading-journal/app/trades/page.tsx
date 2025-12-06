@@ -40,6 +40,7 @@ function TradesPageContent() {
   const [error, setError] = React.useState<string | null>(null)
   const [hasMore, setHasMore] = React.useState(true)
   const [page, setPage] = React.useState(0)
+  const [authStatus, setAuthStatus] = React.useState<'checking' | 'authenticated' | 'unauthenticated'>('checking')
 
   // Modal states
   const [drawerOpen, setDrawerOpen] = React.useState(false)
@@ -122,13 +123,19 @@ function TradesPageContent() {
       const { data: userData, error: authError } = await supabase.auth.getUser()
 
       if (authError) {
+        console.error('Auth error details:', authError)
+        setAuthStatus('unauthenticated')
         throw new Error(`Authentication error: ${authError.message}`)
       }
 
       if (!userData.user) {
+        console.error('No user found in session')
+        setAuthStatus('unauthenticated')
         throw new Error('You must be logged in to view trades. Please sign in to continue.')
       }
 
+      console.log('User authenticated:', userData.user.id)
+      setAuthStatus('authenticated')
       setUserId(userData.user.id)
 
       // Only fetch accounts and playbooks on initial load
@@ -220,25 +227,43 @@ function TradesPageContent() {
       setHasMore(totalLoaded < (count || 0))
 
     } catch (err) {
-      console.error('Error fetching data:', err)
-
       // Enhanced error logging for debugging
-      console.error('Error details:', {
-        message: err instanceof Error ? err.message : 'Unknown error',
-        stack: err instanceof Error ? err.stack : undefined,
-        // Supabase PostgrestError properties
-        code: (err as any)?.code,
-        details: (err as any)?.details,
-        hint: (err as any)?.hint,
-        // Full error object
-        fullError: err
-      })
+      console.error('=== ERROR FETCHING DATA ===')
+      console.error('Raw error:', err)
+      console.error('Error type:', typeof err)
+      console.error('Error constructor:', err?.constructor?.name)
+
+      // Log all properties (even non-enumerable ones)
+      if (err && typeof err === 'object') {
+        console.error('Error properties:')
+        console.error('- message:', (err as any).message)
+        console.error('- code:', (err as any).code)
+        console.error('- details:', (err as any).details)
+        console.error('- hint:', (err as any).hint)
+        console.error('- stack:', (err as any).stack)
+
+        // Try to serialize with all properties
+        try {
+          console.error('JSON.stringify attempt:', JSON.stringify(err, Object.getOwnPropertyNames(err), 2))
+        } catch (e) {
+          console.error('Failed to stringify error:', e)
+        }
+
+        // Log all own properties
+        const allProps = Object.getOwnPropertyNames(err)
+        console.error('All property names:', allProps)
+        allProps.forEach(prop => {
+          console.error(`  ${prop}:`, (err as any)[prop])
+        })
+      }
+
+      console.error('=== END ERROR LOG ===')
 
       // Extract meaningful error message
       let errorMessage = 'Failed to load trades. Please try again.'
 
       if (err instanceof Error) {
-        errorMessage = err.message
+        errorMessage = err.message || 'An error occurred while loading trades'
       } else if (typeof err === 'object' && err !== null) {
         // Handle Supabase PostgrestError
         const postgrestError = err as any
@@ -246,6 +271,8 @@ function TradesPageContent() {
           errorMessage = postgrestError.message
         } else if (postgrestError.details) {
           errorMessage = postgrestError.details
+        } else if (postgrestError.error_description) {
+          errorMessage = postgrestError.error_description
         }
       }
 
@@ -594,14 +621,39 @@ function TradesPageContent() {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 dark:text-red-400 mb-4">Error: {error}</p>
-          <button
-            onClick={fetchData}
-            className="px-4 py-2 text-sm font-medium text-white bg-neutral-600 hover:bg-neutral-700 rounded-lg"
-          >
-            Retry
-          </button>
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="mb-4">
+            <div className="text-6xl mb-4">⚠️</div>
+            <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2">
+              Unable to Load Trades
+            </h2>
+            <p className="text-red-600 dark:text-red-400 mb-2">{error}</p>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
+              Auth Status: <span className="font-mono">{authStatus}</span>
+            </p>
+            {authStatus === 'unauthenticated' && (
+              <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
+                Please sign in to view your trades. Click the button below to go to the login page.
+              </p>
+            )}
+          </div>
+          <div className="flex gap-2 justify-center">
+            {authStatus === 'unauthenticated' ? (
+              <a
+                href="/auth/login"
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
+              >
+                Sign In
+              </a>
+            ) : (
+              <button
+                onClick={() => fetchData()}
+                className="px-4 py-2 text-sm font-medium text-white bg-neutral-600 hover:bg-neutral-700 rounded-lg"
+              >
+                Retry
+              </button>
+            )}
+          </div>
         </div>
       </div>
     )
