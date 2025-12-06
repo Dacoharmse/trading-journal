@@ -16,8 +16,14 @@ import { ColumnPicker } from '@/components/trades/ColumnPicker'
 import { ExportMenu } from '@/components/trades/ExportMenu'
 import { removeOutliers, getTradeResult } from '@/lib/trades-selectors'
 import { convertPnL } from '@/lib/fx-converter'
+import { Button } from '@/components/ui/button'
+import { Loader2 } from 'lucide-react'
 
 type PlaybookSummary = Pick<Playbook, 'id' | 'name' | 'category' | 'active'>
+
+// Pagination constants
+const TRADES_PER_PAGE = 100
+const INITIAL_LOAD = 50
 
 function TradesPageContent() {
   const supabase = createClient()
@@ -30,7 +36,10 @@ function TradesPageContent() {
   const [playbooks, setPlaybooks] = React.useState<PlaybookSummary[]>([])
   const [userId, setUserId] = React.useState('')
   const [loading, setLoading] = React.useState(true)
+  const [loadingMore, setLoadingMore] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const [hasMore, setHasMore] = React.useState(true)
+  const [page, setPage] = React.useState(0)
 
   // Modal states
   const [drawerOpen, setDrawerOpen] = React.useState(false)
@@ -100,48 +109,119 @@ function TradesPageContent() {
     [visibleColumns]
   )
 
-  // Fetch data
-  const fetchData = async () => {
-    setLoading(true)
+  // Fetch data with pagination
+  const fetchData = async (loadMore: boolean = false) => {
+    if (loadMore) {
+      setLoadingMore(true)
+    } else {
+      setLoading(true)
+    }
     setError(null)
 
     try {
       const { data: userData } = await supabase.auth.getUser()
       setUserId(userData.user?.id ?? '')
 
-      // Fetch accounts
-      const { data: accountsData, error: accountsError } = await supabase
-        .from('accounts')
-        .select('*')
-        .order('name')
+      // Only fetch accounts and playbooks on initial load
+      if (!loadMore) {
+        // Fetch accounts with selected fields only
+        const { data: accountsData, error: accountsError } = await supabase
+          .from('accounts')
+          .select('id, name, currency, account_type, phase, account_status')
+          .order('name')
 
-      if (accountsError) throw accountsError
-      setAccounts(accountsData || [])
+        if (accountsError) throw accountsError
+        setAccounts(accountsData || [])
 
-      // Fetch playbooks (for lookup)
-      const { data: playbooksData, error: playbooksError } = await supabase
-        .from('playbooks')
-        .select('id, name, category, active')
-        .order('name')
+        // Fetch playbooks (for lookup) with selected fields only
+        const { data: playbooksData, error: playbooksError } = await supabase
+          .from('playbooks')
+          .select('id, name, category, active')
+          .order('name')
 
-      if (playbooksError) throw playbooksError
-      setPlaybooks((playbooksData as PlaybookSummary[] | null) ?? [])
+        if (playbooksError) throw playbooksError
+        setPlaybooks((playbooksData as PlaybookSummary[] | null) ?? [])
+      }
 
-      // Fetch trades
-      const { data: tradesData, error: tradesError } = await supabase
+      // Fetch trades with pagination and selected fields
+      const currentPage = loadMore ? page + 1 : 0
+      const limit = loadMore ? TRADES_PER_PAGE : INITIAL_LOAD
+      const offset = loadMore ? (page + 1) * TRADES_PER_PAGE : 0
+
+      // Select only necessary fields to reduce payload size
+      const { data: tradesData, error: tradesError, count } = await supabase
         .from('trades')
-        .select('*')
-        .order('exit_date', { ascending: false })
+        .select(`
+          id,
+          user_id,
+          account_id,
+          symbol,
+          symbol_id,
+          direction,
+          entry_price,
+          stop_price,
+          exit_price,
+          size,
+          pips,
+          stop_pips,
+          target_pips,
+          rr_planned,
+          risk_r,
+          r_multiple,
+          entry_date,
+          exit_date,
+          pnl,
+          currency,
+          mae_r,
+          mfe_r,
+          strategy,
+          strategy_id,
+          playbook_id,
+          session,
+          confluences,
+          tags,
+          setup_score,
+          setup_grade,
+          commission,
+          swap,
+          slippage,
+          fees,
+          notes,
+          emotional_state,
+          status,
+          close_reason,
+          created_at
+        `, { count: 'exact' })
+        .order('exit_date', { ascending: false, nullsFirst: false })
+        .order('entry_date', { ascending: false })
+        .range(offset, offset + limit - 1)
 
       if (tradesError) throw tradesError
-      setTrades(tradesData || [])
+
+      if (loadMore) {
+        setTrades((prev) => [...prev, ...(tradesData || [])])
+        setPage(currentPage)
+      } else {
+        setTrades(tradesData || [])
+        setPage(0)
+      }
+
+      // Check if there are more trades to load
+      const totalLoaded = loadMore ? trades.length + (tradesData?.length || 0) : (tradesData?.length || 0)
+      setHasMore(totalLoaded < (count || 0))
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred'
       setError(errorMessage)
       console.error('Error fetching data:', err)
     } finally {
       setLoading(false)
+      setLoadingMore(false)
     }
+  }
+
+  const handleLoadMore = () => {
+    fetchData(true)
   }
 
   React.useEffect(() => {
@@ -506,16 +586,39 @@ function TradesPageContent() {
       />
 
       {/* Table */}
-      <div className="flex-1 overflow-hidden">
-        <TradesTable
-          trades={normalizedTrades}
-          accounts={accounts}
-          playbooks={playbooks}
-          visibleColumns={visibleColumnsSet}
-          units={units}
-          displayCurrency={displayCurrency}
-          onTradeClick={handleTradeClick}
-        />
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="flex-1 overflow-auto">
+          <TradesTable
+            trades={normalizedTrades}
+            accounts={accounts}
+            playbooks={playbooks}
+            visibleColumns={visibleColumnsSet}
+            units={units}
+            displayCurrency={displayCurrency}
+            onTradeClick={handleTradeClick}
+          />
+        </div>
+
+        {/* Load More Button */}
+        {hasMore && normalizedTrades.length > 0 && (
+          <div className="border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4 flex justify-center">
+            <Button
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              variant="outline"
+              className="min-w-[200px]"
+            >
+              {loadingMore ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading more trades...
+                </>
+              ) : (
+                <>Load More ({trades.length} loaded)</>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Modals & Drawers */}
