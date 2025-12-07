@@ -23,6 +23,7 @@ export interface Backtest {
   setup_score?: number | null
   setup_grade?: string | null
   notes?: string | null
+  hold_time?: number | null // Hold time in minutes
   confluences_checked?: Record<string, boolean> | null
   rules_checked?: Record<string, boolean> | null
   created_at?: string

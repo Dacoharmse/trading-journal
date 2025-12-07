@@ -55,6 +55,7 @@ export function BacktestEntryModal({
   const [session, setSession] = React.useState<string>('')
   const [direction, setDirection] = React.useState<'long' | 'short'>('long')
   const [entryDate, setEntryDate] = React.useState<Date>(new Date())
+  const [holdTime, setHoldTime] = React.useState('')
   // Planned metrics
   const [plannedSlPips, setPlannedSlPips] = React.useState('')
   const [plannedTpPips, setPlannedTpPips] = React.useState('')
@@ -84,6 +85,7 @@ export function BacktestEntryModal({
       setSession(editingBacktest.session || '')
       setDirection(editingBacktest.direction)
       setEntryDate(new Date(editingBacktest.entry_date))
+      setHoldTime(editingBacktest.hold_time?.toString() || '')
       setPlannedSlPips(editingBacktest.planned_sl_pips?.toString() || '')
       setPlannedTpPips(editingBacktest.planned_tp_pips?.toString() || '')
       setPlannedRR(editingBacktest.planned_rr?.toString() || '')
@@ -133,6 +135,7 @@ export function BacktestEntryModal({
         session: session || null,
         direction,
         entry_date: format(entryDate, 'yyyy-MM-dd'),
+        hold_time: holdTime ? Number(holdTime) : null,
         // Planned metrics
         planned_sl_pips: plannedSlPips ? Number(plannedSlPips) : null,
         planned_tp_pips: plannedTpPips ? Number(plannedTpPips) : null,
@@ -260,6 +263,7 @@ export function BacktestEntryModal({
     setSession('')
     setDirection('long')
     setEntryDate(new Date())
+    setHoldTime('')
     setPlannedSlPips('')
     setPlannedTpPips('')
     setPlannedRR('')
@@ -355,6 +359,19 @@ export function BacktestEntryModal({
                   />
                 </PopoverContent>
               </Popover>
+            </div>
+
+            <div>
+              <Label htmlFor="hold-time">Hold Time (minutes) - Optional</Label>
+              <Input
+                id="hold-time"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="e.g., 120 for 2 hours"
+                value={holdTime}
+                onChange={(e) => setHoldTime(e.target.value)}
+              />
             </div>
           </div>
 
