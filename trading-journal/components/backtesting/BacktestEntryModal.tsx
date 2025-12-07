@@ -129,6 +129,9 @@ export function BacktestEntryModal({
     })
 
     // Debug logging
+    const uncheckedRules = rules.filter((r) => !rulesChecked[r.id])
+    const uncheckedConf = confluences.filter((c) => !confluencesChecked[c.id])
+
     console.log('Score breakdown:', {
       score: result.score,
       grade: result.grade,
@@ -139,6 +142,8 @@ export function BacktestEntryModal({
       totalRules: rules.length,
       confChecked: Object.keys(confluencesChecked).length,
       totalConf: confluences.length,
+      uncheckedRules: uncheckedRules.map((r) => ({ text: r.rule_text, type: r.type })),
+      uncheckedConf: uncheckedConf.map((c) => c.confluence_text),
     })
 
     return result
