@@ -142,8 +142,8 @@ export function BacktestEntryModal({
       totalRules: rules.length,
       confChecked: Object.keys(confluencesChecked).length,
       totalConf: confluences.length,
-      uncheckedRules: uncheckedRules.map((r) => ({ text: r.rule_text, type: r.type })),
-      uncheckedConf: uncheckedConf.map((c) => c.confluence_text),
+      uncheckedRules: uncheckedRules.map((r) => ({ text: r.label, type: r.type })),
+      uncheckedConf: uncheckedConf.map((c) => c.label),
     })
 
     return result
