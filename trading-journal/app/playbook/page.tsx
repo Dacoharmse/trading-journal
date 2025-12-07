@@ -67,7 +67,7 @@ export default function PlaybookPage() {
             .order('updated_at', { ascending: false }),
           supabase
             .from('trades')
-            .select('id, playbook_id, pnl, r_multiple, closed_at, opened_at')
+            .select('*')
             .not('playbook_id', 'is', 'null'),
         ])
 
