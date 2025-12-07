@@ -49,11 +49,14 @@ export default function PlaybookPage() {
     let cancelled = false
 
     const load = async () => {
+      console.log('Playbook page: Starting load function')
       setLoading(true)
       setError(null)
 
       try {
+        console.log('Playbook page: Getting user data')
         const { data: userData } = await supabase.auth.getUser()
+        console.log('Playbook page: User data received:', !!userData.user)
         if (!userData.user) {
           router.replace('/auth/login')
           return
@@ -104,11 +107,23 @@ export default function PlaybookPage() {
         }
       } catch (err) {
         if (!cancelled) {
-          console.error('Failed to load playbooks:', err)
+          console.error('=== PLAYBOOK PAGE ERROR ===')
+          console.error('Error:', err)
+          console.error('Error type:', typeof err)
+          if (err && typeof err === 'object') {
+            console.error('Error details:', {
+              message: (err as any).message,
+              code: (err as any).code,
+              details: (err as any).details,
+              hint: (err as any).hint,
+            })
+          }
+          console.error('=== END ERROR ===')
           setError('Unable to load playbooks.')
         }
       } finally {
         if (!cancelled) {
+          console.log('Playbook page: Setting loading to false')
           setLoading(false)
         }
       }
