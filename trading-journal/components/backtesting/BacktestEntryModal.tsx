@@ -107,6 +107,15 @@ export function BacktestEntryModal({
   }, [editingBacktest, open])
 
   const score = React.useMemo(() => {
+    // For backtesting, we don't have a checklist feature
+    // So we adjust the rubric to distribute the checklist weight to rules and confluences
+    const adjustedRubric = {
+      ...rubric,
+      weight_rules: 0.7, // 70% for rules (up from 50%)
+      weight_confluences: 0.3, // 30% for confluences (up from 20%)
+      weight_checklist: 0.0, // 0% for checklist (down from 30%)
+    }
+
     return scoreSetup({
       rules: rules.map((r) => ({ id: r.id, type: r.type, weight: r.weight })),
       rulesChecked,
@@ -116,7 +125,7 @@ export function BacktestEntryModal({
         primary: c.primary_confluence,
       })),
       confChecked: confluencesChecked,
-      rubric,
+      rubric: adjustedRubric,
     })
   }, [rules, confluences, rulesChecked, confluencesChecked, rubric])
 
