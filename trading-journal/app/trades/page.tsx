@@ -164,49 +164,10 @@ function TradesPageContent() {
       const limit = loadMore ? TRADES_PER_PAGE : INITIAL_LOAD
       const offset = loadMore ? (page + 1) * TRADES_PER_PAGE : 0
 
-      // Select only necessary fields to reduce payload size
+      // Select all fields (using * to avoid column mismatch issues)
       const { data: tradesData, error: tradesError, count } = await supabase
         .from('trades')
-        .select(`
-          id,
-          user_id,
-          symbol,
-          symbol_id,
-          direction,
-          entry_price,
-          stop_price,
-          exit_price,
-          size,
-          pips,
-          stop_pips,
-          target_pips,
-          rr_planned,
-          risk_r,
-          r_multiple,
-          entry_date,
-          exit_date,
-          pnl,
-          currency,
-          mae_r,
-          mfe_r,
-          strategy,
-          strategy_id,
-          playbook_id,
-          session,
-          confluences,
-          tags,
-          setup_score,
-          setup_grade,
-          commission,
-          swap,
-          slippage,
-          fees,
-          notes,
-          emotional_state,
-          status,
-          close_reason,
-          created_at
-        `, { count: 'exact' })
+        .select('*', { count: 'exact' })
         .order('exit_date', { ascending: false, nullsFirst: false })
         .order('entry_date', { ascending: false })
         .range(offset, offset + limit - 1)
