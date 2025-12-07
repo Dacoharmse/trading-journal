@@ -170,7 +170,6 @@ function TradesPageContent() {
         .select(`
           id,
           user_id,
-          account_id,
           symbol,
           symbol_id,
           direction,
@@ -229,6 +228,14 @@ function TradesPageContent() {
     } catch (err) {
       // Enhanced error logging for debugging
       console.error('=== ERROR FETCHING DATA ===')
+
+      // Log the error message first
+      if (err instanceof Error) {
+        console.error('ERROR MESSAGE:', err.message)
+      } else if (err && typeof err === 'object' && (err as any).message) {
+        console.error('ERROR MESSAGE:', (err as any).message)
+      }
+
       console.error('Raw error:', err)
       console.error('Error type:', typeof err)
       console.error('Error constructor:', err?.constructor?.name)
