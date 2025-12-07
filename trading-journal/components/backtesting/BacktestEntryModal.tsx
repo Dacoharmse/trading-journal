@@ -116,7 +116,7 @@ export function BacktestEntryModal({
       weight_checklist: 0.0, // 0% for checklist (down from 30%)
     }
 
-    return scoreSetup({
+    const result = scoreSetup({
       rules: rules.map((r) => ({ id: r.id, type: r.type, weight: r.weight })),
       rulesChecked,
       confluences: confluences.map((c) => ({
@@ -127,6 +127,21 @@ export function BacktestEntryModal({
       confChecked: confluencesChecked,
       rubric: adjustedRubric,
     })
+
+    // Debug logging
+    console.log('Score breakdown:', {
+      score: result.score,
+      grade: result.grade,
+      rulesPct: result.parts.rulesPct,
+      confPct: result.parts.confPct,
+      missedMust: result.parts.missedMust,
+      rulesChecked: Object.keys(rulesChecked).length,
+      totalRules: rules.length,
+      confChecked: Object.keys(confluencesChecked).length,
+      totalConf: confluences.length,
+    })
+
+    return result
   }, [rules, confluences, rulesChecked, confluencesChecked, rubric])
 
   const handleSubmit = async () => {
