@@ -164,7 +164,6 @@ export function BacktestEntryModal({
         session: session || null,
         direction,
         entry_date: format(entryDate, 'yyyy-MM-dd'),
-        hold_time: holdTime ? Number(holdTime) : null,
         // Planned metrics
         planned_sl_pips: plannedSlPips ? Number(plannedSlPips) : null,
         planned_tp_pips: plannedTpPips ? Number(plannedTpPips) : null,
