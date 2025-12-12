@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import Link from 'next/link'
-import { Plus, Search, Archive, ArchiveRestore, Edit, Loader2, Trash2 } from 'lucide-react'
+import { Plus, Search, Archive, ArchiveRestore, Edit, Loader2, Trash2, Eye } from 'lucide-react'
 import type { Playbook } from '@/types/supabase'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -290,13 +290,22 @@ export function PlaybookListClient({
 
                   <div className="flex w-full flex-col gap-2">
                     <div className="flex w-full items-center gap-2">
+                      <Button asChild size="sm" className="flex-1">
+                        <Link href={`/playbook/${playbook.id}?view=true`}>
+                          <Eye className="h-4 w-4" />
+                          View
+                        </Link>
+                      </Button>
+
                       <Button asChild size="sm" variant="outline" className="flex-1">
                         <Link href={`/playbook/${playbook.id}`}>
                           <Edit className="h-4 w-4" />
                           Edit
                         </Link>
                       </Button>
+                    </div>
 
+                    <div className="flex w-full items-center gap-2">
                       <Button
                         size="sm"
                         variant="ghost"
@@ -318,18 +327,18 @@ export function PlaybookListClient({
                           </>
                         )}
                       </Button>
-                    </div>
 
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      className="w-full"
-                      onClick={() => openDeleteDialog(playbook)}
-                      disabled={isBusy}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Delete
-                    </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="flex-1"
+                        onClick={() => openDeleteDialog(playbook)}
+                        disabled={isBusy}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete
+                      </Button>
+                    </div>
                   </div>
                 </CardFooter>
               </Card>
