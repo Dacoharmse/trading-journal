@@ -247,16 +247,16 @@ export function PlaybookListClient({
                     />
                     {playbook.trade_type && (
                       <div className="absolute bottom-3 right-3">
-                        <Badge
+                        <div
                           className={cn(
-                            'capitalize font-bold shadow-xl px-3 py-1 text-sm border-2',
+                            'inline-flex items-center rounded-md px-3 py-1.5 text-sm font-bold capitalize shadow-xl border-2',
                             playbook.trade_type === 'continuation'
                               ? 'bg-blue-600 text-white border-blue-400'
                               : 'bg-purple-600 text-white border-purple-400'
                           )}
                         >
                           {playbook.trade_type}
-                        </Badge>
+                        </div>
                       </div>
                     )}
                   </div>
