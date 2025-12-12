@@ -450,20 +450,42 @@ export function PlaybookEditor({
       } else {
         console.log('[PlaybookEditor] Updating existing playbook:', currentId)
 
-        // Add timeout wrapper
-        const updatePromise = supabase
-          .from('playbooks')
-          .update(payload)
-          .eq('id', currentId)
+        // Try update with extended timeout and retry logic
+        let updateError = null
+        let attempts = 0
+        const maxAttempts = 2
 
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Update timed out after 10 seconds')), 10000)
-        )
+        while (attempts < maxAttempts && !updateError) {
+          attempts++
+          console.log(`[PlaybookEditor] Update attempt ${attempts}/${maxAttempts}`)
 
-        const result = await Promise.race([updatePromise, timeoutPromise]) as any
-        const { error: updateError } = result
+          try {
+            const updatePromise = supabase
+              .from('playbooks')
+              .update(payload)
+              .eq('id', currentId)
 
-        console.log('[PlaybookEditor] Playbook update result:', { error: updateError })
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Update timed out after 15 seconds')), 15000)
+            )
+
+            const result = await Promise.race([updatePromise, timeoutPromise]) as any
+            updateError = result.error
+
+            console.log('[PlaybookEditor] Playbook update result:', { error: updateError, attempt: attempts })
+            if (!updateError) break // Success!
+
+          } catch (timeoutError) {
+            console.log('[PlaybookEditor] Update attempt timed out:', timeoutError)
+            if (attempts >= maxAttempts) {
+              throw new Error('Update failed after multiple attempts. Please refresh the page and try again.')
+            }
+            // Create fresh client for retry
+            supabase = createClient()
+            console.log('[PlaybookEditor] Created fresh client for retry')
+          }
+        }
+
         if (updateError) throw updateError
       }
 
