@@ -419,22 +419,27 @@ export function PlaybookEditor({
       let currentId = playbookId
 
       if (!currentId) {
+        console.log('[PlaybookEditor] Inserting new playbook...')
         const { data, error: insertError } = await supabase
           .from('playbooks')
           .insert(payload)
           .select()
           .single()
 
+        console.log('[PlaybookEditor] Playbook insert result:', { data, error: insertError })
         if (insertError) throw insertError
         currentId = data.id
         setPlaybookId(data.id)
+        console.log('[PlaybookEditor] Redirecting to:', `/playbook/${data.id}`)
         router.replace(`/playbook/${data.id}`)
       } else {
+        console.log('[PlaybookEditor] Updating existing playbook:', currentId)
         const { error: updateError } = await supabase
           .from('playbooks')
           .update(payload)
           .eq('id', currentId)
 
+        console.log('[PlaybookEditor] Playbook update result:', { error: updateError })
         if (updateError) throw updateError
       }
 
@@ -444,6 +449,7 @@ export function PlaybookEditor({
       const sortedExamples = [...examples].sort((a, b) => a.sort - b.sort)
 
       if (sortedRules.length > 0) {
+        console.log('[PlaybookEditor] Upserting rules:', sortedRules.length)
         const rulePayload = sortedRules.map((rule, index) => ({
           id: rule.id,
           playbook_id: currentId,
@@ -454,12 +460,14 @@ export function PlaybookEditor({
         }))
 
         const { error: ruleError } = await supabase.from('playbook_rules').upsert(rulePayload)
+        console.log('[PlaybookEditor] Rules upsert result:', { error: ruleError })
         if (ruleError) throw ruleError
 
         setRules(rulePayload.map((rule) => ({ ...rule })))
       }
 
       if (sortedConfluences.length > 0) {
+        console.log('[PlaybookEditor] Upserting confluences:', sortedConfluences.length)
         const confluencePayload = sortedConfluences.map((conf, index) => ({
           id: conf.id,
           playbook_id: currentId,
@@ -472,6 +480,7 @@ export function PlaybookEditor({
         const { error: confError } = await supabase
           .from('playbook_confluences')
           .upsert(confluencePayload)
+        console.log('[PlaybookEditor] Confluences upsert result:', { error: confError })
         if (confError) throw confError
 
         setConfluences(confluencePayload.map((conf) => ({ ...conf })))
