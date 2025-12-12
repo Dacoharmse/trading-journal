@@ -502,6 +502,7 @@ export function PlaybookEditor({
       }
 
       if (sortedDetails.length > 0) {
+        console.log('[PlaybookEditor] Processing trade details:', sortedDetails.length)
         const detailPayload = sortedDetails
           .filter((detail) => detail.label.trim().length > 0)
           .map((detail, index) => ({
@@ -515,9 +516,11 @@ export function PlaybookEditor({
           }))
 
         if (detailPayload.length > 0) {
+          console.log('[PlaybookEditor] Upserting trade details:', detailPayload.length)
           const { error: detailError } = await supabase
             .from('playbook_trade_details')
             .upsert(detailPayload)
+          console.log('[PlaybookEditor] Trade details upsert result:', { error: detailError })
           if (detailError) throw detailError
 
           setTradeDetails(detailPayload.map((detail) => ({ ...detail })))
