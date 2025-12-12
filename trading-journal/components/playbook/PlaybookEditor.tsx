@@ -387,10 +387,12 @@ export function PlaybookEditor({
   }, [basics.name, rules.length, confluences.length])
 
   const handleSave = async () => {
+    console.log('[PlaybookEditor] handleSave called!')
     setError(null)
     setStatus(null)
 
     if (validationErrors.length > 0) {
+      console.log('[PlaybookEditor] Validation errors:', validationErrors)
       setError(validationErrors.join(' '))
       return
     }
