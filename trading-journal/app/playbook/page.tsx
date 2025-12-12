@@ -63,6 +63,7 @@ export default function PlaybookPage() {
         }
 
         // Fetch playbooks and trades in parallel
+        console.log('Playbook page: Fetching playbooks and trades...')
         const [playbooksRes, tradesRes] = await Promise.all([
           supabase
             .from('playbooks')
@@ -74,8 +75,20 @@ export default function PlaybookPage() {
             .not('playbook_id', 'is', 'null'),
         ])
 
+        console.log('Playbook page: Data fetched', {
+          playbooksCount: playbooksRes.data?.length,
+          tradesCount: tradesRes.data?.length,
+          playbooksError: playbooksRes.error,
+          tradesError: tradesRes.error,
+        })
+
         if (playbooksRes.error) {
           throw playbooksRes.error
+        }
+
+        if (tradesRes.error) {
+          console.error('Trades query error:', tradesRes.error)
+          throw tradesRes.error
         }
 
         if (!cancelled) {
