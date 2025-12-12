@@ -142,9 +142,9 @@ export function PreviewPanel({ rules, confluences, rubric }: PreviewPanelProps) 
                         {rule.label}
                       </span>
                       {checked ? (
-                        <CheckSquare className="h-4 w-4" />
+                        <CheckSquare className="h-5 w-5 flex-shrink-0" />
                       ) : (
-                        <Square className="h-4 w-4" />
+                        <Square className="h-5 w-5 flex-shrink-0" />
                       )}
                     </button>
                   )
@@ -188,9 +188,9 @@ export function PreviewPanel({ rules, confluences, rubric }: PreviewPanelProps) 
                         {conf.label}
                       </span>
                       {checked ? (
-                        <CheckSquare className="h-4 w-4" />
+                        <CheckSquare className="h-5 w-5 flex-shrink-0" />
                       ) : (
-                        <Square className="h-4 w-4" />
+                        <Square className="h-5 w-5 flex-shrink-0" />
                       )}
                     </button>
                   )
