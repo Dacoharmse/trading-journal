@@ -207,24 +207,9 @@ export function PlaybookListClient({
               >
                 <CardHeader className="gap-3">
                   <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-2">
-                      <CardTitle className="text-xl text-neutral-900 dark:text-neutral-100">
-                        {playbook.name}
-                      </CardTitle>
-                      {playbook.trade_type && (
-                        <Badge
-                          variant="secondary"
-                          className={cn(
-                            'capitalize',
-                            playbook.trade_type === 'continuation'
-                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
-                              : 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300'
-                          )}
-                        >
-                          {playbook.trade_type}
-                        </Badge>
-                      )}
-                    </div>
+                    <CardTitle className="text-xl text-neutral-900 dark:text-neutral-100">
+                      {playbook.name}
+                    </CardTitle>
                     <Badge
                       className={cn(
                         'border px-2 py-1 text-xs font-medium flex-shrink-0',
