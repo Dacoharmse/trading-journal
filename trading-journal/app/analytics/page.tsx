@@ -29,13 +29,15 @@ import { Distributions } from '@/components/analytics/Distributions'
 import { HoldTimeVsRScatter } from '@/components/analytics/HoldTimeVsRScatter'
 import { OutlierToggle } from '@/components/analytics/OutlierToggle'
 import { InsightsStrip } from '@/components/analytics/InsightsStrip'
+import { TradeTypePerformance } from '@/components/analytics/TradeTypePerformance'
+import type { Playbook } from '@/types/supabase'
 
 export default function AnalyticsPage() {
   const supabase = React.useMemo(() => createClient(), [])
 
   const [loading, setLoading] = React.useState(true)
   const [rawTrades, setRawTrades] = React.useState<Trade[]>([])
-  const [playbooks, setPlaybooks] = React.useState<Array<{ id: string; name: string }>>([])
+  const [playbooks, setPlaybooks] = React.useState<Array<{ id: string; name: string; trade_type?: Playbook['trade_type'] }>>([])
   const [outlierToggle, setOutlierToggle] = React.useState(false)
 
   // Filters - using simple defaults for now (can integrate with Zustand later)
@@ -60,7 +62,7 @@ export default function AnalyticsPage() {
             .gte('closed_at', filters.dateFrom)
             .lte('closed_at', filters.dateTo)
             .order('closed_at', { ascending: false }),
-          supabase.from('playbooks').select('id, name'),
+          supabase.from('playbooks').select('id, name, trade_type'),
         ])
 
         if (!cancelled) {
@@ -186,6 +188,9 @@ export default function AnalyticsPage() {
           <SymbolPerformance data={symbolData} />
           <PlaybookGradeChart data={gradeData} />
         </div>
+
+        {/* Trade Type Performance (Continuations vs Reversals, Buy vs Sell) */}
+        <TradeTypePerformance trades={workingTrades} playbooks={playbooks} />
 
         {/* Distributions */}
         <Distributions

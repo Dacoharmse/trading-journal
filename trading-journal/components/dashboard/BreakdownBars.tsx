@@ -8,16 +8,30 @@ import { ArrowUpDown } from "lucide-react"
 
 type Metric = 'netR' | 'winRate' | 'expectancyR' | 'pnl'
 
-interface BreakdownBarsProps {
-  trades: Trade[]
-  type: 'dow' | 'symbol' | 'strategy'
-  units: 'currency' | 'r'
-  currency: string
+interface Playbook {
+  id: string
+  name: string
+  trade_type?: 'continuation' | 'reversal' | null
 }
 
-export function BreakdownBars({ trades, type, units, currency }: BreakdownBarsProps) {
+interface BreakdownBarsProps {
+  trades: Trade[]
+  type: 'dow' | 'symbol' | 'strategy' | 'playbook'
+  units: 'currency' | 'r'
+  currency: string
+  playbooks?: Playbook[]
+}
+
+export function BreakdownBars({ trades, type, units, currency, playbooks = [] }: BreakdownBarsProps) {
   const [metric, setMetric] = React.useState<Metric>('netR')
   const [sortBy, setSortBy] = React.useState<'name' | 'value'>('value')
+
+  // Create playbook map for quick lookup
+  const playbookMap = React.useMemo(() => {
+    const map = new Map<string, Playbook>()
+    playbooks.forEach(p => map.set(p.id, p))
+    return map
+  }, [playbooks])
 
   const data = React.useMemo(() => {
     let grouped: Map<string, Trade[]>
@@ -43,6 +57,18 @@ export function BreakdownBars({ trades, type, units, currency }: BreakdownBarsPr
           grouped.set(symbol, [])
         }
         grouped.get(symbol)!.push(trade)
+      })
+    } else if (type === 'playbook') {
+      // Group by playbook
+      grouped = new Map()
+      trades.forEach(trade => {
+        if (!trade.playbook_id) return // Skip trades without playbook
+        const playbook = playbookMap.get(trade.playbook_id)
+        const playbookName = playbook?.name || 'Unknown Playbook'
+        if (!grouped.has(playbookName)) {
+          grouped.set(playbookName, [])
+        }
+        grouped.get(playbookName)!.push(trade)
       })
     } else {
       // Group by strategy
@@ -94,7 +120,7 @@ export function BreakdownBars({ trades, type, units, currency }: BreakdownBarsPr
     }
 
     return results
-  }, [trades, type, metric, sortBy])
+  }, [trades, type, metric, sortBy, playbookMap])
 
   const formatCurrency = (value: number) => {
     try {
@@ -130,6 +156,7 @@ export function BreakdownBars({ trades, type, units, currency }: BreakdownBarsPr
   const getTitle = () => {
     if (type === 'dow') return 'Performance by Day of Week'
     if (type === 'symbol') return 'Performance by Symbol'
+    if (type === 'playbook') return 'Performance by Playbook'
     return 'Performance by Strategy'
   }
 

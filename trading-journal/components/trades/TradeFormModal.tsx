@@ -2,7 +2,8 @@
 
 import React from 'react'
 import { X, AlertCircle } from 'lucide-react'
-import type { Trade, Account } from '@/types/supabase'
+import type { Trade, Account, EmotionalState } from '@/types/supabase'
+import { EMOTIONAL_STATES } from '@/types/supabase'
 import { calculateR, formatR, formatPnL } from '@/lib/trades-selectors'
 
 interface TradeFormModalProps {
@@ -39,6 +40,7 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
     swap: null,
     slippage: null,
     rule_breaks: '',
+    emotional_state: null,
   })
 
   // Populate form when editing
@@ -65,6 +67,7 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
         swap: trade.swap,
         slippage: trade.slippage,
         rule_breaks: trade.rule_breaks || '',
+        emotional_state: trade.emotional_state || null,
       })
     } else {
       // Reset for new trade
@@ -89,6 +92,7 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
         swap: null,
         slippage: null,
         rule_breaks: '',
+        emotional_state: null,
       })
     }
     setErrors({})
@@ -499,6 +503,28 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
                   <option value="ny">New York</option>
                 </select>
               </div>
+            </div>
+
+            {/* Emotional State */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                Emotional State
+              </label>
+              <select
+                value={formData.emotional_state || ''}
+                onChange={(e) => updateField('emotional_state', e.target.value || null)}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500"
+              >
+                <option value="">-- Select your emotional state --</option>
+                {EMOTIONAL_STATES.map((state) => (
+                  <option key={state.value} value={state.value}>
+                    {state.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                How were you feeling when you took this trade?
+              </p>
             </div>
 
             {/* Confluences & Tags */}

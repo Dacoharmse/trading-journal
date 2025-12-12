@@ -6,15 +6,15 @@ import { createClient } from '@/lib/supabase/client'
 import type {
   Trade,
   Account,
-  Strategy,
-  Confluence,
   Symbol,
   Playbook,
   PlaybookRule,
   PlaybookConfluence,
   PlaybookRubric,
   RiskViolation,
+  EmotionalState,
 } from '@/types/supabase'
+import { EMOTIONAL_STATES } from '@/types/supabase'
 import { ChartPaste, type MediaItem } from './ChartPaste'
 import {
   rFromPips,
@@ -83,8 +83,7 @@ export function NewTradeSheet({
   const [entryTimeframe, setEntryTimeframe] = React.useState<string>('')
   const [analysisTimeframe, setAnalysisTimeframe] = React.useState<string>('')
 
-  // Strategy & Playbook
-  const [strategyId, setStrategyId] = React.useState<string>('')
+  // Playbook
   const [playbooks, setPlaybooks] = React.useState<PlaybookOption[]>([])
   const [playbookId, setPlaybookId] = React.useState<string>('')
   const [playbookRules, setPlaybookRules] = React.useState<PlaybookRule[]>([])
@@ -93,12 +92,13 @@ export function NewTradeSheet({
   const [rulesChecked, setRulesChecked] = React.useState<Record<string, boolean>>({})
   const [confluencesChecked, setConfluencesChecked] = React.useState<Record<string, boolean>>({})
   const [playbookLoading, setPlaybookLoading] = React.useState(false)
-  const [selectedConfluences, setSelectedConfluences] = React.useState<string[]>([])
 
   // Media & notes
   const [media, setMedia] = React.useState<MediaItem[]>([])
+  const [htfMedia, setHtfMedia] = React.useState<MediaItem[]>([])
   const [notes, setNotes] = React.useState('')
   const [closeReason, setCloseReason] = React.useState<string>('')
+  const [emotionalState, setEmotionalState] = React.useState<EmotionalState | ''>('')
 
   // Risk management
   const [riskWarningOpen, setRiskWarningOpen] = React.useState(false)
@@ -107,12 +107,17 @@ export function NewTradeSheet({
 
   // Data
   const [symbols, setSymbols] = React.useState<Symbol[]>([])
-  const [strategies, setStrategies] = React.useState<Strategy[]>([])
-  const [confluences, setConfluences] = React.useState<Confluence[]>([])
 
   // UI state
   const [saving, setSaving] = React.useState(false)
   const [errors, setErrors] = React.useState<Record<string, string>>({})
+
+  // Trade review request state
+  const [requestReview, setRequestReview] = React.useState(false)
+  const [selectedMentorId, setSelectedMentorId] = React.useState<string>('')
+  const [reviewMessage, setReviewMessage] = React.useState('')
+  const [mentors, setMentors] = React.useState<Array<{ id: string; full_name: string; email: string }>>([])
+  const [loadingMentors, setLoadingMentors] = React.useState(false)
 
   // Computed values
   const selectedAccount = React.useMemo(() =>
@@ -132,24 +137,6 @@ export function NewTradeSheet({
   // Load data
   const loadData = React.useCallback(
     async (trade?: Partial<Trade>) => {
-      // Load strategies
-      const { data: strats } = await supabase
-        .from('strategies')
-        .select('*')
-        .eq('active', true)
-        .order('name')
-
-      if (strats) setStrategies(strats)
-
-      // Load confluences
-      const { data: confs } = await supabase
-        .from('confluences')
-        .select('*')
-        .eq('active', true)
-        .order('label')
-
-      if (confs) setConfluences(confs)
-
       // Load playbooks
       const { data: playbookRows } = await supabase
         .from('playbooks')
@@ -194,9 +181,34 @@ export function NewTradeSheet({
     [supabase]
   )
 
+  const loadMentors = React.useCallback(
+    async () => {
+      setLoadingMentors(true)
+      try {
+        // Get all approved mentors (Keegan van Dyk and Chris Dicks)
+        const { data } = await supabase
+          .from('user_profiles')
+          .select('id, full_name, email')
+          .eq('is_mentor', true)
+          .eq('mentor_approved', true)
+          .order('full_name')
+
+        if (data) {
+          setMentors(data)
+        }
+      } catch (error) {
+        console.error('Failed to load mentors:', error)
+      } finally {
+        setLoadingMentors(false)
+      }
+    },
+    [supabase]
+  )
+
   React.useEffect(() => {
     if (open) {
       void loadData(editingTrade ?? undefined)
+      void loadMentors()
       if (editingTrade) {
         populateForm(editingTrade)
       } else {
@@ -310,6 +322,7 @@ export function NewTradeSheet({
       setStrategyId(trade.strategy_id || '')
       setNotes(trade.notes || '')
       setCloseReason(trade.close_reason || '')
+      setEmotionalState(trade.emotional_state || '')
 
       const existingRulesChecked =
         (trade.rules_checked as Record<string, boolean> | null) ?? {}
@@ -330,6 +343,9 @@ export function NewTradeSheet({
       if (trade.media_urls && trade.media_urls.length > 0) {
         setMedia(trade.media_urls.map((url) => ({ url, kind: 'image' as const })))
       }
+      if (trade.htf_media_urls && trade.htf_media_urls.length > 0) {
+        setHtfMedia(trade.htf_media_urls.map((url) => ({ url, kind: 'image' as const })))
+      }
     },
     [loadPlaybookDetails, clearPlaybookState]
   )
@@ -347,14 +363,17 @@ export function NewTradeSheet({
     setTargetPips('')
     setRrPlanned('')
     setRiskR('1.0')
-    setStrategyId('')
     setCloseReason('')
+    setEmotionalState('')
     setPlaybookId('')
     clearPlaybookState()
-    setSelectedConfluences([])
     setMedia([])
+    setHtfMedia([])
     setNotes('')
     setErrors({})
+    setRequestReview(false)
+    setSelectedMentorId('')
+    setReviewMessage('')
   }, [accounts, clearPlaybookState])
 
   const validate = (): boolean => {
@@ -494,7 +513,6 @@ export function NewTradeSheet({
       rr_planned: rrPlannedNum,
       risk_r: riskRNum,
       r_multiple: rMultiple,
-      strategy_id: strategyId || null,
       playbook_id: playbookId || null,
       rules_checked: playbookId ? rulesSnapshot : null,
       confluences_checked: playbookId ? confluencesSnapshot : null,
@@ -503,12 +521,14 @@ export function NewTradeSheet({
       close_reason: closeReason || null,
       notes: notes || null,
       media_urls: media.map((m) => m.url),
+      htf_media_urls: htfMedia.length > 0 ? htfMedia.map((m) => m.url) : undefined,
       pnl_amount: pnlAmount ? parseFloat(pnlAmount) : null,
       pnl_currency: selectedAccount?.currency || 'USD',
       actual_rr: actualRr ? parseFloat(actualRr) : null,
       outcome: outcome || null,
       entry_timeframe: entryTimeframe || null,
       analysis_timeframe: analysisTimeframe || null,
+      emotional_state: emotionalState || null,
     }
 
     await onSave(tradeData)
@@ -529,9 +549,34 @@ export function NewTradeSheet({
       })
     }
 
-    // Save confluences separately
-    if (selectedConfluences.length > 0 && tradeData.id) {
-      await saveConfluences(tradeData.id, selectedConfluences)
+    // Handle trade review request
+    if (requestReview && selectedMentorId && tradeData.id) {
+      try {
+        // Create trade review request
+        await supabase.from('trade_reviews').insert({
+          trade_id: tradeData.id,
+          trader_id: userId,
+          mentor_id: selectedMentorId,
+          status: 'pending',
+          priority: 'normal',
+          request_message: reviewMessage || 'Please review my trade',
+          is_read: false,
+        })
+
+        // Create notification for the mentor
+        const selectedMentor = mentors.find(m => m.id === selectedMentorId)
+        await supabase.from('notifications').insert({
+          user_id: selectedMentorId,
+          type: 'trade_review_request',
+          title: 'New Trade Review Request',
+          message: `A student has requested a review for their trade`,
+          link: `/mentor/reviews`,
+          is_read: false,
+        })
+      } catch (error) {
+        console.error('Failed to create review request:', error)
+        // Don't block the save if review request fails
+      }
     }
 
     onClose()
@@ -585,18 +630,6 @@ export function NewTradeSheet({
     setRiskWarningOpen(false)
     setRiskViolation(null)
     setPendingTradeData(null)
-  }
-
-  const saveConfluences = async (tradeId: string, confIds: string[]) => {
-    // Delete existing
-    await supabase.from('trade_confluences').delete().eq('trade_id', tradeId)
-
-    // Insert new
-    if (confIds.length > 0) {
-      await supabase
-        .from('trade_confluences')
-        .insert(confIds.map((cid) => ({ trade_id: tradeId, confluence_id: cid })))
-    }
   }
 
   // Computed values
@@ -729,29 +762,6 @@ export function NewTradeSheet({
                   <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.symbolId}</p>
                 )}
               </div>
-
-              {!playbookId && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Strategy <span className="text-xs text-gray-500">(Legacy)</span>
-                  </label>
-                  <select
-                    value={strategyId}
-                    onChange={(e) => setStrategyId(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
-                  >
-                    <option value="">None</option>
-                    {strategies.map((strat) => (
-                      <option key={strat.id} value={strat.id}>
-                        {strat.name} ({strat.type})
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Using Playbook is recommended for setup tracking and grading
-                  </p>
-                </div>
-              )}
             </div>
 
             <div>
@@ -855,6 +865,25 @@ export function NewTradeSheet({
                 </p>
               </div>
             </div>
+
+            {/* HTF Chart Upload - shown when analysis timeframe is selected */}
+            {analysisTimeframe && (
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Higher Timeframe Chart <span className="text-xs text-gray-500">(Optional)</span>
+                </label>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                  Add a screenshot of your {analysisTimeframe} analysis chart
+                </p>
+                <ChartPaste
+                  media={htfMedia}
+                  onChange={setHtfMedia}
+                  userId={userId}
+                  tradeId={editingTrade?.id}
+                  maxFiles={2}
+                />
+              </div>
+            )}
           </section>
 
           <section className="space-y-4">
@@ -865,7 +894,7 @@ export function NewTradeSheet({
               Track which rules and confluences were met for this setup. These selections are saved with the trade.
             </p>
             {playbookId ? (
-              <div className="rounded-lg border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-750 p-4">
+              <div className="rounded-lg border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
                 {playbookLoading ? (
                   <div className="flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -890,43 +919,6 @@ export function NewTradeSheet({
             ) : (
               <div className="rounded-lg border border-dashed border-gray-300 dark:border-neutral-600 bg-white/60 dark:bg-neutral-800/50 p-4 text-sm text-gray-500 dark:text-gray-400">
                 Select a playbook above to record your checklist progress.
-              </div>
-            )}
-
-            {!playbookId && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Additional Confluences <span className="text-xs text-gray-500">(Legacy)</span>
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {confluences.map((conf) => {
-                    const selected = selectedConfluences.includes(conf.id)
-                    return (
-                      <button
-                        key={conf.id}
-                        type="button"
-                        onClick={() => {
-                          if (selected) {
-                            setSelectedConfluences(selectedConfluences.filter((id) => id !== conf.id))
-                          } else {
-                            setSelectedConfluences([...selectedConfluences, conf.id])
-                          }
-                        }}
-                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selected ? 'bg-neutral-600 text-white' : 'bg-gray-100 dark:bg-neutral-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-neutral-600'}`}
-                      >
-                        {conf.label}
-                      </button>
-                    )
-                  })}
-                </div>
-                {confluences.length === 0 && (
-                  <p className="text-sm text-gray-500">
-                    No confluences available. Create them in the Confluences page.
-                  </p>
-                )}
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  Select a playbook above for integrated confluence tracking with grading
-                </p>
               </div>
             )}
           </section>
@@ -1146,6 +1138,27 @@ export function NewTradeSheet({
                   <option value="NY">NY</option>
                 </select>
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Emotional State
+                </label>
+                <select
+                  value={emotionalState}
+                  onChange={(e) => setEmotionalState(e.target.value as EmotionalState | '')}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
+                >
+                  <option value="">Select your state...</option>
+                  {EMOTIONAL_STATES.map((state) => (
+                    <option key={state.value} value={state.value}>
+                      {state.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  How were you feeling when taking this trade?
+                </p>
+              </div>
             </div>
 
             <textarea
@@ -1155,6 +1168,67 @@ export function NewTradeSheet({
               placeholder="Trade notes, observations, lessons learned..."
               className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700 resize-none"
             />
+          </section>
+
+          <section className="space-y-4">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+              Request Mentor Review
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Ask your mentor to review this trade and provide feedback
+            </p>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="request-review"
+                checked={requestReview}
+                onChange={(e) => setRequestReview(e.target.checked)}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="request-review" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Request mentor review for this trade
+              </label>
+            </div>
+
+            {requestReview && (
+              <div className="space-y-4 pl-6 border-l-2 border-blue-500">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Select Mentor *
+                  </label>
+                  {loadingMentors ? (
+                    <div className="text-sm text-gray-500 dark:text-gray-400">Loading mentors...</div>
+                  ) : (
+                    <select
+                      value={selectedMentorId}
+                      onChange={(e) => setSelectedMentorId(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
+                    >
+                      <option value="">Choose a mentor...</option>
+                      {mentors.map((mentor) => (
+                        <option key={mentor.id} value={mentor.id}>
+                          {mentor.full_name || mentor.email}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Message for Mentor <span className="text-xs text-gray-500">(Optional)</span>
+                  </label>
+                  <textarea
+                    value={reviewMessage}
+                    onChange={(e) => setReviewMessage(e.target.value)}
+                    rows={3}
+                    placeholder="Any specific questions or areas you'd like feedback on..."
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700 resize-none"
+                  />
+                </div>
+              </div>
+            )}
           </section>
 
           <section className="space-y-4">

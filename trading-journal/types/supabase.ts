@@ -72,12 +72,14 @@ export interface TradeConfluence {
   confluence_id: string
 }
 
+export type PlaybookTradeType = 'continuation' | 'reversal'
+
 export interface Playbook {
   id: string
   user_id: string
   name: string
   description?: string | null
-  category: string
+  trade_type?: PlaybookTradeType | null
   sessions: string[]
   symbols: string[]
   rr_min?: number | null
@@ -140,6 +142,32 @@ export interface PlaybookExample {
   sort: number
   created_at?: string
 }
+
+// Emotional state options for trades
+export type EmotionalState =
+  | 'confident'
+  | 'calm'
+  | 'neutral'
+  | 'anxious'
+  | 'fearful'
+  | 'greedy'
+  | 'frustrated'
+  | 'revenge'
+  | 'fomo'
+  | 'euphoric'
+
+export const EMOTIONAL_STATES: { value: EmotionalState; label: string; color: string }[] = [
+  { value: 'confident', label: 'Confident', color: 'text-green-600' },
+  { value: 'calm', label: 'Calm', color: 'text-blue-500' },
+  { value: 'neutral', label: 'Neutral', color: 'text-gray-500' },
+  { value: 'anxious', label: 'Anxious', color: 'text-yellow-500' },
+  { value: 'fearful', label: 'Fearful', color: 'text-orange-500' },
+  { value: 'greedy', label: 'Greedy', color: 'text-yellow-600' },
+  { value: 'frustrated', label: 'Frustrated', color: 'text-red-400' },
+  { value: 'revenge', label: 'Revenge Trading', color: 'text-red-600' },
+  { value: 'fomo', label: 'FOMO', color: 'text-purple-500' },
+  { value: 'euphoric', label: 'Euphoric', color: 'text-pink-500' },
+]
 
 export interface Trade {
   // Core fields
@@ -210,12 +238,14 @@ export interface Trade {
   pre_trade_checklist?: string | null
   post_trade_review?: string | null
   emotions?: string | null
+  emotional_state?: EmotionalState | null  // Structured emotional state
   mistakes?: string | null
 
   // Attachments
   attachments?: string | null  // JSON array of screenshot URLs (legacy)
   image_url?: string | null    // Legacy single image
   media_urls?: string[]        // NEW: array of uploaded/pasted chart URLs
+  htf_media_urls?: string[]    // Higher timeframe chart screenshots
 
   // Legs (for partial entries/exits)
   legs?: unknown | null  // JSON array of leg data
@@ -233,6 +263,93 @@ export interface Trade {
   updated_at?: string
 }
 
+// Weekly Review Types
+export type WeeklyReviewStatus = 'pending' | 'in_progress' | 'completed'
+
+export interface WinningTradeAnalysis {
+  trade_id: string
+  symbol: string
+  pnl: number
+  would_take_again: boolean
+  // If Yes
+  execution_improvement?: string
+  profit_management?: string
+  repeat_strategy?: string
+  // If No
+  plan_deviation?: string
+  flawed_win_prevention?: string
+  incorrect_execution?: string
+}
+
+export interface LosingTradeAnalysis {
+  trade_id: string
+  symbol: string
+  pnl: number
+  would_take_again: boolean
+  // If Yes
+  loss_avoidance?: string
+  done_well?: string
+  emotions_controlled?: string
+  // If No
+  plan_deviation?: string
+  warning_signs?: string
+  outcome_response?: string
+}
+
+export interface WeeklyReview {
+  id: string
+  user_id: string
+  week_start: string
+  week_end: string
+  status: WeeklyReviewStatus
+
+  // Week statistics
+  total_trades: number
+  winning_trades: number
+  losing_trades: number
+  total_pnl: number
+  win_rate: number
+  best_trade_id?: string | null
+  worst_trade_id?: string | null
+
+  // Trade analysis
+  winning_trades_analysis: WinningTradeAnalysis[]
+  losing_trades_analysis: LosingTradeAnalysis[]
+
+  // Missed opportunities
+  missed_trade_description?: string | null
+  missed_trade_reason?: string | null
+  missed_trade_prevention?: string | null
+
+  // Overall performance
+  week_vs_last_week?: string | null
+  process_execution_rating?: number | null
+  process_execution_notes?: string | null
+  previous_week_mindset_impact?: string | null
+  improvement_actions?: string | null
+
+  // Repeating strengths
+  strength_identified?: string | null
+  strength_cause?: string | null
+  strength_importance?: string | null
+  strength_action_steps?: string | null
+
+  // Repeating mistakes
+  mistake_identified?: string | null
+  mistake_cause?: string | null
+  mistake_importance?: string | null
+  mistake_action_steps?: string | null
+
+  // Goals and insights
+  goals_for_next_week?: string | null
+  key_takeaways?: string | null
+
+  created_at?: string
+  updated_at?: string
+  completed_at?: string | null
+}
+
 // Re-export Account type with fields
 export type { Account as SupabaseAccount }
 export type { Trade as SupabaseTrade }
+export type { WeeklyReview as SupabaseWeeklyReview }

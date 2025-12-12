@@ -5,15 +5,13 @@ import { useRouter } from 'next/navigation'
 import {
   Users,
   UserCheck,
-  Clock,
-  TrendingUp,
   Shield,
-  Activity,
-  AlertCircle,
+  MessageSquare,
+  TrendingUp,
+  Settings,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { getCurrentUserProfile, requireAdmin } from '@/lib/auth-utils'
-import type { AdminDashboardStats } from '@/types/mentorship'
+import { requireAdmin } from '@/lib/auth-utils'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
@@ -23,8 +21,14 @@ export default function AdminDashboardPage() {
 
   const [loading, setLoading] = React.useState(true)
   const [authorized, setAuthorized] = React.useState(false)
-  const [stats, setStats] = React.useState<AdminDashboardStats | null>(null)
-  const [recentActivity, setRecentActivity] = React.useState<any[]>([])
+  const [stats, setStats] = React.useState({
+    totalUsers: 0,
+    activeMentors: 0,
+    totalTrades: 0,
+    supportTickets: 0,
+    newUsersThisWeek: 0,
+    newUsersThisMonth: 0,
+  })
 
   // Check authorization
   React.useEffect(() => {
@@ -46,46 +50,32 @@ export default function AdminDashboardPage() {
     const loadDashboard = async () => {
       setLoading(true)
       try {
-        // Get stats
         const [
-          usersCount,
-          mentorsCount,
-          activeMentorsCount,
-          pendingReviewsCount,
-          completedReviewsCount,
+          totalUsers,
+          activeMentors,
+          totalTrades,
           newUsersWeek,
           newUsersMonth,
-          pendingApplications,
         ] = await Promise.all([
           supabase.from('user_profiles').select('id', { count: 'exact', head: true }),
-          supabase.from('user_profiles').select('id', { count: 'exact', head: true }).eq('is_mentor', true),
-          supabase.from('user_profiles').select('id', { count: 'exact', head: true }).eq('is_mentor', true).eq('mentor_approved', true).eq('mentor_available', true),
-          supabase.from('trade_reviews').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-          supabase.from('trade_reviews').select('id', { count: 'exact', head: true }).eq('status', 'completed'),
-          supabase.from('user_profiles').select('id', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
-          supabase.from('user_profiles').select('id', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
-          supabase.from('mentor_applications').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+          supabase.from('user_profiles').select('id', { count: 'exact', head: true })
+            .eq('is_mentor', true)
+            .eq('mentor_approved', true),
+          supabase.from('trades').select('id', { count: 'exact', head: true }),
+          supabase.from('user_profiles').select('id', { count: 'exact', head: true })
+            .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
+          supabase.from('user_profiles').select('id', { count: 'exact', head: true })
+            .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
         ])
 
         setStats({
-          total_users: usersCount.count || 0,
-          total_mentors: mentorsCount.count || 0,
-          total_active_mentors: activeMentorsCount.count || 0,
-          total_reviews_pending: pendingReviewsCount.count || 0,
-          total_reviews_completed: completedReviewsCount.count || 0,
-          new_users_this_week: newUsersWeek.count || 0,
-          new_users_this_month: newUsersMonth.count || 0,
-          pending_applications: pendingApplications.count || 0,
+          totalUsers: totalUsers.count || 0,
+          activeMentors: activeMentors.count || 0,
+          totalTrades: totalTrades.count || 0,
+          supportTickets: 0, // Will implement later
+          newUsersThisWeek: newUsersWeek.count || 0,
+          newUsersThisMonth: newUsersMonth.count || 0,
         })
-
-        // Get recent activity
-        const { data: auditLogs } = await supabase
-          .from('admin_audit_log')
-          .select('*, admin:admin_id(full_name, email), target_user:target_user_id(full_name, email)')
-          .order('created_at', { ascending: false })
-          .limit(10)
-
-        setRecentActivity(auditLogs || [])
       } catch (error) {
         console.error('Failed to load dashboard:', error)
       } finally {
@@ -96,22 +86,24 @@ export default function AdminDashboardPage() {
     loadDashboard()
   }, [authorized, supabase])
 
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-muted-foreground">Loading admin dashboard...</div>
+      </div>
+    )
+  }
+
   if (!authorized) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
           <Shield className="mx-auto h-12 w-12 text-red-600" />
           <h2 className="mt-4 text-2xl font-bold">Access Denied</h2>
-          <p className="mt-2 text-muted-foreground">You need administrator privileges to access this page</p>
+          <p className="mt-2 text-muted-foreground">
+            You need administrator privileges to access this page
+          </p>
         </div>
-      </div>
-    )
-  }
-
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-muted-foreground">Loading admin dashboard...</div>
       </div>
     )
   }
@@ -123,18 +115,8 @@ export default function AdminDashboardPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
           <p className="text-muted-foreground mt-1">
-            Manage users, mentors, and platform settings
+            Manage users, mentors, and platform operations
           </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => router.push('/admin/users')}>
-            <Users className="h-4 w-4 mr-2" />
-            Manage Users
-          </Button>
-          <Button variant="outline" onClick={() => router.push('/admin/mentors')}>
-            <UserCheck className="h-4 w-4 mr-2" />
-            Manage Mentors
-          </Button>
         </div>
       </div>
 
@@ -146,9 +128,9 @@ export default function AdminDashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.total_users || 0}</div>
+            <div className="text-2xl font-bold">{stats.totalUsers}</div>
             <p className="text-xs text-muted-foreground">
-              +{stats?.new_users_this_week || 0} this week
+              +{stats.newUsersThisWeek} this week
             </p>
           </CardContent>
         </Card>
@@ -159,36 +141,115 @@ export default function AdminDashboardPage() {
             <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.total_active_mentors || 0}</div>
+            <div className="text-2xl font-bold">{stats.activeMentors}</div>
             <p className="text-xs text-muted-foreground">
-              of {stats?.total_mentors || 0} total mentors
+              Approved mentors
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Trades</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.total_reviews_pending || 0}</div>
+            <div className="text-2xl font-bold">{stats.totalTrades}</div>
             <p className="text-xs text-muted-foreground">
-              {stats?.total_reviews_completed || 0} completed
+              Across all users
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Applications</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Support Tickets</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.pending_applications || 0}</div>
+            <div className="text-2xl font-bold">{stats.supportTickets}</div>
             <p className="text-xs text-muted-foreground">
-              Mentor applications
+              Pending resolution
             </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card className="hover:border-primary transition-colors cursor-pointer" onClick={() => router.push('/admin/users')}>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <CardTitle>Manage Users</CardTitle>
+                <CardDescription>View and edit all users</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Button className="w-full" variant="outline">
+              Open User Management
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:border-primary transition-colors cursor-pointer" onClick={() => router.push('/admin/mentors')}>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                <UserCheck className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <CardTitle>Manage Mentors</CardTitle>
+                <CardDescription>Create and manage mentors</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Button className="w-full" variant="outline">
+              Open Mentor Management
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:border-primary transition-colors cursor-pointer" onClick={() => router.push('/admin/support')}>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                <MessageSquare className="h-6 w-6 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <CardTitle>Support Center</CardTitle>
+                <CardDescription>Handle user support tickets</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Button className="w-full" variant="outline">
+              Open Support Center
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:border-primary transition-colors cursor-pointer" onClick={() => router.push('/admin/settings')}>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                <Settings className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+              </div>
+              <div>
+                <CardTitle>System Settings</CardTitle>
+                <CardDescription>Configure platform settings</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Button className="w-full" variant="outline">
+              Open Settings
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -196,84 +257,30 @@ export default function AdminDashboardPage() {
       {/* Recent Activity */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Admin Activity</CardTitle>
+          <CardTitle>Platform Overview</CardTitle>
           <CardDescription>
-            Latest actions performed by administrators
+            Key metrics and recent activity
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {recentActivity.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">
-              No recent activity
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">New Users (Last 7 Days)</p>
+                <p className="text-2xl font-bold">{stats.newUsersThisWeek}</p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-green-600" />
             </div>
-          ) : (
-            <div className="space-y-4">
-              {recentActivity.map((log) => (
-                <div
-                  key={log.id}
-                  className="flex items-start gap-4 rounded-lg border p-4"
-                >
-                  <Activity className="h-5 w-5 text-muted-foreground mt-0.5" />
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium">
-                      {log.action.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      By {log.admin?.full_name || log.admin?.email || 'Unknown'}
-                      {log.target_user && ` • Target: ${log.target_user.full_name || log.target_user.email}`}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(log.created_at).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">New Users (Last 30 Days)</p>
+                <p className="text-2xl font-bold">{stats.newUsersThisMonth}</p>
+              </div>
+              <Users className="h-8 w-8 text-blue-600" />
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
-
-      {/* Quick Actions */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>User Management</CardTitle>
-            <CardDescription>View and manage all users</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button className="w-full" onClick={() => router.push('/admin/users')}>
-              <Users className="h-4 w-4 mr-2" />
-              View Users
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Mentor Applications</CardTitle>
-            <CardDescription>Review pending mentor requests</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button className="w-full" onClick={() => router.push('/admin/mentors/applications')}>
-              <UserCheck className="h-4 w-4 mr-2" />
-              Review Applications
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Audit Logs</CardTitle>
-            <CardDescription>View system activity logs</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button className="w-full" variant="outline" onClick={() => router.push('/admin/audit')}>
-              <Activity className="h-4 w-4 mr-2" />
-              View Logs
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   )
 }

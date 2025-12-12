@@ -31,6 +31,7 @@ import {
 } from "lucide-react"
 import { Broker } from "@/types"
 import { useUserStore } from "@/stores"
+import { useToast } from "@/hooks/use-toast"
 
 const brokerOptions = [
   Broker.TD_AMERITRADE,
@@ -50,11 +51,73 @@ const brokerOptions = [
 export default function SettingsPage() {
   const user = useUserStore((state) => state.user)
   const fetchUser = useUserStore((state) => state.fetchUser)
+  const { toast } = useToast()
+
+  // State for controlled form inputs - Profile
+  const [fullName, setFullName] = React.useState("")
+  const [experienceLevel, setExperienceLevel] = React.useState("beginner")
+  const [yearsOfExperience, setYearsOfExperience] = React.useState("")
+  const [tradingStyle, setTradingStyle] = React.useState("day_trading")
+
+  // State for controlled form inputs - Preferences
+  const [theme, setTheme] = React.useState("system")
+  const [currency, setCurrency] = React.useState("USD")
+  const [timezone, setTimezone] = React.useState(Intl.DateTimeFormat().resolvedOptions().timeZone)
+  const [defaultBroker, setDefaultBroker] = React.useState("")
+  const [defaultChartType, setDefaultChartType] = React.useState("candlestick")
+  const [itemsPerPage, setItemsPerPage] = React.useState("50")
+  const [defaultDateRange, setDefaultDateRange] = React.useState("30d")
+  const [showPnlPercentage, setShowPnlPercentage] = React.useState(false)
+
+  // State for notification preferences
+  const [emailNotifications, setEmailNotifications] = React.useState(true)
+  const [dailySummaryEmail, setDailySummaryEmail] = React.useState(false)
+  const [weeklyReportEmail, setWeeklyReportEmail] = React.useState(false)
+  const [profitTargetAlerts, setProfitTargetAlerts] = React.useState(true)
+  const [drawdownWarnings, setDrawdownWarnings] = React.useState(true)
+  const [dailyLossAlerts, setDailyLossAlerts] = React.useState(true)
+  const [tradeReminders, setTradeReminders] = React.useState(false)
+  const [winningStreakNotifications, setWinningStreakNotifications] = React.useState(true)
+  const [personalBestNotifications, setPersonalBestNotifications] = React.useState(true)
+  const [milestoneNotifications, setMilestoneNotifications] = React.useState(true)
 
   // Fetch data from Supabase on mount
   React.useEffect(() => {
     fetchUser()
   }, [fetchUser])
+
+  // Update form state when user data loads
+  React.useEffect(() => {
+    if (user) {
+      // Profile fields
+      setFullName(user.profile?.full_name || "")
+      setExperienceLevel(user.profile?.experience_level || "beginner")
+      setYearsOfExperience(user.profile?.years_of_experience?.toString() || "")
+      setTradingStyle(user.profile?.trading_style || "day_trading")
+
+      // Preferences fields
+      setTheme(user.preferences?.theme || "system")
+      setCurrency(user.preferences?.currency || "USD")
+      setTimezone(user.preferences?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone)
+      setDefaultBroker(user.preferences?.default_broker || "")
+      setDefaultChartType(user.preferences?.default_chart_type || "candlestick")
+      setItemsPerPage((user.preferences?.items_per_page || 50).toString())
+      setDefaultDateRange(user.preferences?.default_date_range || "30d")
+      setShowPnlPercentage(user.preferences?.show_pnl_percentage || false)
+
+      // Notification preferences
+      setEmailNotifications(user.preferences?.email_notifications ?? true)
+      setDailySummaryEmail(user.preferences?.daily_summary_email ?? false)
+      setWeeklyReportEmail(user.preferences?.weekly_report_email ?? false)
+      setProfitTargetAlerts(user.preferences?.profit_target_alerts ?? true)
+      setDrawdownWarnings(user.preferences?.drawdown_warnings ?? true)
+      setDailyLossAlerts(user.preferences?.daily_loss_alerts ?? true)
+      setTradeReminders(user.preferences?.trade_reminders ?? false)
+      setWinningStreakNotifications(user.preferences?.winning_streak_notifications ?? true)
+      setPersonalBestNotifications(user.preferences?.personal_best_notifications ?? true)
+      setMilestoneNotifications(user.preferences?.milestone_notifications ?? true)
+    }
+  }, [user])
 
   return (
     <div className="flex-1 p-6 space-y-6">
@@ -97,25 +160,22 @@ export default function SettingsPage() {
               <form
                 onSubmit={(e) => {
                   e.preventDefault()
-                  const formData = new FormData(e.currentTarget)
                   const profileData = {
-                    email: formData.get("email") as string,
+                    email: user?.email || "",
                     profile: {
-                      full_name: formData.get("full_name") as string,
-                      bio: formData.get("bio") as string,
-                      phone: formData.get("phone") as string,
-                      country: formData.get("country") as string,
-                      experience_level: formData.get("experience_level") as any,
-                      years_of_experience: formData.get("years_of_experience")
-                        ? parseInt(formData.get("years_of_experience") as string)
+                      full_name: fullName,
+                      experience_level: experienceLevel as any,
+                      years_of_experience: yearsOfExperience
+                        ? parseInt(yearsOfExperience)
                         : undefined,
-                      trading_style: formData.get("trading_style") as any,
-                      twitter_handle: formData.get("twitter_handle") as string,
-                      linkedin_url: formData.get("linkedin_url") as string,
+                      trading_style: tradingStyle as any,
                     },
                   }
                   useUserStore.getState().updateProfile(profileData)
-                  alert("Profile updated successfully!")
+                  toast({
+                    title: "Success",
+                    description: "Profile updated successfully!",
+                  })
                 }}
                 className="space-y-6"
               >
@@ -127,7 +187,7 @@ export default function SettingsPage() {
                       name="email"
                       type="email"
                       placeholder="you@example.com"
-                      defaultValue={useUserStore.getState().user?.email || ""}
+                      value={user?.email || ""}
                       disabled
                       className="bg-muted"
                     />
@@ -142,43 +202,8 @@ export default function SettingsPage() {
                       id="full_name"
                       name="full_name"
                       placeholder="John Doe"
-                      defaultValue={
-                        useUserStore.getState().user?.profile?.full_name || ""
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="bio">Bio</Label>
-                    <Textarea
-                      id="bio"
-                      name="bio"
-                      placeholder="Tell us about yourself and your trading journey..."
-                      rows={4}
-                      defaultValue={useUserStore.getState().user?.profile?.bio || ""}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      placeholder="+1 (555) 000-0000"
-                      defaultValue={useUserStore.getState().user?.profile?.phone || ""}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="country">Country</Label>
-                    <Input
-                      id="country"
-                      name="country"
-                      placeholder="United States"
-                      defaultValue={
-                        useUserStore.getState().user?.profile?.country || ""
-                      }
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
                     />
                   </div>
 
@@ -187,11 +212,8 @@ export default function SettingsPage() {
                   <div className="space-y-2">
                     <Label htmlFor="experience_level">Experience Level</Label>
                     <Select
-                      name="experience_level"
-                      defaultValue={
-                        useUserStore.getState().user?.profile?.experience_level ||
-                        "beginner"
-                      }
+                      value={experienceLevel}
+                      onValueChange={setExperienceLevel}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -214,21 +236,16 @@ export default function SettingsPage() {
                       min="0"
                       max="50"
                       placeholder="5"
-                      defaultValue={
-                        useUserStore.getState().user?.profile?.years_of_experience ||
-                        ""
-                      }
+                      value={yearsOfExperience}
+                      onChange={(e) => setYearsOfExperience(e.target.value)}
                     />
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="trading_style">Primary Trading Style</Label>
                     <Select
-                      name="trading_style"
-                      defaultValue={
-                        useUserStore.getState().user?.profile?.trading_style ||
-                        "day_trading"
-                      }
+                      value={tradingStyle}
+                      onValueChange={setTradingStyle}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -245,32 +262,6 @@ export default function SettingsPage() {
                     </Select>
                   </div>
 
-                  <Separator className="md:col-span-2" />
-
-                  <div className="space-y-2">
-                    <Label htmlFor="twitter_handle">Twitter/X Handle</Label>
-                    <Input
-                      id="twitter_handle"
-                      name="twitter_handle"
-                      placeholder="@yourhandle"
-                      defaultValue={
-                        useUserStore.getState().user?.profile?.twitter_handle || ""
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="linkedin_url">LinkedIn Profile URL</Label>
-                    <Input
-                      id="linkedin_url"
-                      name="linkedin_url"
-                      type="url"
-                      placeholder="https://linkedin.com/in/yourprofile"
-                      defaultValue={
-                        useUserStore.getState().user?.profile?.linkedin_url || ""
-                      }
-                    />
-                  </div>
                 </div>
 
                 <div className="flex justify-end gap-3">
@@ -296,30 +287,21 @@ export default function SettingsPage() {
               <form
                 onSubmit={(e) => {
                   e.preventDefault()
-                  const formData = new FormData(e.currentTarget)
                   const preferencesData = {
-                    default_broker: formData.get("default_broker") as any,
-                    currency: formData.get("currency") as any,
-                    theme: formData.get("theme") as any,
-                    timezone: formData.get("timezone") as string,
-                    default_chart_type: formData.get("default_chart_type") as any,
-                    items_per_page: formData.get("items_per_page")
-                      ? parseInt(formData.get("items_per_page") as string)
-                      : 50,
-                    default_date_range: formData.get("default_date_range") as any,
-                    show_pnl_percentage: formData.get("show_pnl_percentage") === "on",
-                    max_risk_per_trade: formData.get("max_risk_per_trade")
-                      ? parseFloat(formData.get("max_risk_per_trade") as string)
-                      : undefined,
-                    max_daily_loss: formData.get("max_daily_loss")
-                      ? parseFloat(formData.get("max_daily_loss") as string)
-                      : undefined,
-                    max_position_size: formData.get("max_position_size")
-                      ? parseFloat(formData.get("max_position_size") as string)
-                      : undefined,
+                    default_broker: defaultBroker || undefined,
+                    currency: currency as any,
+                    theme: theme as any,
+                    timezone: timezone,
+                    default_chart_type: defaultChartType as any,
+                    items_per_page: parseInt(itemsPerPage),
+                    default_date_range: defaultDateRange as any,
+                    show_pnl_percentage: showPnlPercentage,
                   }
                   useUserStore.getState().updatePreferences(preferencesData)
-                  alert("Preferences saved successfully!")
+                  toast({
+                    title: "Success",
+                    description: "Preferences saved successfully!",
+                  })
                 }}
                 className="space-y-6"
               >
@@ -329,8 +311,8 @@ export default function SettingsPage() {
                     <div className="space-y-2">
                       <Label htmlFor="theme">Theme</Label>
                       <Select
-                        name="theme"
-                        defaultValue={user?.preferences?.theme || "system"}
+                        value={theme}
+                        onValueChange={setTheme}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -346,8 +328,8 @@ export default function SettingsPage() {
                     <div className="space-y-2">
                       <Label htmlFor="currency">Preferred Currency</Label>
                       <Select
-                        name="currency"
-                        defaultValue={user?.preferences?.currency || "USD"}
+                        value={currency}
+                        onValueChange={setCurrency}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -367,11 +349,8 @@ export default function SettingsPage() {
                     <div className="space-y-2">
                       <Label htmlFor="timezone">Timezone</Label>
                       <Select
-                        name="timezone"
-                        defaultValue={
-                          user?.preferences?.timezone ||
-                          Intl.DateTimeFormat().resolvedOptions().timeZone
-                        }
+                        value={timezone}
+                        onValueChange={setTimezone}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -411,7 +390,10 @@ export default function SettingsPage() {
 
                     <div className="space-y-2">
                       <Label htmlFor="default_broker">Default Broker</Label>
-                      <Select name="default_broker" defaultValue="">
+                      <Select
+                        value={defaultBroker}
+                        onValueChange={setDefaultBroker}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="None" />
                         </SelectTrigger>
@@ -435,8 +417,8 @@ export default function SettingsPage() {
                     <div className="space-y-2">
                       <Label htmlFor="default_chart_type">Default Chart Type</Label>
                       <Select
-                        name="default_chart_type"
-                        defaultValue={user?.preferences?.default_chart_type || "candlestick"}
+                        value={defaultChartType}
+                        onValueChange={setDefaultChartType}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -452,10 +434,8 @@ export default function SettingsPage() {
                     <div className="space-y-2">
                       <Label htmlFor="items_per_page">Items Per Page</Label>
                       <Select
-                        name="items_per_page"
-                        defaultValue={
-                          (user?.preferences?.items_per_page || 50).toString()
-                        }
+                        value={itemsPerPage}
+                        onValueChange={setItemsPerPage}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -474,8 +454,8 @@ export default function SettingsPage() {
                         Default Date Range
                       </Label>
                       <Select
-                        name="default_date_range"
-                        defaultValue={user?.preferences?.default_date_range || "30d"}
+                        value={defaultDateRange}
+                        onValueChange={setDefaultDateRange}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -493,72 +473,12 @@ export default function SettingsPage() {
                     <div className="flex items-center space-x-2">
                       <Switch
                         id="show_pnl_percentage"
-                        name="show_pnl_percentage"
-                        defaultChecked={user?.preferences?.show_pnl_percentage}
+                        checked={showPnlPercentage}
+                        onCheckedChange={setShowPnlPercentage}
                       />
                       <Label htmlFor="show_pnl_percentage">
                         Show P&L as Percentage
                       </Label>
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Risk Management</h3>
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="max_risk_per_trade">
-                        Max Risk Per Trade (%)
-                      </Label>
-                      <Input
-                        id="max_risk_per_trade"
-                        name="max_risk_per_trade"
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        max="100"
-                        placeholder="2.0"
-                        defaultValue={user?.preferences?.max_risk_per_trade || ""}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Maximum percentage of capital to risk per trade
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="max_daily_loss">Max Daily Loss ($)</Label>
-                      <Input
-                        id="max_daily_loss"
-                        name="max_daily_loss"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="500.00"
-                        defaultValue={user?.preferences?.max_daily_loss || ""}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Stop trading if daily loss exceeds this amount
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="max_position_size">
-                        Max Position Size ($)
-                      </Label>
-                      <Input
-                        id="max_position_size"
-                        name="max_position_size"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="10000.00"
-                        defaultValue={user?.preferences?.max_position_size || ""}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Maximum dollar amount per position
-                      </p>
                     </div>
                   </div>
                 </div>
@@ -586,14 +506,23 @@ export default function SettingsPage() {
               <form
                 onSubmit={(e) => {
                   e.preventDefault()
-                  const formData = new FormData(e.currentTarget)
                   const notificationPrefs = {
-                    email_notifications: formData.get("email_notifications") === "on",
-                    daily_summary_email: formData.get("daily_summary_email") === "on",
-                    weekly_report_email: formData.get("weekly_report_email") === "on",
+                    email_notifications: emailNotifications,
+                    daily_summary_email: dailySummaryEmail,
+                    weekly_report_email: weeklyReportEmail,
+                    profit_target_alerts: profitTargetAlerts,
+                    drawdown_warnings: drawdownWarnings,
+                    daily_loss_alerts: dailyLossAlerts,
+                    trade_reminders: tradeReminders,
+                    winning_streak_notifications: winningStreakNotifications,
+                    personal_best_notifications: personalBestNotifications,
+                    milestone_notifications: milestoneNotifications,
                   }
                   useUserStore.getState().updatePreferences(notificationPrefs)
-                  alert("Notification preferences saved successfully!")
+                  toast({
+                    title: "Success",
+                    description: "Notification preferences saved successfully!",
+                  })
                 }}
                 className="space-y-6"
               >
@@ -611,8 +540,8 @@ export default function SettingsPage() {
                       </div>
                       <Switch
                         id="email_notifications"
-                        name="email_notifications"
-                        defaultChecked={user?.preferences?.email_notifications ?? true}
+                        checked={emailNotifications}
+                        onCheckedChange={setEmailNotifications}
                       />
                     </div>
 
@@ -627,8 +556,8 @@ export default function SettingsPage() {
                       </div>
                       <Switch
                         id="daily_summary_email"
-                        name="daily_summary_email"
-                        defaultChecked={user?.preferences?.daily_summary_email ?? false}
+                        checked={dailySummaryEmail}
+                        onCheckedChange={setDailySummaryEmail}
                       />
                     </div>
 
@@ -643,8 +572,8 @@ export default function SettingsPage() {
                       </div>
                       <Switch
                         id="weekly_report_email"
-                        name="weekly_report_email"
-                        defaultChecked={user?.preferences?.weekly_report_email ?? false}
+                        checked={weeklyReportEmail}
+                        onCheckedChange={setWeeklyReportEmail}
                       />
                     </div>
                   </div>
@@ -657,42 +586,58 @@ export default function SettingsPage() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <Label className="text-base">Profit Target Reached</Label>
+                        <Label htmlFor="profit_target_alerts" className="text-base">Profit Target Reached</Label>
                         <p className="text-sm text-muted-foreground">
                           Get notified when you reach your profit targets on prop firm accounts
                         </p>
                       </div>
-                      <Switch defaultChecked={true} />
+                      <Switch
+                        id="profit_target_alerts"
+                        checked={profitTargetAlerts}
+                        onCheckedChange={setProfitTargetAlerts}
+                      />
                     </div>
 
                     <div className="flex items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <Label className="text-base">Drawdown Warnings</Label>
+                        <Label htmlFor="drawdown_warnings" className="text-base">Drawdown Warnings</Label>
                         <p className="text-sm text-muted-foreground">
                           Receive alerts when approaching maximum drawdown limits
                         </p>
                       </div>
-                      <Switch defaultChecked={true} />
+                      <Switch
+                        id="drawdown_warnings"
+                        checked={drawdownWarnings}
+                        onCheckedChange={setDrawdownWarnings}
+                      />
                     </div>
 
                     <div className="flex items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <Label className="text-base">Daily Loss Limit</Label>
+                        <Label htmlFor="daily_loss_alerts" className="text-base">Daily Loss Limit</Label>
                         <p className="text-sm text-muted-foreground">
                           Alert when you reach your maximum daily loss threshold
                         </p>
                       </div>
-                      <Switch defaultChecked={true} />
+                      <Switch
+                        id="daily_loss_alerts"
+                        checked={dailyLossAlerts}
+                        onCheckedChange={setDailyLossAlerts}
+                      />
                     </div>
 
                     <div className="flex items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <Label className="text-base">Trade Reminders</Label>
+                        <Label htmlFor="trade_reminders" className="text-base">Trade Reminders</Label>
                         <p className="text-sm text-muted-foreground">
                           Remind you to journal trades that haven't been closed
                         </p>
                       </div>
-                      <Switch defaultChecked={false} />
+                      <Switch
+                        id="trade_reminders"
+                        checked={tradeReminders}
+                        onCheckedChange={setTradeReminders}
+                      />
                     </div>
                   </div>
                 </div>
@@ -704,32 +649,44 @@ export default function SettingsPage() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <Label className="text-base">Winning Streaks</Label>
+                        <Label htmlFor="winning_streak_notifications" className="text-base">Winning Streaks</Label>
                         <p className="text-sm text-muted-foreground">
                           Celebrate your winning streaks with notifications
                         </p>
                       </div>
-                      <Switch defaultChecked={true} />
+                      <Switch
+                        id="winning_streak_notifications"
+                        checked={winningStreakNotifications}
+                        onCheckedChange={setWinningStreakNotifications}
+                      />
                     </div>
 
                     <div className="flex items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <Label className="text-base">New Personal Best</Label>
+                        <Label htmlFor="personal_best_notifications" className="text-base">New Personal Best</Label>
                         <p className="text-sm text-muted-foreground">
                           Get notified when you achieve a new personal best day
                         </p>
                       </div>
-                      <Switch defaultChecked={true} />
+                      <Switch
+                        id="personal_best_notifications"
+                        checked={personalBestNotifications}
+                        onCheckedChange={setPersonalBestNotifications}
+                      />
                     </div>
 
                     <div className="flex items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <Label className="text-base">Milestone Achievements</Label>
+                        <Label htmlFor="milestone_notifications" className="text-base">Milestone Achievements</Label>
                         <p className="text-sm text-muted-foreground">
                           Notifications for reaching trade count or profit milestones
                         </p>
                       </div>
-                      <Switch defaultChecked={true} />
+                      <Switch
+                        id="milestone_notifications"
+                        checked={milestoneNotifications}
+                        onCheckedChange={setMilestoneNotifications}
+                      />
                     </div>
                   </div>
                 </div>
@@ -823,96 +780,6 @@ export default function SettingsPage() {
                     <Button type="submit">Update Password</Button>
                   </div>
                 </form>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Two-Factor Authentication</h3>
-                <div className="rounded-lg border p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <Label className="text-base">
-                        Two-Factor Authentication (2FA)
-                      </Label>
-                      <p className="text-sm text-muted-foreground">
-                        Add an extra layer of security to your account by requiring a
-                        verification code in addition to your password
-                      </p>
-                      {user?.two_factor_enabled ? (
-                        <div className="mt-2 flex items-center gap-2">
-                          <Badge variant="default">Enabled</Badge>
-                          <p className="text-xs text-muted-foreground">
-                            Your account is protected with 2FA
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="mt-2 flex items-center gap-2">
-                          <Badge variant="outline">Disabled</Badge>
-                          <p className="text-xs text-muted-foreground">
-                            Enable 2FA to secure your account
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                    <Button
-                      variant={user?.two_factor_enabled ? "destructive" : "default"}
-                      onClick={() => {
-                        const newState = !user?.two_factor_enabled
-                        useUserStore.getState().updateProfile({
-                          two_factor_enabled: newState,
-                        })
-                        alert(
-                          newState
-                            ? "Two-factor authentication enabled!"
-                            : "Two-factor authentication disabled!"
-                        )
-                      }}
-                    >
-                      {user?.two_factor_enabled ? "Disable" : "Enable"} 2FA
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">API Access</h3>
-                <div className="rounded-lg border p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <Label className="text-base">API Access</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Enable API access to integrate with third-party applications and
-                        trading platforms
-                      </p>
-                      {user?.api_access_enabled && (
-                        <div className="mt-3 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <code className="rounded bg-muted px-2 py-1 text-xs">
-                              api_key_xxxxxxxxxxxxxxxx
-                            </code>
-                            <Button size="sm" variant="outline">
-                              Copy
-                            </Button>
-                          </div>
-                          <Button size="sm" variant="outline">
-                            Regenerate API Key
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                    <Switch
-                      checked={user?.api_access_enabled ?? false}
-                      onCheckedChange={(checked) => {
-                        useUserStore.getState().updateProfile({
-                          api_access_enabled: checked,
-                        })
-                      }}
-                    />
-                  </div>
-                </div>
               </div>
 
               <Separator />

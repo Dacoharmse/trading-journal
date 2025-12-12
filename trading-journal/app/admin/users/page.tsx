@@ -14,6 +14,9 @@ import {
   Mail,
   Calendar,
   AlertCircle,
+  CheckCircle2,
+  XCircle,
+  Trash2,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { requireAdmin, logAdminAction, getRoleBadgeColor, getRoleDisplayName } from '@/lib/auth-utils'
@@ -61,7 +64,11 @@ export default function AdminUsersPage() {
   const [selectedUser, setSelectedUser] = React.useState<UserProfile | null>(null)
   const [showRoleDialog, setShowRoleDialog] = React.useState(false)
   const [showDeactivateDialog, setShowDeactivateDialog] = React.useState(false)
+  const [showConfirmEmailDialog, setShowConfirmEmailDialog] = React.useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false)
   const [newRole, setNewRole] = React.useState<UserRole>('trader')
+  const [confirming, setConfirming] = React.useState(false)
+  const [deleting, setDeleting] = React.useState(false)
 
   // Check authorization
   React.useEffect(() => {
@@ -70,41 +77,43 @@ export default function AdminUsersPage() {
         await requireAdmin()
         setAuthorized(true)
       } catch (error) {
+        console.error('Authorization failed:', error)
+        setAuthorized(false)
+        setLoading(false)
         router.push('/')
       }
     }
     checkAuth()
   }, [router])
 
-  // Load users
+  // Load users function
+  const loadUsers = React.useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setUsers(data || [])
+      setFilteredUsers(data || [])
+    } catch (error) {
+      console.error('Failed to load users:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to load users',
+        variant: 'destructive',
+      })
+    } finally {
+      setLoading(false)
+    }
+  }, [supabase, toast])
+
+  // Load users on mount
   React.useEffect(() => {
     if (!authorized) return
-
-    const loadUsers = async () => {
-      setLoading(true)
-      try {
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .order('created_at', { ascending: false })
-
-        if (error) throw error
-        setUsers(data || [])
-        setFilteredUsers(data || [])
-      } catch (error) {
-        console.error('Failed to load users:', error)
-        toast({
-          title: 'Error',
-          description: 'Failed to load users',
-          variant: 'destructive',
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
-
     loadUsers()
-  }, [authorized, supabase, toast])
+  }, [authorized, loadUsers])
 
   // Filter users
   React.useEffect(() => {
@@ -213,6 +222,122 @@ export default function AdminUsersPage() {
     }
   }
 
+  // Confirm user email
+  const handleConfirmEmail = async () => {
+    if (!selectedUser) return
+
+    try {
+      setConfirming(true)
+
+      // Call Supabase admin API to confirm email
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session) {
+        throw new Error('No active session')
+      }
+
+      // Use the admin API to update the user's email confirmation status
+      const response = await fetch('/api/admin/confirm-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: selectedUser.id,
+          email: selectedUser.email,
+        }),
+      })
+
+      if (!response.ok) {
+        const result = await response.json()
+        throw new Error(result.error || 'Failed to confirm email')
+      }
+
+      // Log admin action
+      await logAdminAction('confirm_user_email', selectedUser.id)
+
+      // Reload users to refresh the UI
+      await loadUsers()
+
+      toast({
+        title: 'Success',
+        description: 'User email confirmed successfully',
+      })
+
+      setShowConfirmEmailDialog(false)
+      setSelectedUser(null)
+    } catch (error) {
+      console.error('Failed to confirm email:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to confirm user email. Please try using Supabase Dashboard.',
+        variant: 'destructive',
+      })
+    } finally {
+      setConfirming(false)
+    }
+  }
+
+  // Delete user
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return
+
+    try {
+      setDeleting(true)
+
+      // Log admin action before deletion
+      await logAdminAction('delete_user', selectedUser.id, {
+        email: selectedUser.email,
+        full_name: selectedUser.full_name,
+      })
+
+      // Call API route to delete user (uses service role to bypass RLS)
+      const response = await fetch('/api/admin/delete-user', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: selectedUser.id,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete user')
+      }
+
+      // Reload users from database to refresh the UI
+      await loadUsers()
+
+      toast({
+        title: 'Success',
+        description: 'User and all related data deleted successfully',
+      })
+
+      setShowDeleteDialog(false)
+      setSelectedUser(null)
+    } catch (error) {
+      console.error('Failed to delete user:', error)
+      toast({
+        title: 'Error',
+        description: `Failed to delete user: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: 'destructive',
+      })
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-muted-foreground">Loading users...</div>
+      </div>
+    )
+  }
+
   if (!authorized) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -223,14 +348,6 @@ export default function AdminUsersPage() {
             You need administrator privileges to access this page
           </p>
         </div>
-      </div>
-    )
-  }
-
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-muted-foreground">Loading users...</div>
       </div>
     )
   }
@@ -410,6 +527,15 @@ export default function AdminUsersPage() {
                       <DropdownMenuItem
                         onClick={() => {
                           setSelectedUser(user)
+                          setShowConfirmEmailDialog(true)
+                        }}
+                      >
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                        Confirm Email
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setSelectedUser(user)
                           setShowDeactivateDialog(true)
                         }}
                       >
@@ -433,6 +559,17 @@ export default function AdminUsersPage() {
                           View Mentor Profile
                         </DropdownMenuItem>
                       )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-red-600 focus:text-red-600"
+                        onClick={() => {
+                          setSelectedUser(user)
+                          setShowDeleteDialog(true)
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete User
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -495,6 +632,103 @@ export default function AdminUsersPage() {
               onClick={handleToggleActive}
             >
               {selectedUser?.is_active ? 'Deactivate' : 'Activate'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm Email Dialog */}
+      <Dialog open={showConfirmEmailDialog} onOpenChange={setShowConfirmEmailDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm User Email</DialogTitle>
+            <DialogDescription>
+              Manually confirm the email address for {selectedUser?.full_name || selectedUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="p-4 bg-muted rounded-lg">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                <div className="text-sm space-y-2">
+                  <p className="font-medium">Important:</p>
+                  <p className="text-muted-foreground">
+                    This will bypass the email verification process and allow the user to sign in immediately.
+                    Only use this for trusted users or testing purposes.
+                  </p>
+                  <p className="text-muted-foreground">
+                    <strong>Email:</strong> {selectedUser?.email}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowConfirmEmailDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmEmail} disabled={confirming}>
+              {confirming ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Confirming...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Confirm Email
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete User</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {selectedUser?.full_name || selectedUser?.email}?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                <div className="text-sm space-y-2">
+                  <p className="font-medium text-red-900 dark:text-red-100">Warning: This action cannot be undone!</p>
+                  <p className="text-red-800 dark:text-red-200">
+                    Deleting this user will permanently remove their profile from the system.
+                    Their trades, playbooks, and other related data may also be affected.
+                  </p>
+                  <p className="text-red-800 dark:text-red-200">
+                    <strong>Email:</strong> {selectedUser?.email}
+                  </p>
+                  <p className="text-red-800 dark:text-red-200">
+                    <strong>Role:</strong> {selectedUser?.role && getRoleDisplayName(selectedUser.role)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteUser} disabled={deleting}>
+              {deleting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete User
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

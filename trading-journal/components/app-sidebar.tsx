@@ -24,8 +24,10 @@ import {
   Bell,
   Eye,
   Share2,
+  Calculator,
+  ClipboardCheck,
 } from "lucide-react"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/lib/supabase/client"
 import { getCurrentUserProfile } from "@/lib/auth-utils"
 import type { UserProfile } from "@/types/mentorship"
 
@@ -83,6 +85,12 @@ const tradingTools = [
     description: "Trading strategies and rules",
   },
   {
+    title: "Weekly Review",
+    url: "/review",
+    icon: ClipboardCheck,
+    description: "Analyze your trading week",
+  },
+  {
     title: "Backtesting Lab",
     url: "/backtesting",
     icon: Beaker,
@@ -95,10 +103,10 @@ const tradingTools = [
     description: "Track your progress",
   },
   {
-    title: "Risk Management",
-    url: "/risk",
-    icon: PieChart,
-    description: "Manage your risk",
+    title: "Position Calculator",
+    url: "/calculator",
+    icon: Calculator,
+    description: "Calculate position size",
   },
 ]
 
@@ -125,10 +133,16 @@ const adminNavItems = [
     description: "User management",
   },
   {
-    title: "Mentor Applications",
-    url: "/admin/mentors/applications",
-    icon: GraduationCap,
-    description: "Review mentor applications",
+    title: "Manage Mentors",
+    url: "/admin/mentors",
+    icon: UserCheck,
+    description: "Create and manage mentors",
+  },
+  {
+    title: "Support Center",
+    url: "/admin/support",
+    icon: MessageSquare,
+    description: "Handle user support",
   },
 ]
 
@@ -165,11 +179,44 @@ const mentorNavItems = [
   },
 ]
 
+const studentNavItems = [
+  {
+    title: "Student Dashboard",
+    url: "/student",
+    icon: GraduationCap,
+    description: "Your learning dashboard",
+  },
+  {
+    title: "My Mentors",
+    url: "/student/mentors",
+    icon: Users,
+    description: "Connect with mentors",
+  },
+  {
+    title: "Published Trades",
+    url: "/student/published-trades",
+    icon: Eye,
+    description: "Learn from mentor trades",
+  },
+  {
+    title: "Shared Playbooks",
+    url: "/student/playbooks",
+    icon: BookOpen,
+    description: "Access mentor playbooks",
+  },
+]
+
 const bottomItems = [
   {
     title: "Community",
-    url: "/community",
+    url: "https://whop.com/joined/2g-s-trading/g-chat-FTrNHwktlG7eQC/app/",
     icon: Users,
+    external: true,
+  },
+  {
+    title: "Support",
+    url: "/support",
+    icon: MessageSquare,
   },
   {
     title: "Settings",
@@ -180,45 +227,51 @@ const bottomItems = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter()
+  const supabase = React.useMemo(() => createClient(), [])
   const [userEmail, setUserEmail] = React.useState<string | null>(null)
   const [userProfile, setUserProfile] = React.useState<UserProfile | null>(null)
   const [unreadNotifications, setUnreadNotifications] = React.useState(0)
 
   React.useEffect(() => {
+    const loadUserProfile = async (user: any) => {
+      if (!user) {
+        setUserEmail(null)
+        setUserProfile(null)
+        setUnreadNotifications(0)
+        return
+      }
+
+      setUserEmail(user.email || null)
+
+      // Get user profile with role information
+      const profile = await getCurrentUserProfile()
+      setUserProfile(profile)
+
+      // Get unread notifications count
+      if (profile) {
+        const { count } = await supabase
+          .from('notifications')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', profile.id)
+          .eq('is_read', false)
+
+        setUnreadNotifications(count || 0)
+      }
+    }
+
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      setUserEmail(user?.email || null)
-
-      if (user) {
-        // Get user profile with role information
-        const profile = await getCurrentUserProfile()
-        setUserProfile(profile)
-
-        // Get unread notifications count
-        if (profile) {
-          const { count } = await supabase
-            .from('notifications')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', profile.id)
-            .eq('is_read', false)
-
-          setUnreadNotifications(count || 0)
-        }
-      }
+      await loadUserProfile(user)
     }
     checkUser()
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUserEmail(session?.user?.email || null)
-      if (!session) {
-        setUserProfile(null)
-        setUnreadNotifications(0)
-      }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      await loadUserProfile(session?.user)
     })
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [supabase])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -278,6 +331,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarGroupContent>
               <SidebarMenu>
                 {mentorNavItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild tooltip={item.description}>
+                      <Link href={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Student Section - Visible to students and admins only (not mentors) */}
+        {userProfile && userProfile.role !== 'mentor' && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Learning</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {studentNavItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild tooltip={item.description}>
                       <Link href={item.url}>
@@ -379,10 +453,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           {bottomItems.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild>
-                <Link href={item.url}>
-                  <item.icon />
-                  <span>{item.title}</span>
-                </Link>
+                {item.external ? (
+                  <a href={item.url} target="_blank" rel="noopener noreferrer">
+                    <item.icon />
+                    <span>{item.title}</span>
+                  </a>
+                ) : (
+                  <Link href={item.url}>
+                    <item.icon />
+                    <span>{item.title}</span>
+                  </Link>
+                )}
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}

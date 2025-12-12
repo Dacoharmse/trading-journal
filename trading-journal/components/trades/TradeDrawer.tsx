@@ -3,6 +3,7 @@
 import React from 'react'
 import { X, Edit3, Copy, Trash2, TrendingUp, TrendingDown, Clock, DollarSign, Target, AlertTriangle, Loader2 } from 'lucide-react'
 import type { Trade, Account, PlaybookRule, PlaybookConfluence, PlaybookRubric } from '@/types/supabase'
+import { EMOTIONAL_STATES } from '@/types/supabase'
 import { createClient } from '@/lib/supabase/client'
 import {
   calculateR,
@@ -494,6 +495,27 @@ export function TradeDrawer({
                   <span className="inline-block px-3 py-1 rounded text-sm bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 capitalize">
                     {trade.session}
                   </span>
+                </div>
+              )}
+              {trade.emotional_state && (
+                <div>
+                  <span className="text-xs text-neutral-600 dark:text-neutral-400 block mb-1">Emotional State</span>
+                  {(() => {
+                    const stateInfo = EMOTIONAL_STATES.find(s => s.value === trade.emotional_state)
+                    return stateInfo ? (
+                      <span className={cn(
+                        "inline-block px-3 py-1 rounded text-sm",
+                        "bg-neutral-100 dark:bg-neutral-900/30",
+                        stateInfo.color
+                      )}>
+                        {stateInfo.label}
+                      </span>
+                    ) : (
+                      <span className="inline-block px-3 py-1 rounded text-sm bg-neutral-100 dark:bg-neutral-900/30 text-neutral-700 dark:text-neutral-400">
+                        {trade.emotional_state}
+                      </span>
+                    )
+                  })()}
                 </div>
               )}
               {confluences.length > 0 && (

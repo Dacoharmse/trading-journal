@@ -7,7 +7,7 @@ import {
   calculateAccountMetrics,
 } from '@/types/account';
 import { Trade } from '@/types/trade';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 
 interface AccountState {
   accounts: TradingAccount[];
@@ -47,6 +47,7 @@ export const useAccountStore = create<AccountState>()(
         set({ isLoading: true, error: null });
 
         try {
+          const supabase = createClient();
           const { data: { user } } = await supabase.auth.getUser();
 
           if (!user) {
@@ -95,6 +96,7 @@ export const useAccountStore = create<AccountState>()(
         set({ isLoading: true, error: null });
 
         try {
+          const supabase = createClient();
           const { data: { user } } = await supabase.auth.getUser();
 
           if (!user) {
@@ -166,6 +168,7 @@ export const useAccountStore = create<AccountState>()(
         set({ isLoading: true, error: null });
 
         try {
+          const supabase = createClient();
           const { error } = await supabase
             .from('accounts')
             .update({
@@ -209,6 +212,7 @@ export const useAccountStore = create<AccountState>()(
         set({ isLoading: true, error: null });
 
         try {
+          const supabase = createClient();
           const { error } = await supabase
             .from('accounts')
             .delete()

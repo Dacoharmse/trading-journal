@@ -34,6 +34,7 @@ export interface PlaybookSummary extends Playbook {
   rules_count: number
   confluences_count: number
   stats?: PlaybookStats | null
+  example_image_url?: string | null
 }
 
 interface PlaybookListClientProps {
@@ -236,6 +237,16 @@ export function PlaybookListClient({
                     </Badge>
                   </div>
                 </CardHeader>
+
+                {playbook.example_image_url && (
+                  <div className="aspect-video w-full overflow-hidden border-y border-neutral-200/70 dark:border-neutral-800/60">
+                    <img
+                      src={playbook.example_image_url}
+                      alt={`${playbook.name} example`}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                )}
 
                 <CardContent className="space-y-4">
                   {playbook.description && (

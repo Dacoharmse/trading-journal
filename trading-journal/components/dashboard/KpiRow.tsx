@@ -84,14 +84,14 @@ export function KpiRow({
               <div className="flex gap-3">
                 <Link
                   href="/import"
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground bg-neutral-800 dark:bg-neutral-700 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-600 transition-colors border border-neutral-700"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-neutral-800 hover:bg-neutral-700 dark:bg-neutral-700 dark:hover:bg-neutral-600 rounded-lg transition-colors"
                 >
                   <ArrowUpRight className="h-4 w-4" />
                   Import Trades
                 </Link>
                 <Link
                   href="/trades"
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground bg-neutral-800 dark:bg-neutral-700 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-600 transition-colors border border-neutral-700"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-neutral-800 hover:bg-neutral-700 dark:bg-neutral-700 dark:hover:bg-neutral-600 rounded-lg transition-colors"
                 >
                   <ArrowUpRight className="h-4 w-4" />
                   Add Trade

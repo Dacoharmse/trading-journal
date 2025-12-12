@@ -6,6 +6,7 @@ import { useTradeStore, useAccountStore } from "@/stores"
 import { useDashboardFilters, computeDateRange } from "@/stores/dashboard-filters"
 import { calculateTradeStats, calculateR } from "@/lib/trade-stats"
 import { convertPnL, formatCurrency } from "@/lib/fx-converter"
+import { createClient } from "@/lib/supabase/client"
 import type { Trade } from "@/types/trade"
 import {
   FilterBar,
@@ -21,13 +22,27 @@ import {
   StreakWidget,
   InsightsBar,
   HoldTimeBands,
+  TradeTypeWidget,
+  PnLDurationBoxPlot,
+  PnLDurationScatter,
+  EmotionalStateWidget,
 } from "@/components/dashboard"
+
+interface PlaybookForWidget {
+  id: string
+  name: string
+  trade_type?: 'continuation' | 'reversal' | null
+  direction?: 'buy' | 'sell' | 'both' | null
+}
 
 export default function Home() {
   const trades = useTradeStore((state) => state.trades)
   const fetchTrades = useTradeStore((state) => state.fetchTrades)
   const accounts = useAccountStore((state) => state.accounts)
   const fetchAccounts = useAccountStore((state) => state.fetchAccounts)
+
+  // Playbooks for trade type widget
+  const [playbooks, setPlaybooks] = React.useState<PlaybookForWidget[]>([])
 
   // Dashboard filters (use shallow equality to prevent re-renders)
   const filters = useDashboardFilters(useShallow((state) => state.filters))
@@ -45,6 +60,19 @@ export default function Home() {
   React.useEffect(() => {
     void fetchTrades()
     void fetchAccounts()
+
+    // Fetch playbooks for trade type widget
+    const fetchPlaybooks = async () => {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('playbooks')
+        .select('id, name, trade_type, direction')
+        .eq('active', true)
+      if (data) {
+        setPlaybooks(data as PlaybookForWidget[])
+      }
+    }
+    void fetchPlaybooks()
   }, [fetchTrades, fetchAccounts])
 
   // Filter trades based on dashboard filters
@@ -189,13 +217,14 @@ export default function Home() {
         />
 
         {/* Edge Analysis Row */}
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-4 lg:grid-cols-4">
           <ExpectancyLadder trades={filteredTrades} />
           <StreakWidget
             trades={normalizedTrades as Trade[]}
             startDate={dateRange.start}
             endDate={dateRange.end}
           />
+          <TradeTypeWidget trades={filteredTrades} playbooks={playbooks} />
           <HoldTimeBands trades={filteredTrades} />
         </div>
 
@@ -229,19 +258,29 @@ export default function Home() {
           />
           <BreakdownBars
             trades={filteredTrades}
-            type="strategy"
+            type="playbook"
             units={filters.units}
             currency={displayCurrency}
+            playbooks={playbooks}
           />
         </div>
 
         {/* Session Heatmap */}
         <SessionHeatmap trades={filteredTrades} />
 
+        {/* Emotional State Performance */}
+        <EmotionalStateWidget trades={filteredTrades} />
+
         {/* Distribution Charts */}
         <div className="grid gap-4 lg:grid-cols-2">
           <Histogram trades={filteredTrades} />
           <ScatterHoldVsR trades={filteredTrades} />
+        </div>
+
+        {/* PnL by Duration Charts */}
+        <div className="grid gap-4 lg:grid-cols-2">
+          <PnLDurationBoxPlot trades={filteredTrades} currency={displayCurrency} />
+          <PnLDurationScatter trades={filteredTrades} currency={displayCurrency} />
         </div>
 
         {/* Account Meters (if specific account selected) */}

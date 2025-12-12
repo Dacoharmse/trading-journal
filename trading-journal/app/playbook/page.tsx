@@ -62,13 +62,17 @@ export default function PlaybookPage() {
           return
         }
 
-        // Fetch playbooks and trades in parallel
-        console.log('Playbook page: Fetching playbooks and trades...')
-        const [playbooksRes, tradesRes] = await Promise.all([
+        // Fetch playbooks, examples, and trades in parallel
+        console.log('Playbook page: Fetching playbooks, examples, and trades...')
+        const [playbooksRes, examplesRes, tradesRes] = await Promise.all([
           supabase
             .from('playbooks')
             .select('*, playbook_rules(count), playbook_confluences(count)')
             .order('updated_at', { ascending: false }),
+          supabase
+            .from('playbook_examples')
+            .select('playbook_id, media_urls, sort')
+            .order('sort', { ascending: true }),
           supabase
             .from('trades')
             .select('*')
@@ -77,13 +81,20 @@ export default function PlaybookPage() {
 
         console.log('Playbook page: Data fetched', {
           playbooksCount: playbooksRes.data?.length,
+          examplesCount: examplesRes.data?.length,
           tradesCount: tradesRes.data?.length,
           playbooksError: playbooksRes.error,
+          examplesError: examplesRes.error,
           tradesError: tradesRes.error,
         })
 
         if (playbooksRes.error) {
           throw playbooksRes.error
+        }
+
+        if (examplesRes.error) {
+          console.error('Examples query error:', examplesRes.error)
+          throw examplesRes.error
         }
 
         if (tradesRes.error) {
@@ -93,11 +104,17 @@ export default function PlaybookPage() {
 
         if (!cancelled) {
           const trades = (tradesRes.data as TradeRecord[] | null) ?? []
+          const examples = (examplesRes.data as { playbook_id: string; media_urls: string[]; sort: number }[] | null) ?? []
 
           const mapped =
             (playbooksRes.data as PlaybookRecord[] | null)?.map((playbook) => {
               // Calculate stats for this playbook
               const stats = calculatePlaybookStats(playbook.id, trades)
+
+              // Get first example image for this playbook
+              const playbookExamples = examples.filter(ex => ex.playbook_id === playbook.id)
+              const firstExample = playbookExamples.length > 0 ? playbookExamples[0] : null
+              const firstImageUrl = firstExample && firstExample.media_urls.length > 0 ? firstExample.media_urls[0] : null
 
               return {
                 id: playbook.id,
@@ -113,6 +130,7 @@ export default function PlaybookPage() {
                 rules_count: playbook.playbook_rules?.[0]?.count ?? 0,
                 confluences_count: playbook.playbook_confluences?.[0]?.count ?? 0,
                 stats: stats.total_trades > 0 ? stats : null,
+                example_image_url: firstImageUrl,
               }
             }) ?? []
           setPlaybooks(mapped)

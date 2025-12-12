@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Logo } from "@/components/logo"
 
 export default function RegisterPage() {
@@ -15,6 +16,9 @@ export default function RegisterPage() {
   const [password, setPassword] = React.useState("")
   const [confirmPassword, setConfirmPassword] = React.useState("")
   const [fullName, setFullName] = React.useState("")
+  const [experienceLevel, setExperienceLevel] = React.useState("beginner")
+  const [yearsOfExperience, setYearsOfExperience] = React.useState("")
+  const [tradingStyle, setTradingStyle] = React.useState("day_trading")
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
@@ -61,6 +65,9 @@ export default function RegisterPage() {
           .insert({
             user_id: authData.user.id,
             full_name: fullName,
+            experience_level: experienceLevel,
+            years_of_experience: yearsOfExperience ? parseInt(yearsOfExperience) : null,
+            trading_style: tradingStyle,
             email_notifications: true,
             subscription_tier: 'free',
             items_per_page: 50,
@@ -125,6 +132,59 @@ export default function RegisterPage() {
                 required
                 disabled={isLoading}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="experienceLevel">Experience Level</Label>
+              <Select
+                value={experienceLevel}
+                onValueChange={setExperienceLevel}
+                disabled={isLoading}
+              >
+                <SelectTrigger id="experienceLevel">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="beginner">Beginner</SelectItem>
+                  <SelectItem value="intermediate">Intermediate</SelectItem>
+                  <SelectItem value="advanced">Advanced</SelectItem>
+                  <SelectItem value="professional">Professional</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="yearsOfExperience">Years of Experience Trading</Label>
+              <Input
+                id="yearsOfExperience"
+                type="number"
+                min="0"
+                max="50"
+                placeholder="5"
+                value={yearsOfExperience}
+                onChange={(e) => setYearsOfExperience(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tradingStyle">Primary Trading Style</Label>
+              <Select
+                value={tradingStyle}
+                onValueChange={setTradingStyle}
+                disabled={isLoading}
+              >
+                <SelectTrigger id="tradingStyle">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="day_trading">Day Trading</SelectItem>
+                  <SelectItem value="swing_trading">Swing Trading</SelectItem>
+                  <SelectItem value="scalping">Scalping</SelectItem>
+                  <SelectItem value="position_trading">Position Trading</SelectItem>
+                  <SelectItem value="mixed">Mixed</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

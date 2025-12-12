@@ -28,8 +28,12 @@ BEGIN;
 -- SECTION 1: USER PROFILES & ROLES
 -- =====================================================
 
+-- Drop existing user_profiles table if it exists (to handle schema changes)
+-- This is safe because we'll recreate it with all the data
+DROP TABLE IF EXISTS public.user_profiles CASCADE;
+
 -- Create user_profiles table (enhanced user management)
-CREATE TABLE IF NOT EXISTS public.user_profiles (
+CREATE TABLE public.user_profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     email TEXT NOT NULL UNIQUE,
     full_name TEXT,
@@ -71,6 +75,15 @@ CREATE TABLE IF NOT EXISTS public.user_profiles (
     -- Constraints
     CONSTRAINT valid_mentor_rating CHECK (mentor_rating >= 0 AND mentor_rating <= 5)
 );
+
+-- Populate user_profiles from existing auth.users
+INSERT INTO public.user_profiles (id, email, full_name, role)
+SELECT
+    au.id,
+    au.email,
+    COALESCE(au.raw_user_meta_data->>'full_name', au.email),
+    'trader'
+FROM auth.users au;
 
 -- Create indexes for user_profiles
 CREATE INDEX IF NOT EXISTS idx_user_profiles_email ON public.user_profiles(email);
@@ -1004,22 +1017,10 @@ GRANT ALL ON public.mentor_applications TO authenticated;
 GRANT ALL ON public.system_settings TO authenticated;
 
 -- =====================================================
--- SECTION 13: CREATE INITIAL ADMIN USER & POPULATE PROFILES
+-- SECTION 13: SET INITIAL ADMIN USER
 -- =====================================================
 
--- First, populate user_profiles from existing auth.users if they don't have profiles yet
-INSERT INTO public.user_profiles (id, email, full_name, role)
-SELECT
-    au.id,
-    au.email,
-    COALESCE(au.raw_user_meta_data->>'full_name', au.email),
-    'trader'
-FROM auth.users au
-WHERE NOT EXISTS (
-    SELECT 1 FROM public.user_profiles up WHERE up.id = au.id
-);
-
--- Now set admin role for dacoharmse13.dh@gmail.com
+-- Set admin role for dacoharmse13.dh@gmail.com
 UPDATE public.user_profiles
 SET
     role = 'admin',

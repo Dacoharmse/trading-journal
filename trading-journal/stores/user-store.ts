@@ -6,7 +6,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User, UserPreferences, AuthSession } from '@/types/user';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
+
+// Get the supabase client (singleton)
+const getSupabase = () => createClient();
 
 interface UserState {
   // State
@@ -39,6 +42,7 @@ export const useUserStore = create<UserState>()(
         set({ isLoading: true, error: null });
 
         try {
+          const supabase = getSupabase();
           const { data: { user: authUser } } = await supabase.auth.getUser();
 
           if (!authUser) {
@@ -69,16 +73,18 @@ export const useUserStore = create<UserState>()(
           }
 
           // Fetch user profile from Supabase
-          const { data: profile, error } = await supabase
+          const { data: profile, error: profileError } = await supabase
             .from('user_profiles')
             .select('*')
             .eq('user_id', authUser.id)
             .single();
 
-          if (error && error.code !== 'PGRST116') {
+          if (profileError && profileError.code !== 'PGRST116') {
             // PGRST116 is "not found" - ignore it for new users
-            throw error;
+            throw profileError;
           }
+
+          console.log('Loaded user profile from database:', profile);
 
           // Transform profile data to User format
           const user: User = {
@@ -106,6 +112,14 @@ export const useUserStore = create<UserState>()(
               timezone: profile?.timezone || 'UTC',
               language: 'en',
               confluences: profile?.confluences || [],
+              default_broker: profile?.default_broker || undefined,
+              default_chart_type: profile?.default_chart_type || 'candlestick',
+              items_per_page: profile?.items_per_page || 50,
+              default_date_range: profile?.default_date_range || '30d',
+              show_pnl_percentage: profile?.show_pnl_percentage || false,
+              max_risk_per_trade: profile?.max_risk_per_trade || undefined,
+              max_daily_loss: profile?.max_daily_loss || undefined,
+              max_position_size: profile?.max_position_size || undefined,
             },
           };
 
@@ -152,18 +166,48 @@ export const useUserStore = create<UserState>()(
             return;
           }
 
-          // Update in Supabase
+          // Update in Supabase - filter out undefined values
+          const updateData: any = {};
+          if (preferences.theme !== undefined) updateData.theme = preferences.theme;
+          if (preferences.currency !== undefined) updateData.currency = preferences.currency;
+          if (preferences.timezone !== undefined) updateData.timezone = preferences.timezone;
+          if (preferences.confluences !== undefined) updateData.confluences = preferences.confluences;
+          if (preferences.default_broker !== undefined) updateData.default_broker = preferences.default_broker;
+          if (preferences.default_chart_type !== undefined) updateData.default_chart_type = preferences.default_chart_type;
+          if (preferences.items_per_page !== undefined) updateData.items_per_page = preferences.items_per_page;
+          if (preferences.default_date_range !== undefined) updateData.default_date_range = preferences.default_date_range;
+          if (preferences.show_pnl_percentage !== undefined) updateData.show_pnl_percentage = preferences.show_pnl_percentage;
+          if (preferences.max_risk_per_trade !== undefined) updateData.max_risk_per_trade = preferences.max_risk_per_trade;
+          if (preferences.max_daily_loss !== undefined) updateData.max_daily_loss = preferences.max_daily_loss;
+          if (preferences.max_position_size !== undefined) updateData.max_position_size = preferences.max_position_size;
+
+          // Notification preferences
+          if (preferences.email_notifications !== undefined) updateData.email_notifications = preferences.email_notifications;
+          if (preferences.daily_summary_email !== undefined) updateData.daily_summary_email = preferences.daily_summary_email;
+          if (preferences.weekly_report_email !== undefined) updateData.weekly_report_email = preferences.weekly_report_email;
+          if (preferences.profit_target_alerts !== undefined) updateData.profit_target_alerts = preferences.profit_target_alerts;
+          if (preferences.drawdown_warnings !== undefined) updateData.drawdown_warnings = preferences.drawdown_warnings;
+          if (preferences.daily_loss_alerts !== undefined) updateData.daily_loss_alerts = preferences.daily_loss_alerts;
+          if (preferences.trade_reminders !== undefined) updateData.trade_reminders = preferences.trade_reminders;
+          if (preferences.winning_streak_notifications !== undefined) updateData.winning_streak_notifications = preferences.winning_streak_notifications;
+          if (preferences.personal_best_notifications !== undefined) updateData.personal_best_notifications = preferences.personal_best_notifications;
+          if (preferences.milestone_notifications !== undefined) updateData.milestone_notifications = preferences.milestone_notifications;
+
+          console.log('Updating preferences for user:', state.user.id);
+          console.log('Update data:', updateData);
+
+          const supabase = getSupabase();
           const { error } = await supabase
             .from('user_profiles')
-            .update({
-              theme: preferences.theme,
-              currency: preferences.currency,
-              timezone: preferences.timezone,
-              confluences: preferences.confluences,
-            })
+            .update(updateData)
             .eq('user_id', state.user.id);
 
-          if (error) throw error;
+          if (error) {
+            console.error('Supabase update error:', error);
+            throw error;
+          }
+
+          console.log('Preferences updated successfully in database');
 
           // Update local state
           set((state) => ({
@@ -210,22 +254,33 @@ export const useUserStore = create<UserState>()(
           }
 
           // Update in Supabase
+          const updateData = {
+            full_name: profile.profile?.full_name,
+            bio: profile.profile?.bio,
+            phone: profile.profile?.phone,
+            country: profile.profile?.country,
+            experience_level: profile.profile?.experience_level,
+            years_of_experience: profile.profile?.years_of_experience,
+            trading_style: profile.profile?.trading_style,
+            twitter_handle: profile.profile?.twitter_handle,
+            linkedin_url: profile.profile?.linkedin_url,
+          };
+
+          console.log('Updating profile for user:', state.user.id);
+          console.log('Profile update data:', updateData);
+
+          const supabase = getSupabase();
           const { error } = await supabase
             .from('user_profiles')
-            .update({
-              full_name: profile.profile?.full_name,
-              bio: profile.profile?.bio,
-              phone: profile.profile?.phone,
-              country: profile.profile?.country,
-              experience_level: profile.profile?.experience_level,
-              years_of_experience: profile.profile?.years_of_experience,
-              trading_style: profile.profile?.trading_style,
-              twitter_handle: profile.profile?.twitter_handle,
-              linkedin_url: profile.profile?.linkedin_url,
-            })
+            .update(updateData)
             .eq('user_id', state.user.id);
 
-          if (error) throw error;
+          if (error) {
+            console.error('Supabase profile update error:', error);
+            throw error;
+          }
+
+          console.log('Profile updated successfully in database');
 
           // Update local state
           set((state) => ({

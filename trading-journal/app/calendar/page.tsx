@@ -5,10 +5,13 @@ import { useShallow } from "zustand/react/shallow"
 import { useTradeStore, useAccountStore } from "@/stores"
 import { useDashboardFilters } from "@/stores/dashboard-filters"
 import { CalendarGrid, DailyDrawer, StreakCounter } from "@/components/calendar"
+import { WeeklySummary } from "@/components/calendar/WeeklySummary"
+import { CalendarStatistics } from "@/components/calendar/CalendarStatistics"
 import { groupTradesByDay, calculateStreaks, type DailyStats } from "@/lib/calendar-utils"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Share2 } from "lucide-react"
 import Link from "next/link"
+import { useToast } from "@/hooks/use-toast"
 
 export default function CalendarPage() {
   const [currentYear, setCurrentYear] = React.useState(() => new Date().getFullYear())
@@ -23,6 +26,7 @@ export default function CalendarPage() {
   const fetchAccounts = useAccountStore((state) => state.fetchAccounts)
 
   const filters = useDashboardFilters(useShallow((state) => state.filters))
+  const { toast } = useToast()
 
   // Fetch data on mount
   React.useEffect(() => {
@@ -85,6 +89,43 @@ export default function CalendarPage() {
     setCurrentMonth(month)
   }
 
+  const handleShare = async () => {
+    const monthName = new Date(currentYear, currentMonth).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    const shareText = `My Trading Calendar - ${monthName}\n\nCheck out my trading performance!`
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Trading Calendar - ${monthName}`,
+          text: shareText,
+        })
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          toast({
+            title: "Share failed",
+            description: "Could not share calendar",
+            variant: "destructive",
+          })
+        }
+      }
+    } else {
+      // Fallback: copy to clipboard
+      try {
+        await navigator.clipboard.writeText(shareText)
+        toast({
+          title: "Copied to clipboard",
+          description: "Calendar info copied to clipboard",
+        })
+      } catch (err) {
+        toast({
+          title: "Share not supported",
+          description: "Sharing is not supported on this device",
+          variant: "destructive",
+        })
+      }
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900 p-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -104,31 +145,38 @@ export default function CalendarPage() {
             </p>
           </div>
 
-          {/* Units Toggle */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground">Display:</span>
-            <div className="flex gap-1 bg-white/60 dark:bg-neutral-800/60 rounded-lg p-1 shadow-sm">
-              <button
-                onClick={() => useDashboardFilters.getState().setUnits('currency')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                  filters.units === 'currency'
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'hover:bg-muted text-muted-foreground'
-                }`}
-              >
-                Currency
-              </button>
-              <button
-                onClick={() => useDashboardFilters.getState().setUnits('r')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                  filters.units === 'r'
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'hover:bg-muted text-muted-foreground'
-                }`}
-              >
-                R
-              </button>
+          {/* Units Toggle and Share */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground">Display:</span>
+              <div className="flex gap-1 bg-white/60 dark:bg-neutral-800/60 rounded-lg p-1 shadow-sm">
+                <button
+                  onClick={() => useDashboardFilters.getState().setUnits('currency')}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                    filters.units === 'currency'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'hover:bg-muted text-muted-foreground'
+                  }`}
+                >
+                  Currency
+                </button>
+                <button
+                  onClick={() => useDashboardFilters.getState().setUnits('r')}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                    filters.units === 'r'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'hover:bg-muted text-muted-foreground'
+                  }`}
+                >
+                  R
+                </button>
+              </div>
             </div>
+
+            <Button variant="outline" size="sm" onClick={handleShare}>
+              <Share2 className="h-4 w-4 mr-2" />
+              Share
+            </Button>
           </div>
         </div>
 
@@ -142,19 +190,40 @@ export default function CalendarPage() {
           worstLossStreakDates={streaks.worstLossStreakDates}
         />
 
-        {/* Calendar Grid */}
-        <div className="bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm rounded-lg border border-neutral-200 dark:border-neutral-700 p-6 shadow-lg">
-          <CalendarGrid
-            year={currentYear}
-            month={currentMonth}
-            dailyStats={dailyStats}
-            displayUnit={filters.units}
-            currency={displayCurrency}
-            bestDay={bestDay}
-            onDateClick={handleDateClick}
-            onMonthChange={handleMonthChange}
-          />
+        {/* Calendar Grid with Weekly Summary */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+          {/* Calendar */}
+          <div className="bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm rounded-lg border border-neutral-200 dark:border-neutral-700 p-6 shadow-lg">
+            <CalendarGrid
+              year={currentYear}
+              month={currentMonth}
+              dailyStats={dailyStats}
+              displayUnit={filters.units}
+              currency={displayCurrency}
+              bestDay={bestDay}
+              onDateClick={handleDateClick}
+              onMonthChange={handleMonthChange}
+            />
+          </div>
+
+          {/* Weekly Summary */}
+          <div className="lg:block">
+            <WeeklySummary
+              year={currentYear}
+              month={currentMonth}
+              dailyStats={dailyStats}
+              displayUnit={filters.units}
+              currency={displayCurrency}
+            />
+          </div>
         </div>
+
+        {/* Statistics Cards */}
+        <CalendarStatistics
+          dailyStats={dailyStats}
+          displayUnit={filters.units}
+          currency={displayCurrency}
+        />
 
         {/* Daily Drawer */}
         <DailyDrawer

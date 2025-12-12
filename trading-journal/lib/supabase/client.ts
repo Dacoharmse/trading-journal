@@ -1,9 +1,11 @@
 /**
  * Supabase Client - Browser-side client
  * Uses singleton pattern to prevent multiple GoTrueClient instances
+ * Uses cookie storage for SSR compatibility
  */
 
-import { createClient as createSupabaseClient, SupabaseClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 // Singleton instance
 let supabaseInstance: SupabaseClient | null = null
@@ -30,17 +32,8 @@ export function createClient() {
     throw new Error('Missing environment variable: NEXT_PUBLIC_SUPABASE_ANON_KEY')
   }
 
-  // Create new instance only if it doesn't exist
-  supabaseInstance = createSupabaseClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-    },
-    db: {
-      schema: 'public',
-    },
-  })
+  // Create new instance with cookie storage (for SSR compatibility)
+  supabaseInstance = createBrowserClient(supabaseUrl, supabaseAnonKey)
 
   return supabaseInstance
 }

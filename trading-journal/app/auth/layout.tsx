@@ -1,11 +1,10 @@
+/**
+ * Auth Layout - No sidebar, full-screen layout for login/register pages
+ */
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  return (
-    <div className="min-h-screen w-full">
-      {children}
-    </div>
-  )
+  return <>{children}</>
 }

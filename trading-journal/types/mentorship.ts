@@ -27,6 +27,7 @@ export interface UserProfile {
   mentor_rating: number
   mentor_total_reviews: number
   mentor_available: boolean
+  instagram_url?: string
 
   // Settings
   timezone: string
