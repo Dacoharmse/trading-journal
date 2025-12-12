@@ -239,12 +239,27 @@ export function PlaybookListClient({
                 </CardHeader>
 
                 {playbook.example_image_url && (
-                  <div className="aspect-video w-full overflow-hidden border-y border-neutral-200/70 dark:border-neutral-800/60">
+                  <div className="relative aspect-video w-full overflow-hidden border-y border-neutral-200/70 dark:border-neutral-800/60">
                     <img
                       src={playbook.example_image_url}
                       alt={`${playbook.name} example`}
                       className="h-full w-full object-cover"
                     />
+                    {playbook.trade_type && (
+                      <div className="absolute bottom-2 right-2">
+                        <Badge
+                          variant="secondary"
+                          className={cn(
+                            'capitalize font-semibold shadow-lg',
+                            playbook.trade_type === 'continuation'
+                              ? 'bg-blue-600 text-white hover:bg-blue-700'
+                              : 'bg-purple-600 text-white hover:bg-purple-700'
+                          )}
+                        >
+                          {playbook.trade_type}
+                        </Badge>
+                      </div>
+                    )}
                   </div>
                 )}
 
