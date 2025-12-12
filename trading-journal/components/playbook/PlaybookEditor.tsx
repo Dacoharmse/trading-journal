@@ -449,10 +449,19 @@ export function PlaybookEditor({
         router.replace(`/playbook/${data.id}`)
       } else {
         console.log('[PlaybookEditor] Updating existing playbook:', currentId)
-        const { error: updateError } = await supabase
+
+        // Add timeout wrapper
+        const updatePromise = supabase
           .from('playbooks')
           .update(payload)
           .eq('id', currentId)
+
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Update timed out after 10 seconds')), 10000)
+        )
+
+        const result = await Promise.race([updatePromise, timeoutPromise]) as any
+        const { error: updateError } = result
 
         console.log('[PlaybookEditor] Playbook update result:', { error: updateError })
         if (updateError) throw updateError
