@@ -401,6 +401,10 @@ export function PlaybookEditor({
     console.log('[PlaybookEditor] Starting save process...')
 
     try {
+      // Create a fresh Supabase client for this save operation
+      const supabase = createClient()
+      console.log('[PlaybookEditor] Created fresh Supabase client')
+
       const payload = {
         name: basics.name.trim(),
         trade_type: basics.trade_type || null,
@@ -416,15 +420,26 @@ export function PlaybookEditor({
         user_id: userId,
       }
 
+      console.log('[PlaybookEditor] Payload prepared, user_id:', userId)
+
       let currentId = playbookId
 
       if (!currentId) {
         console.log('[PlaybookEditor] Inserting new playbook...')
-        const { data, error: insertError } = await supabase
+
+        // Add timeout wrapper
+        const insertPromise = supabase
           .from('playbooks')
           .insert(payload)
           .select()
           .single()
+
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Insert timed out after 10 seconds')), 10000)
+        )
+
+        const result = await Promise.race([insertPromise, timeoutPromise]) as any
+        const { data, error: insertError } = result
 
         console.log('[PlaybookEditor] Playbook insert result:', { data, error: insertError })
         if (insertError) throw insertError
