@@ -246,14 +246,13 @@ export function PlaybookListClient({
                       className="h-full w-full object-cover"
                     />
                     {playbook.trade_type && (
-                      <div className="absolute bottom-2 right-2">
+                      <div className="absolute bottom-3 right-3">
                         <Badge
-                          variant="secondary"
                           className={cn(
-                            'capitalize font-semibold shadow-lg',
+                            'capitalize font-bold shadow-xl px-3 py-1 text-sm border-2',
                             playbook.trade_type === 'continuation'
-                              ? 'bg-blue-600 text-white hover:bg-blue-700'
-                              : 'bg-purple-600 text-white hover:bg-purple-700'
+                              ? 'bg-blue-600 text-white border-blue-400'
+                              : 'bg-purple-600 text-white border-purple-400'
                           )}
                         >
                           {playbook.trade_type}
