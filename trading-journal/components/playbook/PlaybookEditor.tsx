@@ -402,7 +402,7 @@ export function PlaybookEditor({
 
     try {
       // Create a fresh Supabase client for this save operation
-      const supabase = createClient()
+      let supabase = createClient()
       console.log('[PlaybookEditor] Created fresh Supabase client')
 
       const payload = {
