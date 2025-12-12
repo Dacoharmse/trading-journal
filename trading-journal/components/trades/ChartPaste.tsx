@@ -62,19 +62,32 @@ export function ChartPaste({
 
     // Compress and upload
     const newMedia: MediaItem[] = []
-    for (const file of validFiles) {
-      const compressed = await compressImage(file)
-      const result = await uploadTradeMedia(compressed, userId, tradeId)
+    try {
+      for (const file of validFiles) {
+        const compressed = await compressImage(file)
 
-      if (result.error) {
-        setError(result.error)
-      } else {
-        newMedia.push({ url: result.url, kind: 'image', path: result.path })
+        // Add timeout wrapper to upload
+        const uploadPromise = uploadTradeMedia(compressed, userId, tradeId)
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Upload timed out after 30 seconds')), 30000)
+        )
+
+        const result = await Promise.race([uploadPromise, timeoutPromise]) as any
+
+        if (result.error) {
+          setError(result.error)
+        } else {
+          newMedia.push({ url: result.url, kind: 'image', path: result.path })
+        }
       }
-    }
 
-    onChange([...media, ...newMedia])
-    setUploading(false)
+      onChange([...media, ...newMedia])
+    } catch (uploadError) {
+      console.error('Upload error:', uploadError)
+      setError(uploadError instanceof Error ? uploadError.message : 'Upload failed')
+    } finally {
+      setUploading(false)
+    }
   }
 
   const handlePaste = async (e: React.ClipboardEvent) => {
