@@ -11,6 +11,7 @@ interface PlaybookRecord {
   user_id: string
   name: string
   description: string | null
+  trade_type: string | null
   sessions: string[] | null
   symbols: string[] | null
   rr_min: number | null
@@ -121,6 +122,7 @@ export default function PlaybookPage() {
                 user_id: playbook.user_id,
                 name: playbook.name,
                 description: playbook.description,
+                trade_type: playbook.trade_type,
                 sessions: playbook.sessions ?? [],
                 symbols: playbook.symbols ?? [],
                 rr_min: playbook.rr_min ?? null,
