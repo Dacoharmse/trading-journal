@@ -129,7 +129,7 @@ export function PlaybookListClient({
     setLoadingView(true)
 
     try {
-      const [rulesRes, confRes, examplesRes, rubricRes] = await Promise.all([
+      const [rulesRes, confRes, examplesRes, rubricRes, detailsRes] = await Promise.all([
         supabase
           .from('playbook_rules')
           .select('*')
@@ -146,6 +146,11 @@ export function PlaybookListClient({
           .eq('playbook_id', playbook.id)
           .order('sort'),
         supabase.from('playbook_rubric').select('*').eq('playbook_id', playbook.id).maybeSingle(),
+        supabase
+          .from('playbook_trade_details')
+          .select('*')
+          .eq('playbook_id', playbook.id)
+          .order('sort'),
       ])
 
       setViewData({
@@ -153,6 +158,7 @@ export function PlaybookListClient({
         confluences: confRes.data || [],
         examples: examplesRes.data || [],
         rubric: rubricRes.data || null,
+        tradeDetails: detailsRes.data || [],
       })
     } catch (err) {
       console.error('Failed to load playbook details:', err)
@@ -452,106 +458,174 @@ export function PlaybookListClient({
 
       {/* View Playbook Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl">{playbookToView?.name || 'Playbook Details'}</DialogTitle>
-          </DialogHeader>
-
-          {loadingView ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-neutral-500" />
-            </div>
-          ) : playbookToView && viewData ? (
-            <div className="space-y-6">
-              {/* Playbook Info */}
-              <div className="space-y-4">
-                {playbookToView.description && (
-                  <div>
-                    <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">Description</h3>
-                    <p className="text-sm text-neutral-600 dark:text-neutral-400 whitespace-pre-wrap">
-                      {playbookToView.description}
-                    </p>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden p-0">
+          <div className="flex flex-col h-full max-h-[90vh]">
+            {/* Header */}
+            <DialogHeader className="px-6 pt-6 pb-4 border-b border-neutral-200 dark:border-neutral-800">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <DialogTitle className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+                    {playbookToView?.name || 'Playbook Details'}
+                  </DialogTitle>
+                  {playbookToView?.trade_type && (
+                    <Badge
+                      className={cn(
+                        'mt-2 capitalize font-semibold',
+                        playbookToView.trade_type === 'continuation'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-purple-600 text-white'
+                      )}
+                    >
+                      {playbookToView.trade_type}
+                    </Badge>
+                  )}
+                </div>
+                {playbookToView?.sessions && playbookToView.sessions.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {playbookToView.sessions.map((session) => (
+                      <Badge key={session} variant="outline" className="text-xs">
+                        {session}
+                      </Badge>
+                    ))}
                   </div>
                 )}
+              </div>
+            </DialogHeader>
 
-                <div className="grid grid-cols-2 gap-4">
-                  {playbookToView.trade_type && (
-                    <div>
-                      <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">Trade Type</h3>
-                      <Badge
-                        className={cn(
-                          'capitalize',
-                          playbookToView.trade_type === 'continuation'
-                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
-                            : 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300'
-                        )}
-                      >
-                        {playbookToView.trade_type}
-                      </Badge>
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto px-6 py-6">
+              {loadingView ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-neutral-500" />
+                </div>
+              ) : playbookToView && viewData ? (
+                <div className="space-y-8">
+                  {/* Description */}
+                  {playbookToView.description && (
+                    <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-4 bg-neutral-50 dark:bg-neutral-900">
+                      <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-2">Description</h3>
+                      <p className="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap leading-relaxed">
+                        {playbookToView.description}
+                      </p>
                     </div>
                   )}
 
-                  {playbookToView.sessions && playbookToView.sessions.length > 0 && (
+                  {/* Stats */}
+                  {playbookToView.stats && (
+                    <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-4 bg-white dark:bg-black">
+                      <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-3">Performance Metrics</h3>
+                      <PlaybookMiniDashboard stats={playbookToView.stats} compact />
+                    </div>
+                  )}
+
+                  {/* Examples */}
+                  {viewData.examples && viewData.examples.length > 0 && (
                     <div>
-                      <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">Sessions</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {playbookToView.sessions.map((session) => (
-                          <Badge key={session} variant="outline">
-                            {session}
-                          </Badge>
+                      <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-3">Example Charts</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        {viewData.examples.map((example: any, idx: number) => (
+                          <div key={example.id || idx} className="rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden bg-white dark:bg-black">
+                            {example.media_urls && example.media_urls.length > 0 && (
+                              <img
+                                src={example.media_urls[0]}
+                                alt={`Example ${idx + 1}`}
+                                className="w-full aspect-video object-cover"
+                              />
+                            )}
+                            {example.caption && (
+                              <div className="p-3">
+                                <p className="text-xs text-neutral-600 dark:text-neutral-400">{example.caption}</p>
+                              </div>
+                            )}
+                          </div>
                         ))}
                       </div>
                     </div>
                   )}
-                </div>
-              </div>
 
-              {/* Stats */}
-              {playbookToView.stats && (
-                <div>
-                  <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">Performance</h3>
-                  <PlaybookMiniDashboard stats={playbookToView.stats} compact />
-                </div>
-              )}
+                  {/* Trade Details */}
+                  {viewData.tradeDetails && viewData.tradeDetails.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-3">Trade Details & Invalidations</h3>
+                      <div className="space-y-3">
+                        {viewData.tradeDetails.map((detail: any) => (
+                          <div
+                            key={detail.id}
+                            className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-4 bg-neutral-50 dark:bg-neutral-900"
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className={cn(
+                                "flex-shrink-0 mt-0.5 w-2 h-2 rounded-full",
+                                detail.primary_item ? "bg-amber-500" : "bg-neutral-400"
+                              )} />
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <Badge variant="outline" className="text-xs capitalize">
+                                    {detail.type || 'detail'}
+                                  </Badge>
+                                  {detail.primary_item && (
+                                    <Badge className="text-xs bg-amber-500 text-white">Primary</Badge>
+                                  )}
+                                </div>
+                                <p className="text-sm text-neutral-700 dark:text-neutral-300">{detail.label}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-              {/* Examples */}
-              {viewData.examples && viewData.examples.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">Examples</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {viewData.examples.map((example: any, idx: number) => (
-                      <div key={example.id || idx} className="space-y-2">
-                        {example.media_urls && example.media_urls.length > 0 && (
-                          <img
-                            src={example.media_urls[0]}
-                            alt={`Example ${idx + 1}`}
-                            className="w-full rounded-lg border border-neutral-200 dark:border-neutral-800"
-                          />
+                  {/* Rules & Confluences */}
+                  <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-4 bg-white dark:bg-black">
+                    <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-3">Setup Grading</h3>
+                    <PreviewPanel
+                      rules={viewData.rules}
+                      confluences={viewData.confluences}
+                      rubric={viewData.rubric}
+                    />
+                  </div>
+
+                  {/* Additional Info */}
+                  {(playbookToView.symbols && playbookToView.symbols.length > 0) || playbookToView.rr_min || playbookToView.notes_md && (
+                    <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-4 bg-neutral-50 dark:bg-neutral-900">
+                      <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-3">Additional Information</h3>
+                      <div className="space-y-3">
+                        {playbookToView.symbols && playbookToView.symbols.length > 0 && (
+                          <div>
+                            <p className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-2">Symbols</p>
+                            <div className="flex flex-wrap gap-2">
+                              {playbookToView.symbols.map((symbol) => (
+                                <Badge key={symbol} variant="outline" className="text-xs">
+                                  {symbol}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
                         )}
-                        {example.caption && (
-                          <p className="text-xs text-neutral-600 dark:text-neutral-400">{example.caption}</p>
+                        {playbookToView.rr_min && (
+                          <div>
+                            <p className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Minimum R:R</p>
+                            <p className="text-sm text-neutral-700 dark:text-neutral-300">{playbookToView.rr_min}</p>
+                          </div>
+                        )}
+                        {playbookToView.notes_md && (
+                          <div>
+                            <p className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Notes</p>
+                            <p className="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">{playbookToView.notes_md}</p>
+                          </div>
                         )}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-neutral-500">
+                  No data available
                 </div>
               )}
-
-              {/* Rules & Confluences Preview */}
-              <div>
-                <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">Rules & Confluences</h3>
-                <PreviewPanel
-                  rules={viewData.rules}
-                  confluences={viewData.confluences}
-                  rubric={viewData.rubric}
-                />
-              </div>
             </div>
-          ) : (
-            <div className="text-center py-12 text-neutral-500">
-              No data available
-            </div>
-          )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
