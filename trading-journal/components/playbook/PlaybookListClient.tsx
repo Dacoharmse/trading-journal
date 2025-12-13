@@ -458,7 +458,7 @@ export function PlaybookListClient({
 
       {/* View Playbook Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden p-0">
+        <DialogContent className="max-w-[95vw] lg:max-w-7xl max-h-[90vh] overflow-hidden p-0">
           <div className="flex flex-col h-full max-h-[90vh]">
             {/* Header */}
             <DialogHeader className="px-6 pt-6 pb-4 border-b border-neutral-200 dark:border-neutral-800">
@@ -543,38 +543,61 @@ export function PlaybookListClient({
                     </div>
                   )}
 
-                  {/* Trade Details */}
-                  {viewData.tradeDetails && viewData.tradeDetails.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-3">Trade Details & Invalidations</h3>
-                      <div className="space-y-3">
-                        {viewData.tradeDetails.map((detail: any) => (
-                          <div
-                            key={detail.id}
-                            className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-4 bg-neutral-50 dark:bg-neutral-900"
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className={cn(
-                                "flex-shrink-0 mt-0.5 w-2 h-2 rounded-full",
-                                detail.primary_item ? "bg-amber-500" : "bg-neutral-400"
-                              )} />
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <Badge variant="outline" className="text-xs capitalize">
-                                    {detail.type || 'detail'}
-                                  </Badge>
-                                  {detail.primary_item && (
-                                    <Badge className="text-xs bg-amber-500 text-white">Primary</Badge>
-                                  )}
-                                </div>
-                                <p className="text-sm text-neutral-700 dark:text-neutral-300">{detail.label}</p>
+                  {/* Trade Details - Grouped by Type */}
+                  {viewData.tradeDetails && viewData.tradeDetails.length > 0 && (() => {
+                    const detailsByType = viewData.tradeDetails.reduce((acc: any, detail: any) => {
+                      const type = detail.type || 'other'
+                      if (!acc[type]) acc[type] = []
+                      acc[type].push(detail)
+                      return acc
+                    }, {})
+
+                    const typeOrder = ['detail', 'invalidation', 'consideration', 'checklist', 'other']
+                    const typeLabels: any = {
+                      detail: 'Trade Details',
+                      invalidation: 'Invalidations',
+                      consideration: 'Considerations',
+                      checklist: 'Checklist',
+                      other: 'Other'
+                    }
+
+                    return (
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {typeOrder.map(type => {
+                          if (!detailsByType[type] || detailsByType[type].length === 0) return null
+
+                          return (
+                            <div key={type}>
+                              <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-3">
+                                {typeLabels[type]}
+                              </h3>
+                              <div className="space-y-3">
+                                {detailsByType[type].map((detail: any) => (
+                                  <div
+                                    key={detail.id}
+                                    className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-3 bg-neutral-50 dark:bg-neutral-900"
+                                  >
+                                    <div className="flex items-start gap-2">
+                                      <div className={cn(
+                                        "flex-shrink-0 mt-1 w-1.5 h-1.5 rounded-full",
+                                        detail.primary_item ? "bg-amber-500" : "bg-neutral-400"
+                                      )} />
+                                      <div className="flex-1 min-w-0">
+                                        {detail.primary_item && (
+                                          <Badge className="text-xs bg-amber-500 text-white mb-1.5">Primary</Badge>
+                                        )}
+                                        <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-snug">{detail.label}</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
-                    </div>
-                  )}
+                    )
+                  })()}
 
                   {/* Rules & Confluences */}
                   <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-4 bg-white dark:bg-black">
