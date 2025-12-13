@@ -28,7 +28,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { PlaybookMiniDashboard, type PlaybookStats } from './PlaybookMiniDashboard'
+import { PreviewPanel } from './PreviewPanel'
 
 export interface PlaybookSummary extends Playbook {
   rules_count: number
@@ -56,6 +63,10 @@ export function PlaybookListClient({
   const [error, setError] = React.useState<string | null>(initialError)
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
   const [playbookToDelete, setPlaybookToDelete] = React.useState<PlaybookSummary | null>(null)
+  const [viewDialogOpen, setViewDialogOpen] = React.useState(false)
+  const [playbookToView, setPlaybookToView] = React.useState<PlaybookSummary | null>(null)
+  const [viewData, setViewData] = React.useState<any>(null)
+  const [loadingView, setLoadingView] = React.useState(false)
 
   const filteredPlaybooks = React.useMemo(() => {
     return playbooks.filter((playbook) => {
@@ -110,6 +121,44 @@ export function PlaybookListClient({
   const openDeleteDialog = (playbook: PlaybookSummary) => {
     setPlaybookToDelete(playbook)
     setDeleteDialogOpen(true)
+  }
+
+  const openViewDialog = async (playbook: PlaybookSummary) => {
+    setPlaybookToView(playbook)
+    setViewDialogOpen(true)
+    setLoadingView(true)
+
+    try {
+      const [rulesRes, confRes, examplesRes, rubricRes] = await Promise.all([
+        supabase
+          .from('playbook_rules')
+          .select('*')
+          .eq('playbook_id', playbook.id)
+          .order('sort'),
+        supabase
+          .from('playbook_confluences')
+          .select('*')
+          .eq('playbook_id', playbook.id)
+          .order('sort'),
+        supabase
+          .from('playbook_examples')
+          .select('*')
+          .eq('playbook_id', playbook.id)
+          .order('sort'),
+        supabase.from('playbook_rubric').select('*').eq('playbook_id', playbook.id).maybeSingle(),
+      ])
+
+      setViewData({
+        rules: rulesRes.data || [],
+        confluences: confRes.data || [],
+        examples: examplesRes.data || [],
+        rubric: rubricRes.data || null,
+      })
+    } catch (err) {
+      console.error('Failed to load playbook details:', err)
+    } finally {
+      setLoadingView(false)
+    }
   }
 
   const handleDeleteConfirm = async () => {
@@ -290,11 +339,13 @@ export function PlaybookListClient({
 
                   <div className="flex w-full flex-col gap-2">
                     <div className="flex w-full items-center gap-2">
-                      <Button asChild size="sm" className="flex-1">
-                        <Link href={`/playbook/${playbook.id}?view=true`}>
-                          <Eye className="h-4 w-4" />
-                          View
-                        </Link>
+                      <Button
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => openViewDialog(playbook)}
+                      >
+                        <Eye className="h-4 w-4" />
+                        View
                       </Button>
 
                       <Button asChild size="sm" variant="outline" className="flex-1">
@@ -398,6 +449,111 @@ export function PlaybookListClient({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* View Playbook Dialog */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">{playbookToView?.name || 'Playbook Details'}</DialogTitle>
+          </DialogHeader>
+
+          {loadingView ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-neutral-500" />
+            </div>
+          ) : playbookToView && viewData ? (
+            <div className="space-y-6">
+              {/* Playbook Info */}
+              <div className="space-y-4">
+                {playbookToView.description && (
+                  <div>
+                    <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">Description</h3>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400 whitespace-pre-wrap">
+                      {playbookToView.description}
+                    </p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  {playbookToView.trade_type && (
+                    <div>
+                      <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">Trade Type</h3>
+                      <Badge
+                        className={cn(
+                          'capitalize',
+                          playbookToView.trade_type === 'continuation'
+                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+                            : 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300'
+                        )}
+                      >
+                        {playbookToView.trade_type}
+                      </Badge>
+                    </div>
+                  )}
+
+                  {playbookToView.sessions && playbookToView.sessions.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">Sessions</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {playbookToView.sessions.map((session) => (
+                          <Badge key={session} variant="outline">
+                            {session}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Stats */}
+              {playbookToView.stats && (
+                <div>
+                  <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">Performance</h3>
+                  <PlaybookMiniDashboard stats={playbookToView.stats} compact />
+                </div>
+              )}
+
+              {/* Examples */}
+              {viewData.examples && viewData.examples.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">Examples</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {viewData.examples.map((example: any, idx: number) => (
+                      <div key={example.id || idx} className="space-y-2">
+                        {example.media_urls && example.media_urls.length > 0 && (
+                          <img
+                            src={example.media_urls[0]}
+                            alt={`Example ${idx + 1}`}
+                            className="w-full rounded-lg border border-neutral-200 dark:border-neutral-800"
+                          />
+                        )}
+                        {example.caption && (
+                          <p className="text-xs text-neutral-600 dark:text-neutral-400">{example.caption}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Rules & Confluences Preview */}
+              <div>
+                <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">Rules & Confluences</h3>
+                <PreviewPanel
+                  rules={viewData.rules}
+                  confluences={viewData.confluences}
+                  rubric={viewData.rubric}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12 text-neutral-500">
+              No data available
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
