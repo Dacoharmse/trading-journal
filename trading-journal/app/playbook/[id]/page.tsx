@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { PlaybookEditor } from '@/components/playbook/PlaybookEditor'
 import { PlaybookMiniDashboard, calculatePlaybookStats, type PlaybookStats } from '@/components/playbook/PlaybookMiniDashboard'
@@ -28,7 +28,9 @@ export default function EditPlaybookPage() {
   const supabase = React.useMemo(() => createClient(), [])
   const router = useRouter()
   const params = useParams<{ id: string }>()
+  const searchParams = useSearchParams()
   const playbookId = params?.id
+  const isViewMode = searchParams.get('view') === 'true'
 
   const [userId, setUserId] = React.useState<string | null>(null)
   const [playbook, setPlaybook] = React.useState<Playbook | null>(null)
@@ -159,7 +161,7 @@ export default function EditPlaybookPage() {
         </div>
 
         <PlaybookEditor
-          mode="edit"
+          mode={isViewMode ? 'view' : 'edit'}
           userId={userId}
           initialPlaybook={playbook}
           initialRules={rules}

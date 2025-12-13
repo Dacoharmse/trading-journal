@@ -41,7 +41,7 @@ const tradeTypeOptions = ['continuation', 'reversal'] as const
 const timeframeOptions = ['1m', '5m', '15m', '30m', '1H', '4H', 'D1', 'W1'] as const
 
 interface PlaybookEditorProps {
-  mode: 'create' | 'edit'
+  mode: 'create' | 'edit' | 'view'
   userId: string
   initialPlaybook: Playbook | null
   initialRules: PlaybookRule[]
@@ -671,31 +671,41 @@ export function PlaybookEditor({
                 Back to Playbooks
               </Link>
               <span>•</span>
-              <span>{mode === 'create' ? 'Create Playbook' : 'Edit Playbook'}</span>
+              <span>{mode === 'create' ? 'Create Playbook' : mode === 'view' ? 'View Playbook' : 'Edit Playbook'}</span>
             </div>
             <h1 className="text-3xl font-semibold text-neutral-900 dark:text-neutral-50">
               {basics.name || 'Untitled Playbook'}
             </h1>
             <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Design the rules, confluences, and grading rubric for this setup.
+              {mode === 'view'
+                ? 'Viewing playbook details in read-only mode.'
+                : 'Design the rules, confluences, and grading rubric for this setup.'}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {dirty && (
-              <Badge className="border-amber-300/70 bg-amber-100/60 text-amber-700 dark:border-amber-800/70 dark:bg-amber-900/40 dark:text-amber-300">
-                Unsaved changes
+            {mode === 'view' ? (
+              <Badge className="border-blue-300/70 bg-blue-100/60 text-blue-700 dark:border-blue-700/60 dark:bg-blue-900/40 dark:text-blue-300">
+                Read-only mode
               </Badge>
+            ) : (
+              <>
+                {dirty && (
+                  <Badge className="border-amber-300/70 bg-amber-100/60 text-amber-700 dark:border-amber-800/70 dark:bg-amber-900/40 dark:text-amber-300">
+                    Unsaved changes
+                  </Badge>
+                )}
+                {status && !dirty && (
+                  <Badge className="border-emerald-300/70 bg-emerald-100/60 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-900/40 dark:text-emerald-300">
+                    {status}
+                  </Badge>
+                )}
+                <Button onClick={handleSave} disabled={saving}>
+                  <Save className={cn('h-4 w-4', saving && 'animate-spin')} />
+                  {mode === 'create' && !playbookId ? 'Create Playbook' : 'Save Changes'}
+                </Button>
+              </>
             )}
-            {status && !dirty && (
-              <Badge className="border-emerald-300/70 bg-emerald-100/60 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-900/40 dark:text-emerald-300">
-                {status}
-              </Badge>
-            )}
-            <Button onClick={handleSave} disabled={saving}>
-              <Save className={cn('h-4 w-4', saving && 'animate-spin')} />
-              {mode === 'create' && !playbookId ? 'Create Playbook' : 'Save Changes'}
-            </Button>
           </div>
         </div>
 
@@ -718,7 +728,7 @@ export function PlaybookEditor({
         </TabsList>
 
         <TabsContent value="basics" className="mt-4 space-y-6">
-          <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+          <div className={cn("grid gap-6 lg:grid-cols-[2fr_1fr]", mode === 'view' && "pointer-events-none opacity-90")}>
             <div className="space-y-6 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-black">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-neutral-700 dark:text-neutral-200">
@@ -971,6 +981,7 @@ export function PlaybookEditor({
             onUpdateRule={handleUpdateRule}
             onRemoveRule={handleRemoveRule}
             onReorderRules={handleReorderRules}
+            readOnly={mode === 'view'}
           />
         </TabsContent>
 
@@ -981,6 +992,7 @@ export function PlaybookEditor({
             onUpdateConfluence={handleUpdateConfluence}
             onRemoveConfluence={handleRemoveConfluence}
             onReorderConfluences={handleReorderConfluences}
+            readOnly={mode === 'view'}
           />
         </TabsContent>
 
@@ -991,6 +1003,7 @@ export function PlaybookEditor({
             onUpdateDetail={handleUpdateDetail}
             onRemoveDetail={handleRemoveDetail}
             onReorderDetails={handleReorderDetails}
+            readOnly={mode === 'view'}
           />
         </TabsContent>
 
@@ -1002,11 +1015,12 @@ export function PlaybookEditor({
             onRemoveExample={handleRemoveExample}
             userId={userId}
             playbookId={playbookId}
+            readOnly={mode === 'view'}
           />
         </TabsContent>
 
         <TabsContent value="scoring" className="mt-4">
-          <ScoringEditor rubric={rubric} onChange={(next) => { setRubric(next); markDirty() }} />
+          <ScoringEditor rubric={rubric} onChange={(next) => { setRubric(next); markDirty() }} readOnly={mode === 'view'} />
         </TabsContent>
 
         <TabsContent value="preview" className="mt-4">
