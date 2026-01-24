@@ -33,6 +33,7 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
     exit_time: '',
     strategy: '',
     session: null,
+    session_hour: null,
     confluences: '',
     tags: '',
     notes: '',
@@ -60,6 +61,7 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
         exit_time: trade.exit_time || '',
         strategy: trade.strategy || '',
         session: trade.session,
+        session_hour: trade.session_hour || null,
         confluences: trade.confluences || '',
         tags: trade.tags || '',
         notes: trade.notes || '',
@@ -85,6 +87,7 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
         exit_time: '',
         strategy: '',
         session: null,
+        session_hour: null,
         confluences: '',
         tags: '',
         notes: '',
@@ -501,6 +504,35 @@ export function TradeFormModal({ open, trade, accounts, onClose, onSave }: Trade
                   <option value="asia">Asia</option>
                   <option value="london">London</option>
                   <option value="ny">New York</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                  Session Hour
+                </label>
+                <select
+                  value={formData.session_hour || ''}
+                  onChange={(e) => updateField('session_hour', e.target.value || null)}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500"
+                >
+                  <option value="">-- Select --</option>
+                  <optgroup label="Asia">
+                    <option value="A1">A1 - First Hour</option>
+                    <option value="A2">A2 - Second Hour</option>
+                    <option value="A3">A3 - Third Hour</option>
+                    <option value="A4">A4 - Fourth Hour</option>
+                  </optgroup>
+                  <optgroup label="London">
+                    <option value="L1">L1 - First Hour</option>
+                    <option value="L2">L2 - Second Hour</option>
+                    <option value="L3">L3 - Third Hour</option>
+                  </optgroup>
+                  <optgroup label="New York">
+                    <option value="NY1">NY1 - First Hour</option>
+                    <option value="NY2">NY2 - Second Hour</option>
+                    <option value="NY3">NY3 - Third Hour</option>
+                  </optgroup>
                 </select>
               </div>
             </div>

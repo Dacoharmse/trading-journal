@@ -19,7 +19,25 @@ interface PreviewPanelProps {
 }
 
 export function PreviewPanel({ rules, confluences, rubric }: PreviewPanelProps) {
-  const effectiveRubric = rubric ?? getDefaultRubric()
+  const baseRubric = rubric ?? getDefaultRubric()
+
+  // Adjust rubric if there's checklist weight but no checklist items in the playbook
+  // Redistribute checklist weight proportionally to rules and confluences
+  const effectiveRubric = React.useMemo(() => {
+    if (baseRubric.weight_checklist > 0) {
+      // No checklist in playbook, so redistribute the weight
+      const totalRulesAndConf = baseRubric.weight_rules + baseRubric.weight_confluences
+      const redistributionFactor = 1 / totalRulesAndConf
+
+      return {
+        ...baseRubric,
+        weight_rules: baseRubric.weight_rules * redistributionFactor,
+        weight_confluences: baseRubric.weight_confluences * redistributionFactor,
+        weight_checklist: 0,
+      }
+    }
+    return baseRubric
+  }, [baseRubric])
 
   const [rulesChecked, setRulesChecked] = React.useState<Record<string, boolean>>({})
   const [confChecked, setConfChecked] = React.useState<Record<string, boolean>>({})

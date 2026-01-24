@@ -29,13 +29,18 @@ export function AccountMeters({ account, stats, currency }: AccountMetersProps) 
   }
 
   // Calculate prop firm metrics
-  const currentBalance = account.metrics?.currentBalance || 0
   const startingBalance = account.metrics?.startingBalance || account.startingBalance || 0
+
+  // For prop firm accounts, use currentProfits from propFirmSettings
+  // For regular accounts, use netProfit from metrics
+  const currentProfit = isPropAccount
+    ? (account.propFirmSettings?.currentProfits ?? account.metrics?.netProfit ?? 0)
+    : (account.metrics?.netProfit ?? 0)
+
+  const currentBalance = startingBalance + currentProfit
   const profitTarget = account.profitTarget || 0
   const maxDrawdown = account.maxDrawdown || 0
   const dailyDrawdown = account.dailyDrawdown || 0
-
-  const currentProfit = currentBalance - startingBalance
   const profitProgress = profitTarget > 0 ? (currentProfit / profitTarget) * 100 : 0
 
   const currentDrawdown = account.metrics?.currentDrawdown || 0

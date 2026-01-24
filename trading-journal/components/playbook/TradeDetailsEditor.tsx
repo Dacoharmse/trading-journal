@@ -23,6 +23,7 @@ interface TradeDetailsEditorProps {
   onUpdateDetail: (id: string, updates: Partial<TradeDetailDraft>) => void
   onRemoveDetail: (id: string) => void
   onReorderDetails: (fromIndex: number, toIndex: number) => void
+  readOnly?: boolean
 }
 
 export function TradeDetailsEditor({
@@ -31,6 +32,7 @@ export function TradeDetailsEditor({
   onUpdateDetail,
   onRemoveDetail,
   onReorderDetails,
+  readOnly = false,
 }: TradeDetailsEditorProps) {
   const [draggedIndex, setDraggedIndex] = React.useState<number | null>(null)
 
@@ -48,12 +50,13 @@ export function TradeDetailsEditor({
   }, [details])
 
   const handleDragStart = (index: number) => {
+    if (readOnly) return
     setDraggedIndex(index)
   }
 
   const handleDragOver = (event: React.DragEvent, index: number) => {
     event.preventDefault()
-    if (draggedIndex === null || draggedIndex === index) return
+    if (readOnly || draggedIndex === null || draggedIndex === index) return
     onReorderDetails(draggedIndex, index)
     setDraggedIndex(index)
   }
@@ -62,25 +65,26 @@ export function TradeDetailsEditor({
     setDraggedIndex(null)
   }
 
-  const renderDetailRow = (detail: TradeDetailDraft, index: number) => (
+  const renderDetailRow = (detail: TradeDetailDraft, globalIndex: number) => (
     <div
       key={detail.id}
-      draggable
-      onDragStart={() => handleDragStart(index)}
-      onDragOver={(e) => handleDragOver(e, index)}
+      draggable={!readOnly}
+      onDragStart={() => handleDragStart(globalIndex)}
+      onDragOver={(e) => handleDragOver(e, globalIndex)}
       onDragEnd={handleDragEnd}
       className={cn(
         'flex items-center gap-2 rounded-lg border border-neutral-200/70 bg-white p-3',
         'dark:border-neutral-800/60 dark:bg-black',
-        draggedIndex === index && 'opacity-50'
+        draggedIndex === globalIndex && 'opacity-50'
       )}
     >
-      <GripVertical className="h-4 w-4 cursor-grab text-neutral-400" />
+      {!readOnly && <GripVertical className="h-4 w-4 cursor-grab text-neutral-400" />}
       <Input
         value={detail.label}
         onChange={(e) => onUpdateDetail(detail.id, { label: e.target.value })}
         placeholder={`Enter ${detail.type}...`}
         className="flex-1"
+        disabled={readOnly}
       />
       {(detail.type === 'invalidation' || detail.type === 'checklist') && (
         <div className="flex items-center gap-2">
@@ -90,22 +94,25 @@ export function TradeDetailsEditor({
           <Switch
             checked={detail.primary_item}
             onCheckedChange={(checked) => onUpdateDetail(detail.id, { primary_item: checked })}
+            disabled={readOnly}
           />
         </div>
       )}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => onRemoveDetail(detail.id)}
-        className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950"
-      >
-        <X className="h-4 w-4" />
-      </Button>
+      {!readOnly && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onRemoveDetail(detail.id)}
+          className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   )
 
   return (
-    <div className="space-y-8">
+    <div className={cn("space-y-8", readOnly && "pointer-events-none opacity-90")}>
       {/* Trade Details */}
       <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-black">
         <div className="flex items-center justify-between">
@@ -117,14 +124,16 @@ export function TradeDetailsEditor({
               Core setup structure: entry criteria, stop/target placement, execution specifics.
             </p>
           </div>
-          <Button
-            onClick={() => onAddDetail('detail')}
-            variant="outline"
-            size="sm"
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Add Detail
-          </Button>
+          {!readOnly && (
+            <Button
+              onClick={() => onAddDetail('detail')}
+              variant="outline"
+              size="sm"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Detail
+            </Button>
+          )}
         </div>
         <div className="space-y-2">
           {sections.detail.length === 0 ? (
@@ -132,7 +141,10 @@ export function TradeDetailsEditor({
               No trade details yet. Add the core 3-5 lines describing your setup.
             </p>
           ) : (
-            sections.detail.map((detail, idx) => renderDetailRow(detail, idx))
+            sections.detail.map((detail) => {
+              const globalIndex = details.findIndex(d => d.id === detail.id)
+              return renderDetailRow(detail, globalIndex)
+            })
           )}
         </div>
       </div>
@@ -149,14 +161,16 @@ export function TradeDetailsEditor({
               Conditions that void the setup. If present during trade entry → auto grade F.
             </p>
           </div>
-          <Button
-            onClick={() => onAddDetail('invalidation')}
-            variant="outline"
-            size="sm"
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Add Invalidation
-          </Button>
+          {!readOnly && (
+            <Button
+              onClick={() => onAddDetail('invalidation')}
+              variant="outline"
+              size="sm"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Invalidation
+            </Button>
+          )}
         </div>
         <div className="space-y-2">
           {sections.invalidation.length === 0 ? (
@@ -164,7 +178,10 @@ export function TradeDetailsEditor({
               No invalidations defined. Add conditions that would disqualify this setup.
             </p>
           ) : (
-            sections.invalidation.map((detail, idx) => renderDetailRow(detail, idx))
+            sections.invalidation.map((detail) => {
+              const globalIndex = details.findIndex(d => d.id === detail.id)
+              return renderDetailRow(detail, globalIndex)
+            })
           )}
         </div>
       </div>
@@ -180,14 +197,16 @@ export function TradeDetailsEditor({
               Trade management notes, BE rules, exit considerations (not scored).
             </p>
           </div>
-          <Button
-            onClick={() => onAddDetail('consideration')}
-            variant="outline"
-            size="sm"
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Add Consideration
-          </Button>
+          {!readOnly && (
+            <Button
+              onClick={() => onAddDetail('consideration')}
+              variant="outline"
+              size="sm"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Consideration
+            </Button>
+          )}
         </div>
         <div className="space-y-2">
           {sections.consideration.length === 0 ? (
@@ -195,7 +214,10 @@ export function TradeDetailsEditor({
               No considerations yet. Add optional management or exit guidance.
             </p>
           ) : (
-            sections.consideration.map((detail, idx) => renderDetailRow(detail, idx))
+            sections.consideration.map((detail) => {
+              const globalIndex = details.findIndex(d => d.id === detail.id)
+              return renderDetailRow(detail, globalIndex)
+            })
           )}
         </div>
       </div>
@@ -211,14 +233,16 @@ export function TradeDetailsEditor({
               Yes/No items verified before entry. Scored as part of setup grade.
             </p>
           </div>
-          <Button
-            onClick={() => onAddDetail('checklist')}
-            variant="outline"
-            size="sm"
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Add Checklist Item
-          </Button>
+          {!readOnly && (
+            <Button
+              onClick={() => onAddDetail('checklist')}
+              variant="outline"
+              size="sm"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Checklist Item
+            </Button>
+          )}
         </div>
         <div className="space-y-2">
           {sections.checklist.length === 0 ? (
@@ -226,7 +250,10 @@ export function TradeDetailsEditor({
               No checklist items yet. Add binary yes/no checks for this setup.
             </p>
           ) : (
-            sections.checklist.map((detail, idx) => renderDetailRow(detail, idx))
+            sections.checklist.map((detail) => {
+              const globalIndex = details.findIndex(d => d.id === detail.id)
+              return renderDetailRow(detail, globalIndex)
+            })
           )}
         </div>
       </div>

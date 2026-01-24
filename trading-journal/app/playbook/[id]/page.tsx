@@ -12,6 +12,7 @@ import type {
   PlaybookRubric,
   PlaybookTradeDetail,
   PlaybookExample,
+  PlaybookIndicator,
   Symbol,
 } from '@/types/supabase'
 
@@ -38,6 +39,7 @@ export default function EditPlaybookPage() {
   const [confluences, setConfluences] = React.useState<PlaybookConfluence[]>([])
   const [tradeDetails, setTradeDetails] = React.useState<PlaybookTradeDetail[]>([])
   const [examples, setExamples] = React.useState<PlaybookExample[]>([])
+  const [indicators, setIndicators] = React.useState<PlaybookIndicator[]>([])
   const [rubric, setRubric] = React.useState<PlaybookRubric | null>(null)
   const [symbols, setSymbols] = React.useState<Symbol[]>([])
   const [stats, setStats] = React.useState<PlaybookStats | null>(null)
@@ -67,7 +69,7 @@ export default function EditPlaybookPage() {
 
         setUserId(userData.user.id)
 
-        const [playbookRes, rulesRes, confRes, detailsRes, examplesRes, rubricRes, symbolsRes, tradesRes] = await Promise.all([
+        const [playbookRes, rulesRes, confRes, detailsRes, examplesRes, indicatorsRes, rubricRes, symbolsRes, tradesRes] = await Promise.all([
           supabase.from('playbooks').select('*').eq('id', playbookId).maybeSingle(),
           supabase
             .from('playbook_rules')
@@ -86,6 +88,11 @@ export default function EditPlaybookPage() {
             .order('sort'),
           supabase
             .from('playbook_examples')
+            .select('*')
+            .eq('playbook_id', playbookId)
+            .order('sort'),
+          supabase
+            .from('playbook_indicators')
             .select('*')
             .eq('playbook_id', playbookId)
             .order('sort'),
@@ -109,6 +116,7 @@ export default function EditPlaybookPage() {
           setConfluences((confRes.data as PlaybookConfluence[] | null) ?? [])
           setTradeDetails((detailsRes.data as PlaybookTradeDetail[] | null) ?? [])
           setExamples((examplesRes.data as PlaybookExample[] | null) ?? [])
+          setIndicators((indicatorsRes.data as PlaybookIndicator[] | null) ?? [])
           setRubric((rubricRes.data as PlaybookRubric | null) ?? null)
           setSymbols((symbolsRes.data as Symbol[] | null) ?? [])
 
@@ -168,6 +176,7 @@ export default function EditPlaybookPage() {
           initialConfluences={confluences}
           initialTradeDetails={tradeDetails}
           initialExamples={examples}
+          initialIndicators={indicators}
           initialRubric={rubric}
           symbols={symbols}
         />

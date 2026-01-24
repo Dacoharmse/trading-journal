@@ -78,17 +78,10 @@ export function KpiRow({
               <div>
                 <h3 className="text-lg font-semibold mb-2">No trades match your filters</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Try expanding the date range or import trades to get started
+                  Try expanding the date range or add your first trade to get started
                 </p>
               </div>
               <div className="flex gap-3">
-                <Link
-                  href="/import"
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-neutral-800 hover:bg-neutral-700 dark:bg-neutral-700 dark:hover:bg-neutral-600 rounded-lg transition-colors"
-                >
-                  <ArrowUpRight className="h-4 w-4" />
-                  Import Trades
-                </Link>
                 <Link
                   href="/trades"
                   className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-neutral-800 hover:bg-neutral-700 dark:bg-neutral-700 dark:hover:bg-neutral-600 rounded-lg transition-colors"

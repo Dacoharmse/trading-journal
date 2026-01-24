@@ -6,24 +6,18 @@ export interface Backtest {
   symbol: string
   direction: 'long' | 'short'
   entry_date: string
-  // Planned metrics (what you intended before the trade)
-  planned_sl_pips?: number | null
-  planned_tp_pips?: number | null
-  planned_rr?: number | null
-  // Actual metrics (what actually happened)
-  actual_sl_pips?: number | null
-  actual_tp_pips?: number | null
-  actual_rr?: number | null
-  // Legacy fields
-  stop_pips?: number | null
-  target_pips?: number | null
+  hold_time?: number | null // Hold time in minutes
+  time_of_day?: string | null // Time of day (HH:MM format)
+  // Trade metrics
+  sl_pips?: number | null
+  tp_pips?: number | null
+  rr?: number | null
   result_r: number
   outcome?: 'win' | 'loss' | 'breakeven' | 'closed' | null
   chart_image?: string | null
   setup_score?: number | null
   setup_grade?: string | null
   notes?: string | null
-  hold_time?: number | null // Hold time in minutes
   confluences_checked?: Record<string, boolean> | null
   rules_checked?: Record<string, boolean> | null
   created_at?: string
@@ -294,12 +288,12 @@ export interface RecommendedMetrics {
 export function calculateRecommendedMetrics(
   backtests: Backtest[]
 ): RecommendedMetrics | null {
-  // Filter only trades with both planned metrics
+  // Filter only trades with trade metrics
   const validTests = backtests.filter(
     (t) =>
-      t.planned_sl_pips != null &&
-      t.planned_tp_pips != null &&
-      t.planned_rr != null
+      t.sl_pips != null &&
+      t.tp_pips != null &&
+      t.rr != null
   )
 
   const n = validTests.length
@@ -310,13 +304,13 @@ export function calculateRecommendedMetrics(
 
   // Calculate median values (more robust than mean for outliers)
   const slValues = validTests
-    .map((t) => t.planned_sl_pips!)
+    .map((t) => t.sl_pips!)
     .sort((a, b) => a - b)
   const tpValues = validTests
-    .map((t) => t.planned_tp_pips!)
+    .map((t) => t.tp_pips!)
     .sort((a, b) => a - b)
   const rrValues = validTests
-    .map((t) => t.planned_rr!)
+    .map((t) => t.rr!)
     .sort((a, b) => a - b)
 
   const median = (arr: number[]) => {

@@ -67,6 +67,7 @@ export function PlaybookListClient({
   const [playbookToView, setPlaybookToView] = React.useState<PlaybookSummary | null>(null)
   const [viewData, setViewData] = React.useState<any>(null)
   const [loadingView, setLoadingView] = React.useState(false)
+  const [expandedImageUrl, setExpandedImageUrl] = React.useState<string | null>(null)
 
   const filteredPlaybooks = React.useMemo(() => {
     return playbooks.filter((playbook) => {
@@ -129,7 +130,7 @@ export function PlaybookListClient({
     setLoadingView(true)
 
     try {
-      const [rulesRes, confRes, examplesRes, rubricRes, detailsRes] = await Promise.all([
+      const [rulesRes, confRes, examplesRes, rubricRes, detailsRes, indicatorsRes] = await Promise.all([
         supabase
           .from('playbook_rules')
           .select('*')
@@ -151,6 +152,11 @@ export function PlaybookListClient({
           .select('*')
           .eq('playbook_id', playbook.id)
           .order('sort'),
+        supabase
+          .from('playbook_indicators')
+          .select('*')
+          .eq('playbook_id', playbook.id)
+          .order('sort'),
       ])
 
       setViewData({
@@ -159,6 +165,7 @@ export function PlaybookListClient({
         examples: examplesRes.data || [],
         rubric: rubricRes.data || null,
         tradeDetails: detailsRes.data || [],
+        indicators: indicatorsRes.data || [],
       })
     } catch (err) {
       console.error('Failed to load playbook details:', err)
@@ -481,7 +488,7 @@ export function PlaybookListClient({
                   )}
                 </div>
                 {playbookToView?.sessions && playbookToView.sessions.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 pr-10">
                     {playbookToView.sessions.map((session) => (
                       <Badge key={session} variant="outline" className="text-xs">
                         {session}
@@ -529,7 +536,8 @@ export function PlaybookListClient({
                               <img
                                 src={example.media_urls[0]}
                                 alt={`Example ${idx + 1}`}
-                                className="w-full aspect-video object-cover"
+                                className="w-full aspect-video object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                onClick={() => setExpandedImageUrl(example.media_urls[0])}
                               />
                             )}
                             {example.caption && (
@@ -537,6 +545,42 @@ export function PlaybookListClient({
                                 <p className="text-xs text-neutral-600 dark:text-neutral-400">{example.caption}</p>
                               </div>
                             )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TradingView Indicators */}
+                  {viewData.indicators && viewData.indicators.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-3">TradingView Indicators</h3>
+                      <div className="space-y-3">
+                        {viewData.indicators.map((indicator: any) => (
+                          <div key={indicator.id} className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-4 bg-white dark:bg-black">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1">
+                                <h4 className="font-medium text-sm text-neutral-900 dark:text-neutral-100 mb-1">
+                                  {indicator.name}
+                                </h4>
+                                {indicator.description && (
+                                  <p className="text-xs text-neutral-600 dark:text-neutral-400 mb-2">
+                                    {indicator.description}
+                                  </p>
+                                )}
+                                <a
+                                  href={indicator.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
+                                >
+                                  View on TradingView
+                                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                  </svg>
+                                </a>
+                              </div>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -584,7 +628,9 @@ export function PlaybookListClient({
                                       )} />
                                       <div className="flex-1 min-w-0">
                                         {detail.primary_item && (
-                                          <Badge className="text-xs bg-amber-500 text-white mb-1.5">Primary</Badge>
+                                          <Badge className="text-xs bg-amber-500 text-white mb-1.5">
+                                            {detail.type === 'invalidation' ? 'Hard stop' : 'Primary'}
+                                          </Badge>
                                         )}
                                         <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-snug">{detail.label}</p>
                                       </div>
@@ -648,6 +694,22 @@ export function PlaybookListClient({
                 </div>
               )}
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Expanded Image Dialog */}
+      <Dialog open={!!expandedImageUrl} onOpenChange={() => setExpandedImageUrl(null)}>
+        <DialogContent className="p-0 overflow-hidden" style={{ width: '1634px', height: '1006px', maxWidth: '95vw', maxHeight: '95vh' }}>
+          <DialogTitle className="sr-only">Expanded Example Chart</DialogTitle>
+          <div className="relative w-full h-full">
+            {expandedImageUrl && (
+              <img
+                src={expandedImageUrl}
+                alt="Expanded example"
+                className="w-full h-full object-contain"
+              />
+            )}
           </div>
         </DialogContent>
       </Dialog>

@@ -143,6 +143,17 @@ export interface PlaybookExample {
   created_at?: string
 }
 
+export interface PlaybookIndicator {
+  id: string
+  playbook_id: string
+  name: string
+  url: string
+  description?: string | null
+  sort: number
+  created_at?: string
+  updated_at?: string
+}
+
 // Emotional state options for trades
 export type EmotionalState =
   | 'confident'
@@ -215,6 +226,7 @@ export interface Trade {
   strategy_id?: string | null        // NEW: FK to strategies table
   playbook_id?: string | null        // PLAYBOOK: FK to playbooks table
   session?: 'Asia' | 'London' | 'NY' | null
+  session_hour?: 'A1' | 'A2' | 'A3' | 'A4' | 'L1' | 'L2' | 'L3' | 'NY1' | 'NY2' | 'NY3' | null  // Specific hour within session
   confluences?: string | null        // Legacy: comma-separated
   tags?: string | null               // Comma-separated
 

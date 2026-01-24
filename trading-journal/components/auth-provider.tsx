@@ -13,57 +13,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [isLoading, setIsLoading] = React.useState(true)
   const [isAuthenticated, setIsAuthenticated] = React.useState(false)
-  const supabase = React.useMemo(() => createClient(), [])
-  const hasCheckedAuth = React.useRef(false)
 
-  // Initial auth check only
+  // Single effect - rely ONLY on auth state listener, skip initial getSession call
   React.useEffect(() => {
-    if (hasCheckedAuth.current) return
+    const supabase = createClient()
+    const publicRoutes = ['/auth/login', '/auth/register']
+    let mounted = true
 
-    const checkAuth = async () => {
-      // Public routes that don't require authentication
-      const publicRoutes = ['/auth/login', '/auth/register']
+    console.log('[AuthProvider] Setting up auth listener')
 
-      if (publicRoutes.includes(pathname)) {
-        setIsLoading(false)
-        setIsAuthenticated(false)
-        hasCheckedAuth.current = true
-        return
-      }
+    // Set up auth state listener - this will fire INITIAL_SESSION immediately
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return
 
-      // Check if user is authenticated
-      const { data: { session } } = await supabase.auth.getSession()
+      console.log('[AuthProvider] Auth event:', event, 'Session:', session ? 'exists' : 'none')
 
-      if (!session) {
-        setIsAuthenticated(false)
-        setIsLoading(false)
-        hasCheckedAuth.current = true
-        router.push('/auth/login')
-        return
-      }
-
-      setIsAuthenticated(true)
+      // Always update loading state to false on any auth event
       setIsLoading(false)
-      hasCheckedAuth.current = true
-    }
 
-    checkAuth()
-  }, [pathname, router, supabase])
-
-  // Set up auth state listener only once
-  React.useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const publicRoutes = ['/auth/login', '/auth/register']
-      if (!session && !publicRoutes.includes(pathname)) {
-        setIsAuthenticated(false)
-        router.push('/auth/login')
-      } else if (session) {
+      // Update authentication state based on session
+      if (session) {
+        console.log('[AuthProvider] User authenticated')
         setIsAuthenticated(true)
+      } else {
+        console.log('[AuthProvider] User not authenticated')
+        setIsAuthenticated(false)
+
+        // Only redirect if on protected route
+        if (!publicRoutes.includes(pathname)) {
+          console.log('[AuthProvider] Redirecting to login')
+          router.push('/auth/login')
+        }
       }
     })
 
-    return () => subscription.unsubscribe()
-  }, [pathname, router, supabase])
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
+  }, [pathname, router])
 
   // Show loading state while checking auth
   if (isLoading) {

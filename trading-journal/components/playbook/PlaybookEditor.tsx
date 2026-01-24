@@ -26,6 +26,7 @@ import type {
   PlaybookRubric,
   PlaybookTradeDetail,
   PlaybookExample,
+  PlaybookIndicator,
   Symbol as SymbolRecord,
 } from '@/types/supabase'
 import { RulesEditor } from './RulesEditor'
@@ -34,6 +35,7 @@ import { ScoringEditor } from './ScoringEditor'
 import { PreviewPanel } from './PreviewPanel'
 import { TradeDetailsEditor, type TradeDetailDraft } from './TradeDetailsEditor'
 import { ExamplesEditor, type ExampleDraft } from './ExamplesEditor'
+import { IndicatorsEditor, type IndicatorDraft } from './IndicatorsEditor'
 import type { RuleDraft, ConfluenceDraft } from './types'
 
 const sessionOptions = ['Asia', 'London', 'NY'] as const
@@ -50,6 +52,7 @@ interface PlaybookEditorProps {
   symbols: SymbolRecord[]
   initialTradeDetails?: PlaybookTradeDetail[]
   initialExamples?: PlaybookExample[]
+  initialIndicators?: PlaybookIndicator[]
 }
 
 interface BasicsState {
@@ -76,6 +79,7 @@ export function PlaybookEditor({
   symbols,
   initialTradeDetails = [],
   initialExamples = [],
+  initialIndicators = [],
 }: PlaybookEditorProps) {
   const router = useRouter()
   const supabase = React.useMemo(() => createClient(), [])
@@ -150,6 +154,19 @@ export function PlaybookEditor({
       .sort((a, b) => a.sort - b.sort)
   )
 
+  const [indicators, setIndicators] = React.useState<IndicatorDraft[]>(
+    initialIndicators
+      .map((indicator) => ({
+        id: indicator.id,
+        playbook_id: indicator.playbook_id,
+        name: indicator.name,
+        url: indicator.url,
+        description: indicator.description,
+        sort: indicator.sort ?? 0,
+      }))
+      .sort((a, b) => a.sort - b.sort)
+  )
+
   const [rubric, setRubric] = React.useState<PlaybookRubric>(() => {
     const fallback = getDefaultRubric()
     return initialRubric
@@ -164,6 +181,7 @@ export function PlaybookEditor({
   const [deletedConfluenceIds, setDeletedConfluenceIds] = React.useState<string[]>([])
   const [deletedDetailIds, setDeletedDetailIds] = React.useState<string[]>([])
   const [deletedExampleIds, setDeletedExampleIds] = React.useState<string[]>([])
+  const [deletedIndicatorIds, setDeletedIndicatorIds] = React.useState<string[]>([])
   const [activeTab, setActiveTab] = React.useState('basics')
   const [saving, setSaving] = React.useState(false)
   const [dirty, setDirty] = React.useState(false)
@@ -176,6 +194,7 @@ export function PlaybookEditor({
   )
   const persistedDetailIds = React.useRef(new Set(initialTradeDetails.map((d) => d.id)))
   const persistedExampleIds = React.useRef(new Set(initialExamples.map((e) => e.id)))
+  const persistedIndicatorIds = React.useRef(new Set(initialIndicators.map((i) => i.id)))
 
   React.useEffect(() => {
     if (playbookId && rubric.playbook_id !== playbookId) {
@@ -372,6 +391,47 @@ export function PlaybookEditor({
     markDirty()
   }
 
+  const handleAddIndicator = () => {
+    const newIndicator: IndicatorDraft = {
+      id: crypto.randomUUID(),
+      playbook_id: playbookId ?? undefined,
+      name: '',
+      url: '',
+      description: null,
+      sort: indicators.length,
+    }
+    setIndicators((prev) => [...prev, newIndicator])
+    markDirty()
+  }
+
+  const handleUpdateIndicator = (id: string, updates: Partial<IndicatorDraft>) => {
+    setIndicators((prev) =>
+      prev.map((indicator) => (indicator.id === id ? { ...indicator, ...updates } : indicator))
+    )
+    markDirty()
+  }
+
+  const handleRemoveIndicator = (id: string) => {
+    setIndicators((prev) => {
+      const next = prev.filter((indicator) => indicator.id !== id)
+      return next.map((indicator, index) => ({ ...indicator, sort: index }))
+    })
+    if (persistedIndicatorIds.current.has(id)) {
+      setDeletedIndicatorIds((prev) => [...prev, id])
+    }
+    markDirty()
+  }
+
+  const handleReorderIndicators = (fromIndex: number, toIndex: number) => {
+    setIndicators((prev) => {
+      const ordered = [...prev].sort((a, b) => a.sort - b.sort)
+      const [moved] = ordered.splice(fromIndex, 1)
+      ordered.splice(toIndex, 0, moved)
+      return ordered.map((indicator, index) => ({ ...indicator, sort: index }))
+    })
+    markDirty()
+  }
+
   const validationErrors = React.useMemo(() => {
     const issues: string[] = []
     if (!basics.name.trim()) {
@@ -493,6 +553,7 @@ export function PlaybookEditor({
       const sortedConfluences = [...confluences].sort((a, b) => a.sort - b.sort)
       const sortedDetails = [...tradeDetails].sort((a, b) => a.sort - b.sort)
       const sortedExamples = [...examples].sort((a, b) => a.sort - b.sort)
+      const sortedIndicators = [...indicators].sort((a, b) => a.sort - b.sort)
 
       if (sortedRules.length > 0) {
         console.log('[PlaybookEditor] Upserting rules:', sortedRules.length)
@@ -615,6 +676,40 @@ export function PlaybookEditor({
         setDeletedExampleIds([])
       }
 
+      if (deletedIndicatorIds.length > 0) {
+        const { error: deleteIndicatorError } = await supabase
+          .from('playbook_indicators')
+          .delete()
+          .in('id', deletedIndicatorIds)
+        if (deleteIndicatorError) throw deleteIndicatorError
+        setDeletedIndicatorIds([])
+      }
+
+      if (sortedIndicators.length > 0) {
+        console.log('[PlaybookEditor] Processing indicators:', sortedIndicators.length)
+        const indicatorPayload = sortedIndicators
+          .filter((indicator) => indicator.name.trim().length > 0 && indicator.url.trim().length > 0)
+          .map((indicator, index) => ({
+            id: indicator.id,
+            playbook_id: currentId,
+            name: indicator.name.trim(),
+            url: indicator.url.trim(),
+            description: indicator.description || null,
+            sort: index,
+          }))
+
+        if (indicatorPayload.length > 0) {
+          console.log('[PlaybookEditor] Upserting indicators:', indicatorPayload.length, indicatorPayload)
+          const { error: indicatorError } = await supabase
+            .from('playbook_indicators')
+            .upsert(indicatorPayload)
+          console.log('[PlaybookEditor] Indicators upsert result:', { error: indicatorError })
+          if (indicatorError) throw indicatorError
+
+          setIndicators(indicatorPayload.map((indicator) => ({ ...indicator })))
+        }
+      }
+
       if (currentId) {
         const rubricPayload: PlaybookRubric = {
           ...rubric,
@@ -641,6 +736,7 @@ export function PlaybookEditor({
       )
       persistedDetailIds.current = new Set(sortedDetails.map((d) => d.id))
       persistedExampleIds.current = new Set(sortedExamples.map((e) => e.id))
+      persistedIndicatorIds.current = new Set(sortedIndicators.map((i) => i.id))
 
       console.log('[PlaybookEditor] Save successful!')
       setStatus('Playbook saved')
@@ -723,6 +819,7 @@ export function PlaybookEditor({
           <TabsTrigger value="confluences">Confluences</TabsTrigger>
           <TabsTrigger value="details">Trade Details</TabsTrigger>
           <TabsTrigger value="examples">Examples</TabsTrigger>
+          <TabsTrigger value="indicators">Indicators</TabsTrigger>
           <TabsTrigger value="scoring">Scoring</TabsTrigger>
           <TabsTrigger value="preview">Preview</TabsTrigger>
         </TabsList>
@@ -1015,6 +1112,17 @@ export function PlaybookEditor({
             onRemoveExample={handleRemoveExample}
             userId={userId}
             playbookId={playbookId}
+            readOnly={mode === 'view'}
+          />
+        </TabsContent>
+
+        <TabsContent value="indicators" className="mt-4">
+          <IndicatorsEditor
+            indicators={indicators}
+            onAddIndicator={handleAddIndicator}
+            onUpdateIndicator={handleUpdateIndicator}
+            onRemoveIndicator={handleRemoveIndicator}
+            onReorderIndicators={handleReorderIndicators}
             readOnly={mode === 'view'}
           />
         </TabsContent>

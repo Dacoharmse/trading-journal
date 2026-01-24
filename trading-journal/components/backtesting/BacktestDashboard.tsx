@@ -63,12 +63,12 @@ export function BacktestDashboard({ backtests }: BacktestDashboardProps) {
     : 0
 
   // Get recommended TP and SL
-  const backtestsWithMetrics = backtests.filter(bt => bt.planned_sl_pips && bt.planned_tp_pips)
+  const backtestsWithMetrics = backtests.filter(bt => bt.sl_pips && bt.tp_pips)
   const avgSL = backtestsWithMetrics.length > 0
-    ? backtestsWithMetrics.reduce((sum, bt) => sum + (bt.planned_sl_pips || 0), 0) / backtestsWithMetrics.length
+    ? backtestsWithMetrics.reduce((sum, bt) => sum + (bt.sl_pips || 0), 0) / backtestsWithMetrics.length
     : 0
   const avgTP = backtestsWithMetrics.length > 0
-    ? backtestsWithMetrics.reduce((sum, bt) => sum + (bt.planned_tp_pips || 0), 0) / backtestsWithMetrics.length
+    ? backtestsWithMetrics.reduce((sum, bt) => sum + (bt.tp_pips || 0), 0) / backtestsWithMetrics.length
     : 0
   const avgRR = avgSL > 0 ? avgTP / avgSL : 0
 
@@ -244,7 +244,7 @@ export function BacktestDashboard({ backtests }: BacktestDashboardProps) {
                       <div className="relative h-8 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
                         <div
                           className={cn(
-                            'flex h-full items-center justify-end px-3 text-xs font-semibold text-white transition-all',
+                            'h-full transition-all',
                             dayWinRate >= 60
                               ? 'bg-emerald-500 dark:bg-emerald-600'
                               : dayWinRate >= 40
@@ -252,7 +252,8 @@ export function BacktestDashboard({ backtests }: BacktestDashboardProps) {
                               : 'bg-red-500 dark:bg-red-600'
                           )}
                           style={{ width: `${dayWinRate}%` }}
-                        >
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-neutral-900 dark:text-neutral-50">
                           {dayWinRate.toFixed(0)}%
                         </div>
                       </div>

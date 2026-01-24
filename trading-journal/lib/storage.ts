@@ -20,7 +20,8 @@ export interface UploadResult {
 export async function uploadTradeMedia(
   file: File,
   userId: string,
-  tradeId?: string
+  tradeId?: string,
+  timeoutMs: number = 10000
 ): Promise<UploadResult> {
   try {
     const supabase = createClient()
@@ -31,13 +32,19 @@ export async function uploadTradeMedia(
     const folder = tradeId ? `${userId}/${tradeId}` : `${userId}/temp`
     const filePath = `${folder}/${timestamp}_${sanitizedName}`
 
-    // Upload file
-    const { data, error } = await supabase.storage
+    // Upload file with timeout
+    const uploadPromise = supabase.storage
       .from('trade-media')
       .upload(filePath, file, {
         cacheControl: '3600',
         upsert: false,
       })
+
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Upload timeout')), timeoutMs)
+    )
+
+    const { data, error } = await Promise.race([uploadPromise, timeoutPromise])
 
     if (error) {
       console.error('Upload error:', error)
@@ -129,8 +136,8 @@ export function validateMediaFile(
  */
 export async function compressImage(
   file: File,
-  maxWidth = 1920,
-  quality = 0.85
+  maxWidth = 1200,
+  quality = 0.8
 ): Promise<File> {
   return new Promise((resolve) => {
     const reader = new FileReader()

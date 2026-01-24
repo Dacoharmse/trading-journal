@@ -66,6 +66,8 @@ export function NewTradeSheet({
   const [openTime, setOpenTime] = React.useState('')
   const [closeTime, setCloseTime] = React.useState('')
   const [session, setSession] = React.useState<'Asia' | 'London' | 'NY' | ''>('')
+  const [sessionHour, setSessionHour] = React.useState<string>('')
+  const [orderType, setOrderType] = React.useState<string>('')
 
   // Pips/R fields
   const [pips, setPips] = React.useState<string>('')
@@ -314,6 +316,8 @@ export function NewTradeSheet({
       setOpenTime(trade.open_time || '')
       setCloseTime(trade.close_time || '')
       setSession(trade.session || '')
+      setSessionHour(trade.session_hour || '')
+      setOrderType(trade.order_type || '')
       setPips(trade.pips?.toString() || '')
       setStopPips(trade.stop_pips?.toString() || '')
       setTargetPips(trade.target_pips?.toString() || '')
@@ -358,6 +362,8 @@ export function NewTradeSheet({
     setOpenTime('')
     setCloseTime('')
     setSession('')
+    setSessionHour('')
+    setOrderType('')
     setPips('')
     setStopPips('')
     setTargetPips('')
@@ -507,6 +513,8 @@ export function NewTradeSheet({
       open_time: openTime || null,
       close_time: closeTime || null,
       session: session || null,
+      session_hour: sessionHour || null,
+      order_type: orderType || null,
       pips: pipsNum,
       stop_pips: stopPipsNum,
       target_pips: targetPips ? parseFloat(targetPips) : null,
@@ -786,6 +794,26 @@ export function NewTradeSheet({
                   Short
                 </button>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Execution Method
+              </label>
+              <select
+                value={orderType}
+                onChange={(e) => setOrderType(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
+              >
+                <option value="">-- Select --</option>
+                <option value="Market">Market Order</option>
+                <option value="Limit">Limit Order</option>
+                <option value="Stop">Stop Order</option>
+                <option value="Stop Limit">Stop Limit Order</option>
+              </select>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                How you entered this trade
+              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1139,6 +1167,37 @@ export function NewTradeSheet({
                 </select>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Session Hour
+                </label>
+                <select
+                  value={sessionHour}
+                  onChange={(e) => setSessionHour(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
+                >
+                  <option value="">-- Select --</option>
+                  <optgroup label="Asia">
+                    <option value="A1">A1 - First Hour</option>
+                    <option value="A2">A2 - Second Hour</option>
+                    <option value="A3">A3 - Third Hour</option>
+                    <option value="A4">A4 - Fourth Hour</option>
+                  </optgroup>
+                  <optgroup label="London">
+                    <option value="L1">L1 - First Hour</option>
+                    <option value="L2">L2 - Second Hour</option>
+                    <option value="L3">L3 - Third Hour</option>
+                  </optgroup>
+                  <optgroup label="New York">
+                    <option value="NY1">NY1 - First Hour</option>
+                    <option value="NY2">NY2 - Second Hour</option>
+                    <option value="NY3">NY3 - Third Hour</option>
+                  </optgroup>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Emotional State

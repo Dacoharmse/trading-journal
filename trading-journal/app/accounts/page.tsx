@@ -587,6 +587,9 @@ export default function AccountsPage() {
                     }))
                   }
                 />
+                <p className="text-xs text-muted-foreground">
+                  Note: For Forex trades, specify symbols here. For futures (MNQ, MES, MGC, etc.), you can add them here or use the Setup Symbols page in the sidebar under Data → Setup Symbols to automatically add common futures contracts.
+                </p>
               </div>
 
               <Separator className="md:col-span-2" />

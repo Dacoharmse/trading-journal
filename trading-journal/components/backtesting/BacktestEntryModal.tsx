@@ -56,22 +56,17 @@ export function BacktestEntryModal({
   const [direction, setDirection] = React.useState<'long' | 'short'>('long')
   const [entryDate, setEntryDate] = React.useState<Date>(new Date())
   const [holdTime, setHoldTime] = React.useState('')
-  // Planned metrics
-  const [plannedSlPips, setPlannedSlPips] = React.useState('')
-  const [plannedTpPips, setPlannedTpPips] = React.useState('')
-  const [plannedRR, setPlannedRR] = React.useState('')
-  // Actual metrics
-  const [actualSlPips, setActualSlPips] = React.useState('')
-  const [actualTpPips, setActualTpPips] = React.useState('')
-  const [actualRR, setActualRR] = React.useState('')
-  // Legacy fields (kept for backward compatibility)
-  const [stopPips, setStopPips] = React.useState('')
-  const [targetPips, setTargetPips] = React.useState('')
+  const [timeOfDay, setTimeOfDay] = React.useState('')
+  // Simplified trade metrics
+  const [slPips, setSlPips] = React.useState('')
+  const [tpPips, setTpPips] = React.useState('')
+  const [rr, setRR] = React.useState('')
   const [resultR, setResultR] = React.useState('')
   const [outcome, setOutcome] = React.useState<'win' | 'loss' | 'breakeven' | 'closed'>('win')
   const [chartImage, setChartImage] = React.useState('')
   const [chartPreview, setChartPreview] = React.useState<string | null>(null)
   const [uploadingImage, setUploadingImage] = React.useState(false)
+  const [originalChartImage, setOriginalChartImage] = React.useState('')
   const [notes, setNotes] = React.useState('')
   const [rulesChecked, setRulesChecked] = React.useState<Record<string, boolean>>({})
   const [confluencesChecked, setConfluencesChecked] = React.useState<Record<string, boolean>>(
@@ -86,17 +81,14 @@ export function BacktestEntryModal({
       setDirection(editingBacktest.direction)
       setEntryDate(new Date(editingBacktest.entry_date))
       setHoldTime(editingBacktest.hold_time?.toString() || '')
-      setPlannedSlPips(editingBacktest.planned_sl_pips?.toString() || '')
-      setPlannedTpPips(editingBacktest.planned_tp_pips?.toString() || '')
-      setPlannedRR(editingBacktest.planned_rr?.toString() || '')
-      setActualSlPips(editingBacktest.actual_sl_pips?.toString() || '')
-      setActualTpPips(editingBacktest.actual_tp_pips?.toString() || '')
-      setActualRR(editingBacktest.actual_rr?.toString() || '')
-      setStopPips(editingBacktest.stop_pips?.toString() || '')
-      setTargetPips(editingBacktest.target_pips?.toString() || '')
+      setTimeOfDay(editingBacktest.time_of_day || '')
+      setSlPips(editingBacktest.sl_pips?.toString() || '')
+      setTpPips(editingBacktest.tp_pips?.toString() || '')
+      setRR(editingBacktest.rr?.toString() || '')
       setResultR(editingBacktest.result_r.toString())
       setOutcome(editingBacktest.outcome || 'win')
       setChartImage(editingBacktest.chart_image || '')
+      setOriginalChartImage(editingBacktest.chart_image || '')
       setChartPreview(editingBacktest.chart_image || null)
       setNotes(editingBacktest.notes || '')
       setRulesChecked((editingBacktest.rules_checked as Record<string, boolean>) || {})
@@ -159,25 +151,37 @@ export function BacktestEntryModal({
 
       console.log('Submitting backtest with entry date:', entryDate, 'formatted:', format(entryDate, 'yyyy-MM-dd'))
 
-      const data = {
+      // Log image size if present and check if too large (only for new backtests)
+      if (chartImage && !editingBacktest) {
+        const imageSizeKB = (chartImage.length / 1024).toFixed(1)
+        console.log(`Chart image size: ${imageSizeKB} KB`)
+
+        // Reject if data URL is too large (> 500KB will cause database timeouts)
+        if (chartImage.startsWith('data:') && chartImage.length > 500000) {
+          const sizeKB = (chartImage.length / 1024).toFixed(1)
+          console.error(`Data URL is too large (${sizeKB} KB), rejecting save`)
+          setLoading(false)
+          alert(`Image is too large (${sizeKB} KB) and will cause the save to fail.\n\nPlease:\n1. Use a smaller screenshot\n2. Crop the image before pasting\n3. Or leave the image field empty and save without an image`)
+          return
+        }
+      }
+
+      // Only include chart_image if it has changed or is new
+      const imageHasChanged = editingBacktest ? chartImage !== originalChartImage : true
+
+      const data: any = {
         symbol,
         session: session || null,
         direction,
         entry_date: format(entryDate, 'yyyy-MM-dd'),
-        // Planned metrics
-        planned_sl_pips: plannedSlPips ? Number(plannedSlPips) : null,
-        planned_tp_pips: plannedTpPips ? Number(plannedTpPips) : null,
-        planned_rr: plannedRR ? Number(plannedRR) : null,
-        // Actual metrics
-        actual_sl_pips: actualSlPips ? Number(actualSlPips) : null,
-        actual_tp_pips: actualTpPips ? Number(actualTpPips) : null,
-        actual_rr: actualRR ? Number(actualRR) : null,
-        // Legacy fields
-        stop_pips: stopPips ? Number(stopPips) : null,
-        target_pips: targetPips ? Number(targetPips) : null,
+        hold_time: holdTime ? Number(holdTime) : null,
+        time_of_day: timeOfDay || null,
+        // Trade metrics
+        sl_pips: slPips ? Number(slPips) : null,
+        tp_pips: tpPips ? Number(tpPips) : null,
+        rr: rr ? Number(rr) : null,
         result_r: Number(resultR),
         outcome,
-        chart_image: chartImage || null,
         setup_score: score.score,
         setup_grade: score.grade,
         notes: notes || null,
@@ -185,11 +189,19 @@ export function BacktestEntryModal({
         confluences_checked: confluencesChecked,
       }
 
+      // Only include chart_image if changed (to avoid re-sending large data URLs)
+      if (imageHasChanged) {
+        data.chart_image = chartImage || null
+        console.log('Image has changed, including in update')
+      } else {
+        console.log('Image unchanged, skipping from update')
+      }
+
       let error
 
       if (editingBacktest) {
         // Update existing backtest
-        console.log('Updating backtest:', editingBacktest.id, data)
+        console.log('Updating backtest:', editingBacktest.id)
         const result = await supabase
           .from('backtests')
           .update(data)
@@ -203,7 +215,7 @@ export function BacktestEntryModal({
           playbook_id: playbookId,
           ...data,
         }
-        console.log('Inserting backtest:', insertData)
+        console.log('Inserting backtest...')
         const result = await supabase.from('backtests').insert(insertData)
         error = result.error
         console.log('Insert result:', { error, data: result.data })
@@ -215,6 +227,11 @@ export function BacktestEntryModal({
       }
 
       console.log('Backtest saved successfully')
+
+      // Reset loading state first to avoid UI getting stuck
+      setLoading(false)
+
+      // Then trigger callbacks
       onSuccess()
       resetForm()
       onClose()
@@ -244,40 +261,83 @@ export function BacktestEntryModal({
         if (item.type.startsWith('image/')) {
           e.preventDefault()
           const file = item.getAsFile()
-          if (!file) continue
+          if (!file) {
+            console.warn('No file found in clipboard')
+            continue
+          }
 
+          console.log('[BacktestEntry] Starting image upload:', file.name, file.size, 'bytes')
           setUploadingImage(true)
-          try {
-            // Compress image before upload
-            const compressedFile = await compressImage(file)
 
-            // Upload to Supabase storage (uploadTradeMedia creates its own client)
-            const result = await uploadTradeMedia(compressedFile, userId, 'backtests')
-
-            if (result.error) {
-              console.error('Upload failed:', result.error)
-              // Fallback: create local preview only
-              const reader = new FileReader()
-              reader.onload = (event) => {
-                const dataUrl = event.target?.result as string
-                setChartPreview(dataUrl)
-              }
-              reader.readAsDataURL(file)
-            } else {
-              // Successfully uploaded
-              setChartImage(result.url)
-              setChartPreview(result.url)
+          // Set a timeout to prevent infinite loading
+          let timeoutCleared = false
+          const startTime = Date.now()
+          const uploadTimeout = setTimeout(() => {
+            if (!timeoutCleared) {
+              const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
+              console.error(`[BacktestEntry] Upload timeout after ${elapsed}s - resetting upload state`)
+              setUploadingImage(false)
+              setChartPreview(null)
+              alert(`Image upload timed out after ${elapsed} seconds. The image may be too large or there may be a network issue. Please try again or use a smaller image.`)
             }
-          } catch (error) {
-            console.error('Failed to upload image:', error)
-            // Fallback: create local preview
+          }, 45000) // 45 second timeout for large images
+
+          try {
+            // Compress image
+            console.log('[BacktestEntry] Compressing image...')
+            const compressionStart = Date.now()
+            const compressedFile = await compressImage(file)
+            const compressionTime = ((Date.now() - compressionStart) / 1000).toFixed(1)
+            console.log(`[BacktestEntry] Image compressed in ${compressionTime}s: ${file.size} → ${compressedFile.size} bytes`)
+
+            // Clear main timeout since compression succeeded
+            timeoutCleared = true
+            clearTimeout(uploadTimeout)
+
+            // Convert compressed image to data URL (skip Supabase upload since it's timing out)
+            console.log('[BacktestEntry] Converting to data URL...')
             const reader = new FileReader()
             reader.onload = (event) => {
               const dataUrl = event.target?.result as string
+              setChartImage(dataUrl)
               setChartPreview(dataUrl)
+              const sizeKB = (dataUrl.length / 1024).toFixed(1)
+              console.log(`[BacktestEntry] Data URL ready, size: ${sizeKB} KB`)
+
+              // Warn if still large
+              if (dataUrl.length > 200000) {
+                console.warn(`[BacktestEntry] Data URL is large (${sizeKB} KB), save may be slow`)
+              }
             }
-            reader.readAsDataURL(file)
+            reader.onerror = () => {
+              console.error('[BacktestEntry] FileReader error')
+              setUploadingImage(false)
+            }
+            reader.readAsDataURL(compressedFile)
+          } catch (error) {
+            // Clear timeout on error
+            timeoutCleared = true
+            clearTimeout(uploadTimeout)
+            console.error('[BacktestEntry] Exception during upload:', error)
+
+            // Fallback: create local preview using data URL
+            try {
+              const reader = new FileReader()
+              reader.onload = (event) => {
+                const dataUrl = event.target?.result as string
+                setChartImage(dataUrl) // Store data URL as fallback
+                setChartPreview(dataUrl)
+                console.log('[BacktestEntry] Using local data URL after exception')
+              }
+              reader.onerror = () => {
+                console.error('[BacktestEntry] FileReader error in catch block')
+              }
+              reader.readAsDataURL(file)
+            } catch (readerError) {
+              console.error('[BacktestEntry] FileReader failed:', readerError)
+            }
           } finally {
+            console.log('[BacktestEntry] Resetting upload state')
             setUploadingImage(false)
           }
         }
@@ -292,14 +352,10 @@ export function BacktestEntryModal({
     setDirection('long')
     setEntryDate(new Date())
     setHoldTime('')
-    setPlannedSlPips('')
-    setPlannedTpPips('')
-    setPlannedRR('')
-    setActualSlPips('')
-    setActualTpPips('')
-    setActualRR('')
-    setStopPips('')
-    setTargetPips('')
+    setTimeOfDay('')
+    setSlPips('')
+    setTpPips('')
+    setRR('')
     setResultR('')
     setOutcome('win')
     setChartImage('')
@@ -401,12 +457,22 @@ export function BacktestEntryModal({
                 onChange={(e) => setHoldTime(e.target.value)}
               />
             </div>
+
+            <div>
+              <Label htmlFor="time-of-day">Time of Day - Optional</Label>
+              <Input
+                id="time-of-day"
+                type="time"
+                value={timeOfDay}
+                onChange={(e) => setTimeOfDay(e.target.value)}
+              />
+            </div>
           </div>
 
-          {/* Planned Metrics */}
+          {/* Trade Metrics */}
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">
-              Planned Metrics (before trade)
+              Trade Metrics
             </h3>
             <div className="grid grid-cols-3 gap-3">
               <div>
@@ -414,8 +480,8 @@ export function BacktestEntryModal({
                 <Input
                   type="number"
                   step="0.1"
-                  value={plannedSlPips}
-                  onChange={(e) => setPlannedSlPips(e.target.value)}
+                  value={slPips}
+                  onChange={(e) => setSlPips(e.target.value)}
                   placeholder="10"
                 />
               </div>
@@ -424,8 +490,8 @@ export function BacktestEntryModal({
                 <Input
                   type="number"
                   step="0.1"
-                  value={plannedTpPips}
-                  onChange={(e) => setPlannedTpPips(e.target.value)}
+                  value={tpPips}
+                  onChange={(e) => setTpPips(e.target.value)}
                   placeholder="20"
                 />
               </div>
@@ -434,48 +500,9 @@ export function BacktestEntryModal({
                 <Input
                   type="number"
                   step="0.1"
-                  value={plannedRR}
-                  onChange={(e) => setPlannedRR(e.target.value)}
+                  value={rr}
+                  onChange={(e) => setRR(e.target.value)}
                   placeholder="2.0"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Actual Metrics */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">
-              Actual Results (what happened)
-            </h3>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <Label className="text-xs">SL (pips)</Label>
-                <Input
-                  type="number"
-                  step="0.1"
-                  value={actualSlPips}
-                  onChange={(e) => setActualSlPips(e.target.value)}
-                  placeholder="8"
-                />
-              </div>
-              <div>
-                <Label className="text-xs">TP (pips)</Label>
-                <Input
-                  type="number"
-                  step="0.1"
-                  value={actualTpPips}
-                  onChange={(e) => setActualTpPips(e.target.value)}
-                  placeholder="15"
-                />
-              </div>
-              <div>
-                <Label className="text-xs">R:R</Label>
-                <Input
-                  type="number"
-                  step="0.1"
-                  value={actualRR}
-                  onChange={(e) => setActualRR(e.target.value)}
-                  placeholder="1.5"
                 />
               </div>
             </div>

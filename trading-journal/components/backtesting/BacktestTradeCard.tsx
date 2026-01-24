@@ -1,10 +1,12 @@
 'use client'
 
+import * as React from 'react'
 import type { Backtest } from '@/lib/backtest-selectors'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
-import { ArrowUp, ArrowDown, Calendar, Edit2, Trash2 } from 'lucide-react'
+import { ArrowUp, ArrowDown, Calendar, Edit2, Trash2, X } from 'lucide-react'
 
 interface BacktestTradeCardProps {
   backtest: Backtest
@@ -13,6 +15,7 @@ interface BacktestTradeCardProps {
 }
 
 export function BacktestTradeCard({ backtest, onEdit, onDelete }: BacktestTradeCardProps) {
+  const [imageZoomed, setImageZoomed] = React.useState(false)
   const isWin = backtest.result_r > 0
   const date = new Date(backtest.entry_date).toLocaleDateString('en-US', {
     month: 'short',
@@ -21,6 +24,7 @@ export function BacktestTradeCard({ backtest, onEdit, onDelete }: BacktestTradeC
   })
 
   return (
+    <>
     <div className="overflow-hidden rounded-lg border border-neutral-200/70 bg-white/80 dark:border-neutral-800/60 dark:bg-neutral-900/60">
       {/* Header */}
       <div className="border-b border-neutral-200/70 bg-neutral-50/50 p-3 dark:border-neutral-800/60 dark:bg-neutral-900/50">
@@ -126,124 +130,50 @@ export function BacktestTradeCard({ backtest, onEdit, onDelete }: BacktestTradeC
           <img
             src={backtest.chart_image}
             alt={`${backtest.symbol} chart`}
-            className="h-auto w-full object-cover"
+            className="h-auto w-full cursor-pointer object-cover transition-opacity hover:opacity-90"
             style={{ maxHeight: '400px' }}
+            onClick={() => setImageZoomed(true)}
+            title="Click to zoom"
           />
         </div>
       )}
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-2 gap-3 p-3">
-        {/* Planned Metrics */}
-        {(backtest.planned_sl_pips != null ||
-          backtest.planned_tp_pips != null ||
-          backtest.planned_rr != null) && (
+      {(backtest.sl_pips != null || backtest.tp_pips != null || backtest.rr != null) && (
+        <div className="border-b border-neutral-200/70 p-3 dark:border-neutral-800/60">
           <div className="rounded border border-neutral-200/70 bg-neutral-50/50 p-2 dark:border-neutral-800/60 dark:bg-neutral-900/50">
             <div className="mb-1.5 text-xs font-semibold text-neutral-600 dark:text-neutral-400">
-              Planned
+              Trade Metrics
             </div>
-            <div className="space-y-1 text-xs">
-              {backtest.planned_sl_pips != null && (
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              {backtest.sl_pips != null && (
                 <div className="flex justify-between">
                   <span className="text-neutral-500 dark:text-neutral-400">SL:</span>
                   <span className="font-medium text-neutral-700 dark:text-neutral-200">
-                    {backtest.planned_sl_pips.toFixed(1)} pips
+                    {backtest.sl_pips.toFixed(1)} pips
                   </span>
                 </div>
               )}
-              {backtest.planned_tp_pips != null && (
+              {backtest.tp_pips != null && (
                 <div className="flex justify-between">
                   <span className="text-neutral-500 dark:text-neutral-400">TP:</span>
                   <span className="font-medium text-neutral-700 dark:text-neutral-200">
-                    {backtest.planned_tp_pips.toFixed(1)} pips
+                    {backtest.tp_pips.toFixed(1)} pips
                   </span>
                 </div>
               )}
-              {backtest.planned_rr != null && (
+              {backtest.rr != null && (
                 <div className="flex justify-between">
                   <span className="text-neutral-500 dark:text-neutral-400">R:R:</span>
                   <span className="font-medium text-emerald-700 dark:text-emerald-300">
-                    {backtest.planned_rr.toFixed(1)}
+                    {backtest.rr.toFixed(1)}
                   </span>
                 </div>
               )}
             </div>
           </div>
-        )}
-
-        {/* Actual Metrics */}
-        {(backtest.actual_sl_pips != null ||
-          backtest.actual_tp_pips != null ||
-          backtest.actual_rr != null) && (
-          <div className="rounded border border-neutral-200/70 bg-neutral-50/50 p-2 dark:border-neutral-800/60 dark:bg-neutral-900/50">
-            <div className="mb-1.5 text-xs font-semibold text-neutral-600 dark:text-neutral-400">
-              Actual
-            </div>
-            <div className="space-y-1 text-xs">
-              {backtest.actual_sl_pips != null && (
-                <div className="flex justify-between">
-                  <span className="text-neutral-500 dark:text-neutral-400">SL:</span>
-                  <span className="font-medium text-neutral-700 dark:text-neutral-200">
-                    {backtest.actual_sl_pips.toFixed(1)} pips
-                  </span>
-                </div>
-              )}
-              {backtest.actual_tp_pips != null && (
-                <div className="flex justify-between">
-                  <span className="text-neutral-500 dark:text-neutral-400">TP:</span>
-                  <span className="font-medium text-neutral-700 dark:text-neutral-200">
-                    {backtest.actual_tp_pips.toFixed(1)} pips
-                  </span>
-                </div>
-              )}
-              {backtest.actual_rr != null && (
-                <div className="flex justify-between">
-                  <span className="text-neutral-500 dark:text-neutral-400">R:R:</span>
-                  <span
-                    className={cn(
-                      'font-medium',
-                      backtest.actual_rr > 0
-                        ? 'text-emerald-700 dark:text-emerald-300'
-                        : 'text-red-700 dark:text-red-300'
-                    )}
-                  >
-                    {backtest.actual_rr.toFixed(1)}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Legacy metrics (if no planned/actual) */}
-        {!backtest.planned_sl_pips &&
-          !backtest.actual_sl_pips &&
-          (backtest.stop_pips != null || backtest.target_pips != null) && (
-            <div className="col-span-2 rounded border border-neutral-200/70 bg-neutral-50/50 p-2 dark:border-neutral-800/60 dark:bg-neutral-900/50">
-              <div className="mb-1.5 text-xs font-semibold text-neutral-600 dark:text-neutral-400">
-                Trade Metrics
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                {backtest.stop_pips != null && (
-                  <div className="flex justify-between">
-                    <span className="text-neutral-500 dark:text-neutral-400">Stop:</span>
-                    <span className="font-medium text-neutral-700 dark:text-neutral-200">
-                      {backtest.stop_pips.toFixed(1)} pips
-                    </span>
-                  </div>
-                )}
-                {backtest.target_pips != null && (
-                  <div className="flex justify-between">
-                    <span className="text-neutral-500 dark:text-neutral-400">Target:</span>
-                    <span className="font-medium text-neutral-700 dark:text-neutral-200">
-                      {backtest.target_pips.toFixed(1)} pips
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-      </div>
+        </div>
+      )}
 
       {/* Notes */}
       {backtest.notes && (
@@ -255,5 +185,31 @@ export function BacktestTradeCard({ backtest, onEdit, onDelete }: BacktestTradeC
         </div>
       )}
     </div>
+
+    {/* Image Zoom Dialog */}
+    {backtest.chart_image && (
+      <Dialog open={imageZoomed} onOpenChange={setImageZoomed}>
+        <DialogContent className="p-0 overflow-hidden" style={{ width: '1835px', height: '1006px', maxWidth: '98vw', maxHeight: '98vh' }}>
+          <DialogTitle className="sr-only">
+            {backtest.symbol} Chart - {backtest.direction === 'long' ? 'Long' : 'Short'} - {date}
+          </DialogTitle>
+          <div className="relative h-full w-full">
+            <button
+              onClick={() => setImageZoomed(false)}
+              className="absolute right-4 top-4 z-10 rounded-full bg-black/70 p-3 text-white transition-colors hover:bg-black/90"
+              aria-label="Close"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            <img
+              src={backtest.chart_image}
+              alt={`${backtest.symbol} chart - full size`}
+              className="h-full w-full object-contain"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+    )}
+    </>
   )
 }

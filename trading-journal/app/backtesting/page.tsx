@@ -24,7 +24,7 @@ import {
 interface PlaybookWithStats {
   id: string
   name: string
-  category: string
+  trade_type: string | null
   active: boolean
   backtestCount: number
   winRate: number
@@ -50,7 +50,7 @@ export default function BacktestingPage() {
         if (!userData.user) return
 
         const [playbooksRes, backtestsRes] = await Promise.all([
-          supabase.from('playbooks').select('id, name, category, active'),
+          supabase.from('playbooks').select('id, name, trade_type, active'),
           supabase.from('backtests').select('*'),
         ])
 
@@ -58,7 +58,7 @@ export default function BacktestingPage() {
           const playbooksData = playbooksRes.data as Array<{
             id: string
             name: string
-            category: string
+            trade_type: string | null
             active: boolean
           }> | null
 
@@ -72,7 +72,7 @@ export default function BacktestingPage() {
               return {
                 id: pb.id,
                 name: pb.name,
-                category: pb.category,
+                trade_type: pb.trade_type,
                 active: pb.active,
                 backtestCount: kpis.n,
                 winRate: kpis.winRate,
@@ -104,14 +104,14 @@ export default function BacktestingPage() {
       if (!userData.user) return
 
       const [playbooksRes, backtestsRes] = await Promise.all([
-        supabase.from('playbooks').select('id, name, category, active'),
+        supabase.from('playbooks').select('id, name, trade_type, active'),
         supabase.from('backtests').select('*'),
       ])
 
       const playbooksData = playbooksRes.data as Array<{
         id: string
         name: string
-        category: string
+        trade_type: string | null
         active: boolean
       }> | null
 
@@ -125,7 +125,7 @@ export default function BacktestingPage() {
           return {
             id: pb.id,
             name: pb.name,
-            category: pb.category,
+            trade_type: pb.trade_type,
             active: pb.active,
             backtestCount: kpis.n,
             winRate: kpis.winRate,
@@ -235,9 +235,11 @@ export default function BacktestingPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="space-y-1">
                       <CardTitle className="text-lg">{playbook.name}</CardTitle>
-                      <Badge variant="secondary" className="text-xs">
-                        {playbook.category}
-                      </Badge>
+                      {playbook.trade_type && (
+                        <Badge variant="secondary" className="text-xs capitalize">
+                          {playbook.trade_type}
+                        </Badge>
+                      )}
                     </div>
                     <Badge
                       className={cn(

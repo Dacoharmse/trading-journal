@@ -26,6 +26,8 @@ import {
   Share2,
   Calculator,
   ClipboardCheck,
+  Filter,
+  Database,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { getCurrentUserProfile } from "@/lib/auth-utils"
@@ -69,6 +71,11 @@ const mainNavItems = [
     title: "Analytics",
     url: "/analytics",
     icon: BarChart3,
+  },
+  {
+    title: "Trade Analysis",
+    url: "/trade-analysis",
+    icon: Filter,
   },
   {
     title: "Reports",
@@ -116,6 +123,12 @@ const dataTools = [
     url: "/accounts",
     icon: Wallet,
     description: "Manage accounts",
+  },
+  {
+    title: "Setup Symbols",
+    url: "/setup-symbols",
+    icon: Database,
+    description: "Add futures symbols",
   },
 ]
 
