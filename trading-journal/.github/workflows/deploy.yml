@@ -1,0 +1,105 @@
+name: Build and Deploy to VPS
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: trading-journal/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./trading-journal
+        run: npm ci
+
+      - name: Create .env.local for build
+        working-directory: ./trading-journal
+        run: |
+          echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" >> .env.local
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env.local
+
+      - name: Build application
+        working-directory: ./trading-journal
+        run: npm run build
+
+      - name: Prepare deployment package
+        working-directory: ./trading-journal
+        run: |
+          # Create deployment directory
+          mkdir -p deploy
+
+          # Copy standalone build
+          cp -r .next/standalone/* deploy/
+
+          # Copy static files
+          cp -r .next/static deploy/.next/static
+
+          # Copy public folder
+          cp -r public deploy/public
+
+          # Create tar archive for faster transfer
+          tar -czf deploy.tar.gz deploy
+
+      - name: Deploy to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          source: "trading-journal/deploy.tar.gz"
+          target: "/tmp"
+          strip_components: 1
+
+      - name: Execute deployment on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            # Set deployment directory (adjust this path to your VPS setup)
+            DEPLOY_DIR="/var/www/trading-journal"
+
+            # Stop the running application
+            pm2 stop trading-journal || true
+
+            # Backup current deployment
+            if [ -d "$DEPLOY_DIR" ]; then
+              mv $DEPLOY_DIR ${DEPLOY_DIR}_backup_$(date +%Y%m%d_%H%M%S)
+            fi
+
+            # Extract new deployment
+            mkdir -p $DEPLOY_DIR
+            tar -xzf /tmp/deploy.tar.gz -C /tmp
+            mv /tmp/deploy/* $DEPLOY_DIR/
+
+            # Copy environment variables
+            cp /var/www/trading-journal-env/.env.local $DEPLOY_DIR/.env.local || true
+
+            # Clean up
+            rm -f /tmp/deploy.tar.gz
+            rm -rf /tmp/deploy
+
+            # Start/Restart the application
+            cd $DEPLOY_DIR
+            pm2 start server.js --name trading-journal || pm2 restart trading-journal
+
+            # Clean up old backups (keep last 3)
+            ls -dt ${DEPLOY_DIR}_backup_* 2>/dev/null | tail -n +4 | xargs rm -rf || true
+
+            echo "Deployment complete!"
