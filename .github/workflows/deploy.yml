@@ -25,8 +25,9 @@ jobs:
             # Navigate to project
             cd /root/trading-journal/trading-journal
 
-            # Pull latest code
+            # Reset any local changes and pull latest code
             echo "=== Pulling latest code ==="
+            git -C /root/trading-journal reset --hard HEAD
             git -C /root/trading-journal pull origin master
 
             # Install dependencies (only if package-lock changed)
