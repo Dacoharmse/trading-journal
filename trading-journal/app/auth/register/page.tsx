@@ -19,6 +19,7 @@ export default function RegisterPage() {
   const [experienceLevel, setExperienceLevel] = React.useState("beginner")
   const [yearsOfExperience, setYearsOfExperience] = React.useState("")
   const [tradingStyle, setTradingStyle] = React.useState("day_trading")
+  const [whopUsername, setWhopUsername] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [success, setSuccess] = React.useState<string | null>(null)
@@ -29,7 +30,7 @@ export default function RegisterPage() {
     setSuccess(null)
 
     // Validation
-    if (!email || !password || !confirmPassword) {
+    if (!email || !password || !confirmPassword || !whopUsername) {
       setError("Please fill in all required fields")
       return
     }
@@ -67,6 +68,8 @@ export default function RegisterPage() {
           .insert({
             user_id: authData.user.id,
             full_name: fullName,
+            whop_username: whopUsername,
+            is_active: false,
             experience_level: experienceLevel,
             years_of_experience: yearsOfExperience ? parseInt(yearsOfExperience) : null,
             trading_style: tradingStyle,
@@ -146,6 +149,22 @@ export default function RegisterPage() {
                 required
                 disabled={isLoading}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="whopUsername">WHOP Username *</Label>
+              <Input
+                id="whopUsername"
+                type="text"
+                placeholder="Your WHOP username"
+                value={whopUsername}
+                onChange={(e) => setWhopUsername(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+              <p className="text-xs text-muted-foreground">
+                Enter your WHOP username so we can verify your mentorship membership
+              </p>
             </div>
 
             <div className="space-y-2">

@@ -123,8 +123,9 @@ export default function AdminUsersPage() {
     if (searchTerm) {
       filtered = filtered.filter(
         (user) =>
-          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+          user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (user as any).whop_username?.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
 
@@ -393,24 +394,24 @@ export default function AdminUsersPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Mentors</CardTitle>
-            <UserCheck className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Active</CardTitle>
+            <UserCheck className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {users.filter((u) => u.is_mentor && u.mentor_approved).length}
+            <div className="text-2xl font-bold text-green-600">
+              {users.filter((u) => (u as any).is_active).length}
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Inactive</CardTitle>
-            <UserX className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Pending Approval</CardTitle>
+            <UserX className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {users.filter((u) => !u.is_active).length}
+            <div className="text-2xl font-bold text-yellow-600">
+              {users.filter((u) => !(u as any).is_active).length}
             </div>
           </CardContent>
         </Card>
@@ -480,18 +481,29 @@ export default function AdminUsersPage() {
                             Mentor
                           </Badge>
                         )}
-                        {!user.is_active && (
-                          <Badge variant="destructive" className="gap-1">
+                        {(user as any).is_active ? (
+                          <Badge className="gap-1 bg-green-600">
+                            <CheckCircle2 className="h-3 w-3" />
+                            Active
+                          </Badge>
+                        ) : (
+                          <Badge variant="destructive" className="gap-1 bg-yellow-600">
                             <AlertCircle className="h-3 w-3" />
-                            Inactive
+                            Pending Approval
                           </Badge>
                         )}
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
                         <div className="flex items-center gap-1">
                           <Mail className="h-3 w-3" />
                           {user.email}
                         </div>
+                        {(user as any).whop_username && (
+                          <div className="flex items-center gap-1">
+                            <Crown className="h-3 w-3" />
+                            WHOP: <span className="font-medium text-foreground">{(user as any).whop_username}</span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
                           Joined {new Date(user.created_at).toLocaleDateString()}
@@ -618,11 +630,20 @@ export default function AdminUsersPage() {
               {selectedUser?.is_active ? 'Deactivate' : 'Activate'} User
             </DialogTitle>
             <DialogDescription>
-              {selectedUser?.is_active
+              {(selectedUser as any)?.is_active
                 ? 'This will prevent the user from accessing the platform.'
-                : 'This will restore access to the platform.'}
+                : 'This will approve this user and grant them access to the platform.'}
             </DialogDescription>
           </DialogHeader>
+          <div className="py-4">
+            <div className="p-4 bg-muted rounded-lg space-y-2 text-sm">
+              <p><strong>Name:</strong> {selectedUser?.full_name || 'Not set'}</p>
+              <p><strong>Email:</strong> {selectedUser?.email}</p>
+              {(selectedUser as any)?.whop_username && (
+                <p><strong>WHOP Username:</strong> {(selectedUser as any).whop_username}</p>
+              )}
+            </div>
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDeactivateDialog(false)}>
               Cancel
