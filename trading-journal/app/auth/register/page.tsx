@@ -21,10 +21,12 @@ export default function RegisterPage() {
   const [tradingStyle, setTradingStyle] = React.useState("day_trading")
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const [success, setSuccess] = React.useState<string | null>(null)
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setSuccess(null)
 
     // Validation
     if (!email || !password || !confirmPassword) {
@@ -78,8 +80,14 @@ export default function RegisterPage() {
           // Don't fail registration if profile creation fails
         }
 
-        alert("Registration successful! You can now log in.")
-        router.push("/auth/login")
+        // Send welcome email (don't block on failure)
+        fetch('/api/send-welcome-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, fullName }),
+        }).catch(err => console.error('Welcome email failed:', err))
+
+        setSuccess("Registration successful! Your account is pending admin approval. You will receive a welcome email shortly.")
       }
     } catch (error: any) {
       console.error("Registration error:", error)
@@ -106,6 +114,12 @@ export default function RegisterPage() {
             {error && (
               <div className="p-3 text-sm text-red-500 bg-red-50 dark:bg-red-950 rounded-md border border-red-200 dark:border-red-800">
                 {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="p-3 text-sm text-green-600 bg-green-50 dark:bg-green-950 rounded-md border border-green-200 dark:border-green-800">
+                {success}
               </div>
             )}
 
