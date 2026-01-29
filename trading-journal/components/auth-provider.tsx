@@ -47,30 +47,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Set up auth state listener - this will fire INITIAL_SESSION immediately
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return
 
       console.log('[AuthProvider] Auth event:', event, 'Session:', session ? 'exists' : 'none')
+
+      // Always set loading to false immediately - never block on async checks
+      setIsLoading(false)
 
       // Update authentication state based on session
       if (session) {
         console.log('[AuthProvider] User authenticated')
         setIsAuthenticated(true)
 
-        // Check if user is active
-        const active = await checkActiveStatus(session.user.id)
-        if (mounted) {
-          setIsActive(active)
-          setIsLoading(false)
-          if (!active) {
-            console.log('[AuthProvider] User account is not active')
+        // Check active status in background (non-blocking)
+        checkActiveStatus(session.user.id).then((active) => {
+          if (mounted) {
+            setIsActive(active)
+            if (!active) {
+              console.log('[AuthProvider] User account is not active')
+            }
           }
-        }
+        })
       } else {
         console.log('[AuthProvider] User not authenticated')
         setIsAuthenticated(false)
         setIsActive(true)
-        setIsLoading(false)
 
         // Only redirect if on protected route
         if (!publicRoutes.includes(pathname)) {
