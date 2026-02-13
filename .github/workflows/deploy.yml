@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-  workflow_dispatch: # Allow manual trigger from GitHub Actions tab
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -30,7 +30,7 @@ jobs:
             git -C /root/trading-journal reset --hard HEAD
             git -C /root/trading-journal pull origin master
 
-            # Install dependencies (only if package-lock changed)
+            # Install dependencies
             echo "=== Installing dependencies ==="
             npm ci
 
@@ -38,12 +38,20 @@ jobs:
             echo "=== Building application ==="
             npm run build
 
-            # Restart PM2 process
+            # Copy static assets into standalone directory
+            echo "=== Preparing standalone build ==="
+            cp -r public .next/standalone/
+            cp -r .next/static .next/standalone/.next/
+
+            # Fix ownership for service user
+            chown -R tradingjournal:tradingjournal .next/standalone/ public/
+
+            # Restart systemd service
             echo "=== Restarting application ==="
-            pm2 restart trading-journal
+            systemctl restart trading-journal
 
             # Verify it's running
             sleep 3
-            pm2 status trading-journal
+            systemctl status trading-journal --no-pager
 
             echo "=== Deployment complete ==="
