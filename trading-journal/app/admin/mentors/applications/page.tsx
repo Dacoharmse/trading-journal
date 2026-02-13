@@ -112,11 +112,14 @@ export default function MentorApplicationsPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
+      // Map action to status
+      const newStatus = reviewAction === 'approve' ? 'approved' : 'rejected'
+
       // Update application
       const { error: appError } = await supabase
         .from('mentor_applications')
         .update({
-          status: reviewAction,
+          status: newStatus,
           reviewed_at: new Date().toISOString(),
           reviewed_by: user.id,
           admin_notes: adminNotes || null,
@@ -125,7 +128,7 @@ export default function MentorApplicationsPage() {
 
       if (appError) throw appError
 
-      if (reviewAction === 'approved') {
+      if (reviewAction === 'approve') {
         // Update user profile to approved mentor
         const { error: profileError } = await supabase
           .from('user_profiles')
@@ -161,7 +164,7 @@ export default function MentorApplicationsPage() {
 
       // Log admin action
       await logAdminAction(
-        reviewAction === 'approved' ? 'approve_mentor' : 'reject_mentor',
+        reviewAction === 'approve' ? 'approve_mentor' : 'reject_mentor',
         selectedApplication.user_id,
         { application_id: selectedApplication.id, notes: adminNotes }
       )
@@ -172,7 +175,7 @@ export default function MentorApplicationsPage() {
           app.id === selectedApplication.id
             ? {
                 ...app,
-                status: reviewAction,
+                status: newStatus,
                 reviewed_at: new Date().toISOString(),
                 reviewed_by: user.id,
                 admin_notes: adminNotes || undefined,
@@ -183,7 +186,7 @@ export default function MentorApplicationsPage() {
 
       toast({
         title: 'Success',
-        description: `Mentor application ${reviewAction === 'approved' ? 'approved' : 'rejected'}`,
+        description: `Mentor application ${reviewAction === 'approve' ? 'approved' : 'rejected'}`,
       })
 
       setShowReviewDialog(false)

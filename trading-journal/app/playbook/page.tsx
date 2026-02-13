@@ -5,13 +5,14 @@ import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { PlaybookListClient, type PlaybookSummary } from '@/components/playbook/PlaybookListClient'
 import { calculatePlaybookStats } from '@/components/playbook/PlaybookMiniDashboard'
+import type { PlaybookTradeType } from '@/types/supabase'
 
 interface PlaybookRecord {
   id: string
   user_id: string
   name: string
   description: string | null
-  trade_type: string | null
+  trade_type: PlaybookTradeType | null
   sessions: string[] | null
   symbols: string[] | null
   rr_min: number | null

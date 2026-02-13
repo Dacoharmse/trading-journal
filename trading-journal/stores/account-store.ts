@@ -4,6 +4,9 @@ import {
   TradingAccount,
   AccountInput,
   AccountUpdate,
+  AccountType,
+  PropFirmPhase,
+  PropFirmSettings,
   calculateAccountMetrics,
 } from '@/types/account';
 import { Trade } from '@/types/trade';
@@ -68,17 +71,17 @@ export const useAccountStore = create<AccountState>()(
             id: row.id,
             name: row.name,
             broker: row.broker,
-            accountType: row.account_type as any,
+            accountType: row.account_type as AccountType,
             currency: row.currency,
             startingBalance: Number(row.starting_balance),
             tradingPairs: row.trading_pairs || [],
             isActive: row.is_active,
             propFirmSettings: row.account_type === 'prop-firm' ? {
-              phase: row.phase as any,
+              phase: row.phase as PropFirmPhase | undefined,
               profitTarget: row.profit_target ? Number(row.profit_target) : undefined,
               maxDrawdown: row.max_drawdown ? Number(row.max_drawdown) : undefined,
               dailyDrawdown: row.daily_drawdown ? Number(row.daily_drawdown) : undefined,
-              status: row.account_status as any,
+              status: row.account_status as PropFirmSettings['status'],
               currentProfits: row.current_profits ? Number(row.current_profits) : undefined,
               currentDrawdown: row.current_drawdown ? Number(row.current_drawdown) : undefined,
             } : undefined,
@@ -88,8 +91,7 @@ export const useAccountStore = create<AccountState>()(
           set({ accounts, isLoading: false });
         } catch (error: any) {
           set({ error: error.message, isLoading: false });
-          console.error('Error fetching accounts:', error);
-        }
+                  }
       },
 
       addAccount: async (input: AccountInput) => {
@@ -134,17 +136,17 @@ export const useAccountStore = create<AccountState>()(
             id: data.id,
             name: data.name,
             broker: data.broker,
-            accountType: data.account_type as any,
+            accountType: data.account_type as AccountType,
             currency: data.currency,
             startingBalance: Number(data.starting_balance),
             tradingPairs: data.trading_pairs || [],
             isActive: data.is_active,
             propFirmSettings: data.account_type === 'prop-firm' ? {
-              phase: data.phase as any,
+              phase: data.phase as PropFirmPhase | undefined,
               profitTarget: data.profit_target ? Number(data.profit_target) : undefined,
               maxDrawdown: data.max_drawdown ? Number(data.max_drawdown) : undefined,
               dailyDrawdown: data.daily_drawdown ? Number(data.daily_drawdown) : undefined,
-              status: data.account_status as any,
+              status: data.account_status as PropFirmSettings['status'],
               currentProfits: data.current_profits ? Number(data.current_profits) : undefined,
               currentDrawdown: data.current_drawdown ? Number(data.current_drawdown) : undefined,
             } : undefined,
@@ -159,8 +161,7 @@ export const useAccountStore = create<AccountState>()(
           return newAccount;
         } catch (error: any) {
           set({ error: error.message, isLoading: false });
-          console.error('Error adding account:', error);
-          return null;
+                    return null;
         }
       },
 
@@ -204,8 +205,7 @@ export const useAccountStore = create<AccountState>()(
           }));
         } catch (error: any) {
           set({ error: error.message, isLoading: false });
-          console.error('Error updating account:', error);
-        }
+                  }
       },
 
       deleteAccount: async (id: string) => {
@@ -228,8 +228,7 @@ export const useAccountStore = create<AccountState>()(
           }));
         } catch (error: any) {
           set({ error: error.message, isLoading: false });
-          console.error('Error deleting account:', error);
-        }
+                  }
       },
 
       selectAccount: (id: string | null) => {

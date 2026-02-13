@@ -184,11 +184,19 @@ export default function AdminUsersPage() {
     if (!selectedUser) return
 
     try {
-      const newStatus = !selectedUser.is_active
+      const newStatus = !(selectedUser as any).is_active
+
+      const updateData: any = { is_active: newStatus }
+      if (newStatus) {
+        updateData.activated_at = new Date().toISOString()
+        updateData.deactivated_at = null
+      } else {
+        updateData.deactivated_at = new Date().toISOString()
+      }
 
       const { error } = await supabase
         .from('user_profiles')
-        .update({ is_active: newStatus })
+        .update(updateData)
         .eq('id', selectedUser.id)
 
       if (error) throw error
@@ -202,7 +210,7 @@ export default function AdminUsersPage() {
       // Update local state
       setUsers(
         users.map((user) =>
-          user.id === selectedUser.id ? { ...user, is_active: newStatus } : user
+          user.id === selectedUser.id ? { ...user, ...updateData } as any : user
         )
       )
 
@@ -642,6 +650,8 @@ export default function AdminUsersPage() {
               {(selectedUser as any)?.whop_username && (
                 <p><strong>WHOP Username:</strong> {(selectedUser as any).whop_username}</p>
               )}
+              <p><strong>Status:</strong> {(selectedUser as any)?.is_active ? <span className="text-green-600">Active</span> : <span className="text-yellow-600">Inactive</span>}</p>
+              <p><strong>Joined:</strong> {selectedUser?.created_at ? new Date(selectedUser.created_at).toLocaleDateString() : 'Unknown'}</p>
             </div>
           </div>
           <DialogFooter>
@@ -649,10 +659,10 @@ export default function AdminUsersPage() {
               Cancel
             </Button>
             <Button
-              variant={selectedUser?.is_active ? 'destructive' : 'default'}
+              variant={(selectedUser as any)?.is_active ? 'destructive' : 'default'}
               onClick={handleToggleActive}
             >
-              {selectedUser?.is_active ? 'Deactivate' : 'Activate'}
+              {(selectedUser as any)?.is_active ? 'Deactivate' : 'Activate'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -64,14 +64,16 @@ export default function CalendarPage() {
 
   // Find best day
   const bestDay = React.useMemo(() => {
-    let best: { date: string; value: number } | null = null
+    const entries = Array.from(dailyStats.entries())
+    if (entries.length === 0) return undefined
 
-    dailyStats.forEach((stats, date) => {
+    const best = entries.reduce<{ date: string; value: number } | null>((acc, [date, stats]) => {
       const value = filters.units === 'r' ? stats.totalR : stats.totalPnL
-      if (!best || value > best.value) {
-        best = { date, value }
+      if (!acc || value > acc.value) {
+        return { date, value }
       }
-    })
+      return acc
+    }, null)
 
     return best?.date
   }, [dailyStats, filters.units])

@@ -30,7 +30,7 @@ export default function RegisterPage() {
     setSuccess(null)
 
     // Validation
-    if (!email || !password || !confirmPassword || !whopUsername) {
+    if (!email || !password || !confirmPassword) {
       setError("Please fill in all required fields")
       return
     }
@@ -68,8 +68,8 @@ export default function RegisterPage() {
           .insert({
             user_id: authData.user.id,
             full_name: fullName,
-            whop_username: whopUsername,
-            is_active: false,
+            whop_username: whopUsername || null,
+            is_active: true,
             experience_level: experienceLevel,
             years_of_experience: yearsOfExperience ? parseInt(yearsOfExperience) : null,
             trading_style: tradingStyle,
@@ -90,7 +90,7 @@ export default function RegisterPage() {
           body: JSON.stringify({ email, fullName }),
         }).catch(err => console.error('Welcome email failed:', err))
 
-        setSuccess("Registration successful! Your account is pending admin approval. You will receive a welcome email shortly.")
+        setSuccess("Registration successful! You can now sign in to your account.")
       }
     } catch (error: any) {
       console.error("Registration error:", error)
@@ -152,19 +152,15 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="whopUsername">WHOP Username *</Label>
+              <Label htmlFor="whopUsername">WHOP Username</Label>
               <Input
                 id="whopUsername"
                 type="text"
-                placeholder="Your WHOP username"
+                placeholder="Your WHOP username (optional)"
                 value={whopUsername}
                 onChange={(e) => setWhopUsername(e.target.value)}
-                required
                 disabled={isLoading}
               />
-              <p className="text-xs text-muted-foreground">
-                Enter your WHOP username so we can verify your mentorship membership
-              </p>
             </div>
 
             <div className="space-y-2">

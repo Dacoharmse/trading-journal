@@ -70,8 +70,7 @@ export const useTradeStore = create<TradeState>()(
           if (error) {
             const errorMsg = `Database error: ${error.message} (Code: ${error.code})`;
             set({ error: errorMsg, isLoading: false });
-            console.error('Error adding trade:', error);
-            throw new Error(errorMsg);
+                        throw new Error(errorMsg);
           }
 
           let updatedTrades: Trade[] = [];
@@ -83,8 +82,7 @@ export const useTradeStore = create<TradeState>()(
         } catch (error: any) {
           const errorMsg = error.message || 'Unknown error adding trade';
           set({ error: errorMsg, isLoading: false });
-          console.error('Error adding trade:', error);
-          throw error; // Re-throw so caller can handle it
+                    throw error; // Re-throw so caller can handle it
         }
       },
 
@@ -140,8 +138,7 @@ export const useTradeStore = create<TradeState>()(
           useAccountStore.getState().recalculateMetrics(updatedTrades);
         } catch (error: any) {
           set({ error: error.message, isLoading: false });
-          console.error('Error updating trade:', error);
-        }
+                  }
       },
 
       // Delete a trade
@@ -185,8 +182,7 @@ export const useTradeStore = create<TradeState>()(
           useAccountStore.getState().recalculateMetrics(updatedTrades);
         } catch (error: any) {
           set({ error: error.message, isLoading: false });
-          console.error('Error deleting trade:', error);
-        }
+                  }
       },
 
       // Set selected trade

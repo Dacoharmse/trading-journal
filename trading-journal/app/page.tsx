@@ -206,11 +206,11 @@ export default function Home() {
         {/* KPI Row */}
         <KpiRow
           trades={filteredTrades}
-          netPnL={stats.net_profit}
-          winRate={stats.win_rate}
-          profitFactor={stats.profit_factor}
-          avgWin={stats.avg_win}
-          avgLoss={stats.avg_loss}
+          netPnL={stats.net_profit ?? 0}
+          winRate={stats.win_rate ?? 0}
+          profitFactor={stats.profit_factor ?? 0}
+          avgWin={stats.avg_win ?? 0}
+          avgLoss={stats.avg_loss ?? 0}
           avgHoldMins={stats.avg_trade_duration ? stats.avg_trade_duration * 60 : undefined}
           currency={displayCurrency}
           units={filters.units}

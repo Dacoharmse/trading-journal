@@ -3,8 +3,6 @@
  * Handles multi-currency trade P&L normalization
  */
 
-import type { BaseCurrency } from '@/stores/dashboard-filters'
-
 /**
  * FX Rate cache
  * In production, this would come from a database table:
@@ -87,13 +85,11 @@ export function getFxRate(
 
   const fromRates = FX_RATES[from]
   if (!fromRates) {
-    console.warn(`FX rate not found for ${from}, defaulting to 1.0`)
     return 1.0
   }
 
   const rate = fromRates[to]
   if (!rate) {
-    console.warn(`FX rate not found for ${from}→${to}, defaulting to 1.0`)
     return 1.0
   }
 
@@ -111,42 +107,8 @@ export function getLastFxRateDate(): string {
   return '2025-10-08'
 }
 
-/**
- * Format currency amount with proper symbol and decimals
- *
- * @param value - Amount to format
- * @param currency - Currency code
- * @returns Formatted string
- */
-export function formatCurrency(value: number, currency: string): string {
-  try {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value)
-  } catch (error) {
-    // Fallback for unsupported currencies
-    return `${currency} ${value.toFixed(0)}`
-  }
-}
-
-/**
- * Get currency symbol
- *
- * @param currency - Currency code
- * @returns Currency symbol (e.g., $, R, €, £)
- */
-export function getCurrencySymbol(currency: BaseCurrency): string {
-  const symbols: Record<BaseCurrency, string> = {
-    'USD': '$',
-    'ZAR': 'R',
-    'EUR': '€',
-    'GBP': '£',
-  }
-  return symbols[currency] || currency
-}
+// Re-export formatting utilities from trade-formatting.ts for backwards compatibility
+export { formatCurrency, getCurrencySymbol } from './trade-formatting'
 
 /**
  * Check if FX rates are available for a currency pair

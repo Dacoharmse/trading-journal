@@ -64,6 +64,17 @@ export interface UserPreferences {
 
   /** Trading confluences */
   confluences?: string[];
+
+  /** Alert notifications */
+  profit_target_alerts?: boolean;
+  drawdown_warnings?: boolean;
+  daily_loss_alerts?: boolean;
+  trade_reminders?: boolean;
+
+  /** Achievement notifications */
+  winning_streak_notifications?: boolean;
+  personal_best_notifications?: boolean;
+  milestone_notifications?: boolean;
 }
 
 /**

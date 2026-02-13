@@ -256,19 +256,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       setUserEmail(user.email || null)
 
-      // Get user profile with role information
-      const profile = await getCurrentUserProfile()
-      setUserProfile(profile)
+      try {
+        // Get user profile with role information
+        const profile = await getCurrentUserProfile()
+        setUserProfile(profile)
 
-      // Get unread notifications count
-      if (profile) {
-        const { count } = await supabase
-          .from('notifications')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', profile.id)
-          .eq('is_read', false)
+        // Get unread notifications count
+        if (profile) {
+          const { count } = await supabase
+            .from('notifications')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', profile.id)
+            .eq('is_read', false)
 
-        setUnreadNotifications(count || 0)
+          setUnreadNotifications(count || 0)
+        }
+      } catch {
+        // Profile loading failed - sidebar will show basic navigation
+        setUserProfile(null)
       }
     }
 

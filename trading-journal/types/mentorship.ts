@@ -18,6 +18,12 @@ export interface UserProfile {
   // Role system
   role: UserRole
 
+  // Account status (WHOP verification)
+  is_active: boolean
+  whop_username?: string
+  activated_at?: string
+  deactivated_at?: string
+
   // Mentor-specific
   is_mentor: boolean
   mentor_bio?: string

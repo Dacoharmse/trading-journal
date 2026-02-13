@@ -78,13 +78,14 @@ export function formatCurrency(value: number, currency: string = 'USD'): string 
 }
 
 /**
- * Format R-multiple
+ * Format R-multiple for display
  * @param r - R-multiple value
- * @returns Formatted R string
+ * @param showSign - Whether to show + for positive values (default: true)
+ * @returns Formatted string (e.g., "+2.5R", "-0.8R", "N/A" for null)
  */
-export function formatR(r: number | null | undefined): string {
+export function formatR(r: number | null | undefined, showSign = true): string {
   if (r === null || r === undefined) return 'N/A'
-  const sign = r >= 0 ? '+' : ''
+  const sign = showSign && r >= 0 ? '+' : ''
   return `${sign}${r.toFixed(2)}R`
 }
 

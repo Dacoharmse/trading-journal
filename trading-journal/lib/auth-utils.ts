@@ -8,20 +8,39 @@ import type { UserRole, UserProfile } from '@/types/mentorship'
 
 /**
  * Get current user's profile with role information
+ * Tries both 'id' and 'user_id' columns for compatibility with different schema versions
  */
 export async function getCurrentUserProfile(): Promise<UserProfile | null> {
-  const supabase = createClient()
+  try {
+    const supabase = createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
 
-  const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
+    // Try querying by 'id' first (mentorship schema: id = auth.users.id)
+    const { data: profile, error } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
 
-  return profile
+    if (profile) return profile
+
+    // Fallback: try querying by 'user_id' (legacy schema)
+    if (error) {
+      const { data: profileByUserId } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
+
+      if (profileByUserId) return profileByUserId
+    }
+
+    return null
+  } catch {
+    return null
+  }
 }
 
 /**

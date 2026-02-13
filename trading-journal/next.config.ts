@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Note: ESLint and TypeScript issues are tracked as warnings
+  // TODO: Fix remaining type safety issues and re-enable strict checking
   eslint: {
     ignoreDuringBuilds: true,
   },

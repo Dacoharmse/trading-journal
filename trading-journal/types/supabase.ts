@@ -79,6 +79,7 @@ export interface Playbook {
   user_id: string
   name: string
   description?: string | null
+  category?: string | null
   trade_type?: PlaybookTradeType | null
   sessions: string[]
   symbols: string[]

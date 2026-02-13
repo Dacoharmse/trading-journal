@@ -40,17 +40,8 @@ export function parseRR(rr: string | number | null | undefined): number | null {
   return isFinite(n) ? n : null
 }
 
-/**
- * Format R-multiple for display
- * @param r R-multiple value
- * @param showSign Whether to show + for positive values
- * @returns Formatted string (e.g., "+2.5R", "-0.8R")
- */
-export function formatR(r: number | null | undefined, showSign = true): string {
-  if (r == null) return '—'
-  const sign = showSign && r > 0 ? '+' : ''
-  return `${sign}${r.toFixed(2)}R`
-}
+// Re-export formatR from trade-formatting.ts for backwards compatibility
+export { formatR } from './trade-formatting'
 
 /**
  * Format pips/points for display

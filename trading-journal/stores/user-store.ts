@@ -84,8 +84,6 @@ export const useUserStore = create<UserState>()(
             throw profileError;
           }
 
-          console.log('Loaded user profile from database:', profile);
-
           // Transform profile data to User format
           const user: User = {
             id: authUser.id,
@@ -126,7 +124,6 @@ export const useUserStore = create<UserState>()(
           set({ user, isLoading: false });
         } catch (error: any) {
           set({ error: error.message, isLoading: false });
-          console.error('Error fetching user:', error);
         }
       },
 
@@ -167,7 +164,7 @@ export const useUserStore = create<UserState>()(
           }
 
           // Update in Supabase - filter out undefined values
-          const updateData: any = {};
+          const updateData: Record<string, unknown> = {};
           if (preferences.theme !== undefined) updateData.theme = preferences.theme;
           if (preferences.currency !== undefined) updateData.currency = preferences.currency;
           if (preferences.timezone !== undefined) updateData.timezone = preferences.timezone;
@@ -193,9 +190,6 @@ export const useUserStore = create<UserState>()(
           if (preferences.personal_best_notifications !== undefined) updateData.personal_best_notifications = preferences.personal_best_notifications;
           if (preferences.milestone_notifications !== undefined) updateData.milestone_notifications = preferences.milestone_notifications;
 
-          console.log('Updating preferences for user:', state.user.id);
-          console.log('Update data:', updateData);
-
           const supabase = getSupabase();
           const { error } = await supabase
             .from('user_profiles')
@@ -203,11 +197,8 @@ export const useUserStore = create<UserState>()(
             .eq('user_id', state.user.id);
 
           if (error) {
-            console.error('Supabase update error:', error);
             throw error;
           }
-
-          console.log('Preferences updated successfully in database');
 
           // Update local state
           set((state) => ({
@@ -222,7 +213,6 @@ export const useUserStore = create<UserState>()(
           }));
         } catch (error: any) {
           set({ error: error.message, isLoading: false });
-          console.error('Error updating preferences:', error);
         }
       },
 
@@ -266,9 +256,6 @@ export const useUserStore = create<UserState>()(
             linkedin_url: profile.profile?.linkedin_url,
           };
 
-          console.log('Updating profile for user:', state.user.id);
-          console.log('Profile update data:', updateData);
-
           const supabase = getSupabase();
           const { error } = await supabase
             .from('user_profiles')
@@ -276,11 +263,8 @@ export const useUserStore = create<UserState>()(
             .eq('user_id', state.user.id);
 
           if (error) {
-            console.error('Supabase profile update error:', error);
             throw error;
           }
-
-          console.log('Profile updated successfully in database');
 
           // Update local state
           set((state) => ({
@@ -296,7 +280,6 @@ export const useUserStore = create<UserState>()(
           }));
         } catch (error: any) {
           set({ error: error.message, isLoading: false });
-          console.error('Error updating profile:', error);
         }
       },
 

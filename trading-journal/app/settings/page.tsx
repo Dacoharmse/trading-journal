@@ -287,17 +287,16 @@ export default function SettingsPage() {
               <form
                 onSubmit={(e) => {
                   e.preventDefault()
-                  const preferencesData = {
+                  useUserStore.getState().updatePreferences({
                     default_broker: defaultBroker || undefined,
-                    currency: currency as any,
-                    theme: theme as any,
+                    currency: currency,
+                    theme: theme,
                     timezone: timezone,
-                    default_chart_type: defaultChartType as any,
+                    default_chart_type: defaultChartType,
                     items_per_page: parseInt(itemsPerPage),
-                    default_date_range: defaultDateRange as any,
+                    default_date_range: defaultDateRange,
                     show_pnl_percentage: showPnlPercentage,
-                  }
-                  useUserStore.getState().updatePreferences(preferencesData)
+                  } as any)
                   toast({
                     title: "Success",
                     description: "Preferences saved successfully!",
