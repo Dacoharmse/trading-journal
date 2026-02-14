@@ -21,6 +21,7 @@ export interface UserProfile {
   // Account status (WHOP verification)
   is_active: boolean
   whop_username?: string
+  whop_user_id?: string
   activated_at?: string
   deactivated_at?: string
 

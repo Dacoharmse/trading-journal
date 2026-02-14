@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Logo } from "@/components/logo"
+import { CheckCircle2, Loader2 } from "lucide-react"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -20,9 +21,41 @@ export default function RegisterPage() {
   const [yearsOfExperience, setYearsOfExperience] = React.useState("")
   const [tradingStyle, setTradingStyle] = React.useState("day_trading")
   const [whopUsername, setWhopUsername] = React.useState("")
+  const [whopVerified, setWhopVerified] = React.useState(false)
+  const [whopUserId, setWhopUserId] = React.useState<string | null>(null)
+  const [verifyingWhop, setVerifyingWhop] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [success, setSuccess] = React.useState<string | null>(null)
+
+  const verifyWhopUsername = async () => {
+    if (!whopUsername.trim()) {
+      setError("WHOP username is required")
+      return
+    }
+    setVerifyingWhop(true)
+    setError(null)
+    try {
+      const res = await fetch("/api/whop/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: whopUsername.trim() }),
+      })
+      const data = await res.json()
+      if (data.verified) {
+        setWhopVerified(true)
+        setWhopUserId(data.whop_user_id)
+      } else {
+        setWhopVerified(false)
+        setWhopUserId(null)
+        setError(data.error || "WHOP membership verification failed")
+      }
+    } catch {
+      setError("Failed to verify WHOP membership. Please try again.")
+    } finally {
+      setVerifyingWhop(false)
+    }
+  }
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,6 +65,16 @@ export default function RegisterPage() {
     // Validation
     if (!email || !password || !confirmPassword) {
       setError("Please fill in all required fields")
+      return
+    }
+
+    if (!whopUsername.trim()) {
+      setError("WHOP username is required")
+      return
+    }
+
+    if (!whopVerified) {
+      setError("Please verify your WHOP membership first")
       return
     }
 
@@ -62,14 +105,16 @@ export default function RegisterPage() {
       if (signUpError) throw signUpError
 
       if (authData.user) {
-        // Create user profile
+        // Create user profile with verified WHOP data
         const { error: profileError } = await supabase
           .from('user_profiles')
           .insert({
             user_id: authData.user.id,
             full_name: fullName,
-            whop_username: whopUsername || null,
+            whop_username: whopUsername.trim(),
+            whop_user_id: whopUserId,
             is_active: true,
+            activated_at: new Date().toISOString(),
             experience_level: experienceLevel,
             years_of_experience: yearsOfExperience ? parseInt(yearsOfExperience) : null,
             trading_style: tradingStyle,
@@ -80,7 +125,6 @@ export default function RegisterPage() {
 
         if (profileError) {
           console.error("Profile creation error:", profileError)
-          // Don't fail registration if profile creation fails
         }
 
         // Send welcome email (don't block on failure)
@@ -88,7 +132,7 @@ export default function RegisterPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, fullName }),
-        }).catch(err => console.error('Welcome email failed:', err))
+        }).catch(() => {})
 
         setSuccess("Registration successful! You can now sign in to your account.")
       }
@@ -152,15 +196,45 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="whopUsername">WHOP Username</Label>
-              <Input
-                id="whopUsername"
-                type="text"
-                placeholder="Your WHOP username (optional)"
-                value={whopUsername}
-                onChange={(e) => setWhopUsername(e.target.value)}
-                disabled={isLoading}
-              />
+              <Label htmlFor="whopUsername">WHOP Username *</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="whopUsername"
+                  type="text"
+                  placeholder="Your WHOP username"
+                  value={whopUsername}
+                  onChange={(e) => {
+                    setWhopUsername(e.target.value)
+                    setWhopVerified(false)
+                    setWhopUserId(null)
+                  }}
+                  required
+                  disabled={isLoading || verifyingWhop}
+                />
+                <Button
+                  type="button"
+                  variant={whopVerified ? "default" : "outline"}
+                  onClick={verifyWhopUsername}
+                  disabled={!whopUsername.trim() || verifyingWhop || whopVerified}
+                  className="shrink-0"
+                >
+                  {verifyingWhop ? (
+                    <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Verifying</>
+                  ) : whopVerified ? (
+                    <><CheckCircle2 className="mr-1 h-4 w-4" /> Verified</>
+                  ) : (
+                    "Verify"
+                  )}
+                </Button>
+              </div>
+              {whopVerified && (
+                <p className="text-xs text-green-600 dark:text-green-400">
+                  Active WHOP membership verified
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                An active Trading Mastery subscription on WHOP is required
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -245,7 +319,11 @@ export default function RegisterPage() {
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading || !whopVerified}
+            >
               {isLoading ? "Creating account..." : "Create account"}
             </Button>
 
