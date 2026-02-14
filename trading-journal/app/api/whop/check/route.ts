@@ -22,7 +22,7 @@ export async function POST() {
     let profile = null
     const { data: profileById } = await adminClient
       .from('user_profiles')
-      .select('id, role, whop_username, whop_user_id, is_active')
+      .select('id, email, role, whop_username, whop_user_id, is_active')
       .eq('id', user.id)
       .single()
 
@@ -31,7 +31,7 @@ export async function POST() {
     } else {
       const { data: profileByUserId } = await adminClient
         .from('user_profiles')
-        .select('id, role, whop_username, whop_user_id, is_active')
+        .select('id, email, role, whop_username, whop_user_id, is_active')
         .eq('user_id', user.id)
         .single()
       profile = profileByUserId
@@ -56,25 +56,28 @@ export async function POST() {
     if (profile.whop_user_id) {
       // Fast path: use stored whop_user_id
       result = await checkMembershipByUserId(profile.whop_user_id)
-    } else if (profile.whop_username) {
-      // Slow path: iterate memberships to find by username
-      result = await verifyWhopMembership(profile.whop_username)
+    } else {
+      // Slow path: verify by email (matches WHOP account email)
+      const email = profile.email || user.email
+      if (!email) {
+        return NextResponse.json(
+          { verified: false, error: 'No email found for this account.' },
+          { status: 403 }
+        )
+      }
+      result = await verifyWhopMembership(email)
 
-      // Store whop_user_id for future fast lookups
+      // Store whop_user_id and username for future fast lookups
       if (result.whop_user_id) {
+        const updateData: Record<string, string> = { whop_user_id: result.whop_user_id }
+        if (result.whop_username) {
+          updateData.whop_username = result.whop_username
+        }
         await adminClient
           .from('user_profiles')
-          .update({ whop_user_id: result.whop_user_id })
+          .update(updateData)
           .eq('id', profile.id)
       }
-    } else {
-      return NextResponse.json(
-        {
-          verified: false,
-          error: 'No WHOP username linked to this account. Please contact support.',
-        },
-        { status: 403 }
-      )
     }
 
     // Update is_active status

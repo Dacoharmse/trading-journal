@@ -20,17 +20,17 @@ export default function RegisterPage() {
   const [experienceLevel, setExperienceLevel] = React.useState("beginner")
   const [yearsOfExperience, setYearsOfExperience] = React.useState("")
   const [tradingStyle, setTradingStyle] = React.useState("day_trading")
-  const [whopUsername, setWhopUsername] = React.useState("")
   const [whopVerified, setWhopVerified] = React.useState(false)
   const [whopUserId, setWhopUserId] = React.useState<string | null>(null)
+  const [whopUsername, setWhopUsername] = React.useState<string | null>(null)
   const [verifyingWhop, setVerifyingWhop] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [success, setSuccess] = React.useState<string | null>(null)
 
-  const verifyWhopUsername = async () => {
-    if (!whopUsername.trim()) {
-      setError("WHOP username is required")
+  const verifyWhopEmail = async () => {
+    if (!email.trim()) {
+      setError("Please enter your email first")
       return
     }
     setVerifyingWhop(true)
@@ -39,15 +39,17 @@ export default function RegisterPage() {
       const res = await fetch("/api/whop/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: whopUsername.trim() }),
+        body: JSON.stringify({ email: email.trim() }),
       })
       const data = await res.json()
       if (data.verified) {
         setWhopVerified(true)
         setWhopUserId(data.whop_user_id)
+        setWhopUsername(data.whop_username || null)
       } else {
         setWhopVerified(false)
         setWhopUserId(null)
+        setWhopUsername(null)
         setError(data.error || "WHOP membership verification failed")
       }
     } catch {
@@ -62,14 +64,8 @@ export default function RegisterPage() {
     setError(null)
     setSuccess(null)
 
-    // Validation
     if (!email || !password || !confirmPassword) {
       setError("Please fill in all required fields")
-      return
-    }
-
-    if (!whopUsername.trim()) {
-      setError("WHOP username is required")
       return
     }
 
@@ -91,7 +87,6 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      // Sign up the user
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -105,13 +100,12 @@ export default function RegisterPage() {
       if (signUpError) throw signUpError
 
       if (authData.user) {
-        // Create user profile with verified WHOP data
         const { error: profileError } = await supabase
           .from('user_profiles')
           .insert({
             user_id: authData.user.id,
             full_name: fullName,
-            whop_username: whopUsername.trim(),
+            whop_username: whopUsername,
             whop_user_id: whopUserId,
             is_active: true,
             activated_at: new Date().toISOString(),
@@ -127,7 +121,6 @@ export default function RegisterPage() {
           console.error("Profile creation error:", profileError)
         }
 
-        // Send welcome email (don't block on failure)
         fetch('/api/send-welcome-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -184,29 +177,17 @@ export default function RegisterPage() {
 
             <div className="space-y-2">
               <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="whopUsername">WHOP Username *</Label>
               <div className="flex gap-2">
                 <Input
-                  id="whopUsername"
-                  type="text"
-                  placeholder="Your WHOP username"
-                  value={whopUsername}
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
                   onChange={(e) => {
-                    setWhopUsername(e.target.value)
+                    setEmail(e.target.value)
                     setWhopVerified(false)
                     setWhopUserId(null)
+                    setWhopUsername(null)
                   }}
                   required
                   disabled={isLoading || verifyingWhop}
@@ -214,12 +195,12 @@ export default function RegisterPage() {
                 <Button
                   type="button"
                   variant={whopVerified ? "default" : "outline"}
-                  onClick={verifyWhopUsername}
-                  disabled={!whopUsername.trim() || verifyingWhop || whopVerified}
+                  onClick={verifyWhopEmail}
+                  disabled={!email.trim() || verifyingWhop || whopVerified}
                   className="shrink-0"
                 >
                   {verifyingWhop ? (
-                    <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Verifying</>
+                    <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Checking</>
                   ) : whopVerified ? (
                     <><CheckCircle2 className="mr-1 h-4 w-4" /> Verified</>
                   ) : (
@@ -229,11 +210,11 @@ export default function RegisterPage() {
               </div>
               {whopVerified && (
                 <p className="text-xs text-green-600 dark:text-green-400">
-                  Active WHOP membership verified
+                  Active WHOP membership verified{whopUsername ? ` (${whopUsername})` : ''}
                 </p>
               )}
               <p className="text-xs text-muted-foreground">
-                An active Trading Mastery subscription on WHOP is required
+                Use the same email as your WHOP account. An active Trading Mastery subscription is required.
               </p>
             </div>
 

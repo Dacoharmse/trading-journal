@@ -32,6 +32,7 @@ interface WhopUser {
 export interface VerifyResult {
   verified: boolean
   whop_user_id: string | null
+  whop_username?: string
   membership_status: string | null
   error?: string
 }
@@ -64,11 +65,11 @@ async function getWhopUser(userId: string): Promise<WhopUser | null> {
 }
 
 /**
- * Verify WHOP membership by username (slow path - used during registration).
- * Iterates all memberships for the product, looks up each user to match username.
+ * Verify WHOP membership by email.
+ * Iterates all memberships for the product, looks up each user to match email.
  */
-export async function verifyWhopMembership(username: string): Promise<VerifyResult> {
-  const normalizedUsername = username.trim().toLowerCase()
+export async function verifyWhopMembership(email: string): Promise<VerifyResult> {
+  const normalizedEmail = email.trim().toLowerCase()
   let page = 1
   const perPage = 50
   const productId = getProductId()
@@ -91,11 +92,12 @@ export async function verifyWhopMembership(username: string): Promise<VerifyResu
 
     for (const membership of data.data) {
       const user = await getWhopUser(membership.user_id)
-      if (user && user.username.toLowerCase() === normalizedUsername) {
+      if (user && user.email.toLowerCase() === normalizedEmail) {
         return {
           verified: membership.valid === true,
           whop_user_id: membership.user_id,
           membership_status: membership.status,
+          whop_username: user.username,
           error: membership.valid
             ? undefined
             : `Your WHOP membership status is "${membership.status}". Please ensure your Trading Mastery subscription is active.`,
@@ -113,7 +115,7 @@ export async function verifyWhopMembership(username: string): Promise<VerifyResu
     verified: false,
     whop_user_id: null,
     membership_status: null,
-    error: 'No WHOP membership found for this username. Please ensure you have an active Trading Mastery subscription on WHOP.',
+    error: 'No WHOP membership found for this email. Please ensure you have an active Trading Mastery subscription on WHOP using this email address.',
   }
 }
 

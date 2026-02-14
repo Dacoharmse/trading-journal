@@ -3,26 +3,27 @@ import { verifyWhopMembership } from '@/lib/whop'
 
 /**
  * POST /api/whop/verify
- * Verifies a WHOP username has an active Trading Mastery membership.
+ * Verifies an email has an active Trading Mastery membership on WHOP.
  * Called during registration before Supabase signUp.
  */
 export async function POST(request: NextRequest) {
   try {
-    const { username } = await request.json()
+    const { email } = await request.json()
 
-    if (!username || typeof username !== 'string' || username.trim().length === 0) {
+    if (!email || typeof email !== 'string' || email.trim().length === 0) {
       return NextResponse.json(
-        { verified: false, error: 'WHOP username is required' },
+        { verified: false, error: 'Email is required' },
         { status: 400 }
       )
     }
 
-    const result = await verifyWhopMembership(username.trim())
+    const result = await verifyWhopMembership(email.trim())
 
     if (result.verified) {
       return NextResponse.json({
         verified: true,
         whop_user_id: result.whop_user_id,
+        whop_username: result.whop_username,
         membership_status: result.membership_status,
       })
     }
