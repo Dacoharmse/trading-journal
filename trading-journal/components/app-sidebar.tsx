@@ -30,7 +30,6 @@ import {
   Database,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
-import { getCurrentUserProfile } from "@/lib/auth-utils"
 import type { UserProfile } from "@/types/mentorship"
 
 import {
@@ -257,8 +256,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       setUserEmail(user.email || null)
 
       try {
-        // Get user profile with role information
-        const profile = await getCurrentUserProfile()
+        // Get user profile via API route (bypasses RLS)
+        const res = await fetch('/api/user/profile')
+        const data = await res.json()
+        const profile = data.profile as UserProfile | null
         setUserProfile(profile)
 
         // Get unread notifications count
