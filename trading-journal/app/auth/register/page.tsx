@@ -100,32 +100,34 @@ export default function RegisterPage() {
       if (signUpError) throw signUpError
 
       if (authData.user) {
-        // Auto-confirm email so user can log in immediately
+        const profileData = {
+          full_name: fullName,
+          whop_username: whopUsername,
+          whop_user_id: whopUserId,
+          experience_level: experienceLevel,
+          years_of_experience: yearsOfExperience ? parseInt(yearsOfExperience) : null,
+          trading_style: tradingStyle,
+        }
+
+        // Auto-confirm email + create profile in one call (doesn't need cookies)
         await fetch('/api/auth/auto-confirm', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: authData.user.id }),
+          body: JSON.stringify({
+            userId: authData.user.id,
+            email,
+            profileData,
+          }),
         }).catch(() => {})
 
-        // Create profile via server-side API route (bypasses RLS)
-        const profileRes = await fetch('/api/auth/create-profile', {
+        // Fallback: also try create-profile (may work if cookies are set)
+        fetch('/api/auth/create-profile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            full_name: fullName,
-            whop_username: whopUsername,
-            whop_user_id: whopUserId,
-            experience_level: experienceLevel,
-            years_of_experience: yearsOfExperience ? parseInt(yearsOfExperience) : null,
-            trading_style: tradingStyle,
-          }),
-        })
+          body: JSON.stringify(profileData),
+        }).catch(() => {})
 
-        if (!profileRes.ok) {
-          const profileData = await profileRes.json()
-          console.error("Profile creation error:", profileData.error)
-        }
-
+        // Send welcome email
         fetch('/api/send-welcome-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
