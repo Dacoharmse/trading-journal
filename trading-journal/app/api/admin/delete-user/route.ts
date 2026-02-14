@@ -5,7 +5,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
  * DELETE /api/admin/delete-user
  * Deletes a user and all related data using service role (bypasses RLS)
  */
-export async function DELETE(request: Request) {
+export async function POST(request: Request) {
   try {
     const supabase = await createClient()
     const { data: { user }, error: userError } = await supabase.auth.getUser()

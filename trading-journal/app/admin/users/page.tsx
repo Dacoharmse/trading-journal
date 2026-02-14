@@ -269,7 +269,7 @@ export default function AdminUsersPage() {
 
       // Call API route to delete user (uses service role to bypass RLS)
       const response = await fetch('/api/admin/delete-user', {
-        method: 'DELETE',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
