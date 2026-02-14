@@ -67,6 +67,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!mounted) return
 
       if (session) {
+        // Ensure user profile exists (safety net for RLS-blocked inserts during registration)
+        try {
+          await fetch('/api/auth/create-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({}),
+          })
+        } catch {
+          // Non-critical - profile may already exist
+        }
+
         // Verify WHOP membership
         const membershipValid = await checkWhopMembership()
 

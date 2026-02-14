@@ -100,25 +100,23 @@ export default function RegisterPage() {
       if (signUpError) throw signUpError
 
       if (authData.user) {
-        const { error: profileError } = await supabase
-          .from('user_profiles')
-          .insert({
-            user_id: authData.user.id,
+        // Create profile via server-side API route (bypasses RLS)
+        const profileRes = await fetch('/api/auth/create-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
             full_name: fullName,
             whop_username: whopUsername,
             whop_user_id: whopUserId,
-            is_active: true,
-            activated_at: new Date().toISOString(),
             experience_level: experienceLevel,
             years_of_experience: yearsOfExperience ? parseInt(yearsOfExperience) : null,
             trading_style: tradingStyle,
-            email_notifications: true,
-            subscription_tier: 'free',
-            items_per_page: 50,
-          })
+          }),
+        })
 
-        if (profileError) {
-          console.error("Profile creation error:", profileError)
+        if (!profileRes.ok) {
+          const profileData = await profileRes.json()
+          console.error("Profile creation error:", profileData.error)
         }
 
         fetch('/api/send-welcome-email', {

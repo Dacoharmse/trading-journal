@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 /**
  * DELETE /api/admin/delete-user
@@ -8,49 +7,31 @@ import { createAdminClient } from '@/lib/supabase/server'
  */
 export async function DELETE(request: Request) {
   try {
-    // Create server client (reads auth from cookies)
     const supabase = await createClient()
-
-    // Get current user and verify they're admin
     const { data: { user }, error: userError } = await supabase.auth.getUser()
 
-    console.log('User verification:', { user: user?.email, error: userError })
-
     if (userError || !user) {
-      return NextResponse.json({
-        error: 'Unauthorized - Not logged in',
-        details: userError?.message
-      }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: profile, error: profileError } = await supabase
+    // Use admin client to verify role (bypasses RLS)
+    const adminClient = createAdminClient()
+
+    const { data: profile } = await adminClient
       .from('user_profiles')
       .select('role')
       .eq('id', user.id)
       .single()
 
-    console.log('Profile check:', { role: profile?.role, error: profileError })
-
-    if (profileError || !profile) {
-      return NextResponse.json({
-        error: 'Failed to verify admin role',
-        details: profileError?.message
-      }, { status: 500 })
+    if (!profile || profile.role !== 'admin') {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
-    if (profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 })
-    }
-
-    // Get userId from request body
     const { userId } = await request.json()
 
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 })
     }
-
-    // Create admin client with service role (bypasses RLS)
-    const adminClient = createAdminClient()
 
     // Delete related data in order (using service role)
 
