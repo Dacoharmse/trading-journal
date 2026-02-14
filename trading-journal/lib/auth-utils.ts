@@ -12,32 +12,11 @@ import type { UserRole, UserProfile } from '@/types/mentorship'
  */
 export async function getCurrentUserProfile(): Promise<UserProfile | null> {
   try {
-    const supabase = createClient()
-
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return null
-
-    // Try querying by 'id' first (mentorship schema: id = auth.users.id)
-    const { data: profile, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single()
-
-    if (profile) return profile
-
-    // Fallback: try querying by 'user_id' (legacy schema)
-    if (error) {
-      const { data: profileByUserId } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
-
-      if (profileByUserId) return profileByUserId
-    }
-
-    return null
+    // Use server-side API route to bypass RLS restrictions
+    const res = await fetch('/api/user/profile')
+    if (!res.ok) return null
+    const data = await res.json()
+    return data.profile || null
   } catch {
     return null
   }
