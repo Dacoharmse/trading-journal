@@ -17,12 +17,14 @@ import {
   CheckCircle2,
   XCircle,
   Trash2,
+  UserPlus,
 } from 'lucide-react'
 import { requireAdmin, getRoleBadgeColor, getRoleDisplayName } from '@/lib/auth-utils'
 import type { UserProfile, UserRole } from '@/types/mentorship'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,6 +69,12 @@ export default function AdminUsersPage() {
   const [newRole, setNewRole] = React.useState<UserRole>('trader')
   const [confirming, setConfirming] = React.useState(false)
   const [deleting, setDeleting] = React.useState(false)
+  const [showAddUserDialog, setShowAddUserDialog] = React.useState(false)
+  const [addingUser, setAddingUser] = React.useState(false)
+  const [newUserEmail, setNewUserEmail] = React.useState('')
+  const [newUserPassword, setNewUserPassword] = React.useState('')
+  const [newUserFullName, setNewUserFullName] = React.useState('')
+  const [newUserRole, setNewUserRole] = React.useState<UserRole>('trader')
 
   // Check authorization
   React.useEffect(() => {
@@ -306,6 +314,70 @@ export default function AdminUsersPage() {
     }
   }
 
+  // Add user manually (bypasses WHOP verification)
+  const handleAddUser = async () => {
+    if (!newUserEmail || !newUserPassword) {
+      toast({
+        title: 'Error',
+        description: 'Email and password are required',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (newUserPassword.length < 6) {
+      toast({
+        title: 'Error',
+        description: 'Password must be at least 6 characters',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    try {
+      setAddingUser(true)
+
+      const response = await fetch('/api/admin/create-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: newUserEmail.trim(),
+          password: newUserPassword,
+          fullName: newUserFullName.trim() || null,
+          role: newUserRole,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create user')
+      }
+
+      await loadUsers()
+
+      toast({
+        title: 'Success',
+        description: `User ${newUserEmail} created successfully`,
+      })
+
+      setShowAddUserDialog(false)
+      setNewUserEmail('')
+      setNewUserPassword('')
+      setNewUserFullName('')
+      setNewUserRole('trader')
+    } catch (error) {
+      console.error('Failed to create user:', error)
+      toast({
+        title: 'Error',
+        description: `Failed to create user: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: 'destructive',
+      })
+    } finally {
+      setAddingUser(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -338,9 +410,15 @@ export default function AdminUsersPage() {
             Manage user accounts, roles, and permissions
           </p>
         </div>
-        <Button variant="outline" onClick={() => router.push('/admin')}>
-          Back to Dashboard
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setShowAddUserDialog(true)}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Add User
+          </Button>
+          <Button variant="outline" onClick={() => router.push('/admin')}>
+            Back to Dashboard
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -725,6 +803,92 @@ export default function AdminUsersPage() {
                 <>
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete User
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add User Dialog */}
+      <Dialog open={showAddUserDialog} onOpenChange={(open) => {
+        setShowAddUserDialog(open)
+        if (!open) {
+          setNewUserEmail('')
+          setNewUserPassword('')
+          setNewUserFullName('')
+          setNewUserRole('trader')
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add User Manually</DialogTitle>
+            <DialogDescription>
+              Create a new user account without WHOP verification. The user will be active immediately.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="addUserFullName">Full Name</Label>
+              <Input
+                id="addUserFullName"
+                placeholder="John Doe"
+                value={newUserFullName}
+                onChange={(e) => setNewUserFullName(e.target.value)}
+                disabled={addingUser}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="addUserEmail">Email *</Label>
+              <Input
+                id="addUserEmail"
+                type="email"
+                placeholder="user@example.com"
+                value={newUserEmail}
+                onChange={(e) => setNewUserEmail(e.target.value)}
+                disabled={addingUser}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="addUserPassword">Password *</Label>
+              <Input
+                id="addUserPassword"
+                type="password"
+                placeholder="Min 6 characters"
+                value={newUserPassword}
+                onChange={(e) => setNewUserPassword(e.target.value)}
+                disabled={addingUser}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="addUserRole">Role</Label>
+              <Select value={newUserRole} onValueChange={(value) => setNewUserRole(value as UserRole)} disabled={addingUser}>
+                <SelectTrigger id="addUserRole">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="trader">Trader</SelectItem>
+                  <SelectItem value="premium">Premium Trader</SelectItem>
+                  <SelectItem value="mentor">Mentor</SelectItem>
+                  <SelectItem value="admin">Administrator</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddUserDialog(false)} disabled={addingUser}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddUser} disabled={addingUser || !newUserEmail || !newUserPassword}>
+              {addingUser ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Create User
                 </>
               )}
             </Button>
