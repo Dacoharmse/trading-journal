@@ -10,14 +10,12 @@ import {
   TrendingUp,
   Settings,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { requireAdmin } from '@/lib/auth-utils'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
 export default function AdminDashboardPage() {
   const router = useRouter()
-  const supabase = React.useMemo(() => createClient(), [])
 
   const [loading, setLoading] = React.useState(true)
   const [authorized, setAuthorized] = React.useState(false)
@@ -43,39 +41,17 @@ export default function AdminDashboardPage() {
     checkAuth()
   }, [router])
 
-  // Load dashboard data
+  // Load dashboard data via API route (bypasses RLS)
   React.useEffect(() => {
     if (!authorized) return
 
     const loadDashboard = async () => {
       setLoading(true)
       try {
-        const [
-          totalUsers,
-          activeMentors,
-          totalTrades,
-          newUsersWeek,
-          newUsersMonth,
-        ] = await Promise.all([
-          supabase.from('user_profiles').select('id', { count: 'exact', head: true }),
-          supabase.from('user_profiles').select('id', { count: 'exact', head: true })
-            .eq('is_mentor', true)
-            .eq('mentor_approved', true),
-          supabase.from('trades').select('id', { count: 'exact', head: true }),
-          supabase.from('user_profiles').select('id', { count: 'exact', head: true })
-            .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
-          supabase.from('user_profiles').select('id', { count: 'exact', head: true })
-            .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
-        ])
-
-        setStats({
-          totalUsers: totalUsers.count || 0,
-          activeMentors: activeMentors.count || 0,
-          totalTrades: totalTrades.count || 0,
-          supportTickets: 0, // Will implement later
-          newUsersThisWeek: newUsersWeek.count || 0,
-          newUsersThisMonth: newUsersMonth.count || 0,
-        })
+        const res = await fetch('/api/admin/stats')
+        if (!res.ok) throw new Error('Failed to load stats')
+        const data = await res.json()
+        setStats(data)
       } catch (error) {
         console.error('Failed to load dashboard:', error)
       } finally {
@@ -84,7 +60,7 @@ export default function AdminDashboardPage() {
     }
 
     loadDashboard()
-  }, [authorized, supabase])
+  }, [authorized])
 
   if (loading) {
     return (

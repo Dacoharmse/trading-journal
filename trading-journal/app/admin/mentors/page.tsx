@@ -12,8 +12,7 @@ import {
   Edit,
   Trash2,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import { requireAdmin, logAdminAction } from '@/lib/auth-utils'
+import { requireAdmin } from '@/lib/auth-utils'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -50,7 +49,6 @@ interface UserProfile {
 
 export default function ManageMentorsPage() {
   const router = useRouter()
-  const supabase = React.useMemo(() => createClient(), [])
   const { toast } = useToast()
 
   const [loading, setLoading] = React.useState(true)
@@ -81,20 +79,17 @@ export default function ManageMentorsPage() {
     checkAuth()
   }, [router])
 
-  // Load users
+  // Load users via API route (bypasses RLS)
   React.useEffect(() => {
     if (!authorized) return
 
     const loadUsers = async () => {
       try {
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .order('created_at', { ascending: false })
-
-        if (error) throw error
-        setUsers(data || [])
-        setFilteredUsers(data || [])
+        const res = await fetch('/api/admin/users')
+        if (!res.ok) throw new Error('Failed to load users')
+        const data = await res.json()
+        setUsers(data.users || [])
+        setFilteredUsers(data.users || [])
       } catch (error) {
         console.error('Failed to load users:', error)
         toast({
@@ -108,7 +103,7 @@ export default function ManageMentorsPage() {
     }
 
     loadUsers()
-  }, [authorized, supabase, toast])
+  }, [authorized, toast])
 
   // Search filter
   React.useEffect(() => {
@@ -141,24 +136,21 @@ export default function ManageMentorsPage() {
         .map((s) => s.trim())
         .filter((s) => s.length > 0)
 
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({
-          is_mentor: true,
-          mentor_approved: true,
-          mentor_available: true,
-          mentor_specialties: specialtiesArray,
-          mentor_bio: mentorBio || null,
-        })
-        .eq('id', selectedUser.id)
-
-      if (error) throw error
-
-      // Log admin action
-      await logAdminAction('create_mentor', selectedUser.id, {
-        specialties: specialtiesArray,
-        bio: mentorBio,
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: selectedUser.id,
+          updates: {
+            is_mentor: true,
+            mentor_approved: true,
+            mentor_available: true,
+            mentor_specialties: specialtiesArray,
+            mentor_bio: mentorBio || null,
+          },
+        }),
       })
+      if (!res.ok) throw new Error('Failed to create mentor')
 
       // Update local state
       setUsers(
@@ -198,19 +190,19 @@ export default function ManageMentorsPage() {
     if (!confirm(`Remove mentor status from ${user.full_name || user.email}?`)) return
 
     try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({
-          is_mentor: false,
-          mentor_approved: false,
-          mentor_available: false,
-        })
-        .eq('id', user.id)
-
-      if (error) throw error
-
-      // Log admin action
-      await logAdminAction('remove_mentor', user.id)
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          updates: {
+            is_mentor: false,
+            mentor_approved: false,
+            mentor_available: false,
+          },
+        }),
+      })
+      if (!res.ok) throw new Error('Failed to remove mentor')
 
       // Update local state
       setUsers(

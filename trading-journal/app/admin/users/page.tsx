@@ -18,8 +18,7 @@ import {
   XCircle,
   Trash2,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import { requireAdmin, logAdminAction, getRoleBadgeColor, getRoleDisplayName } from '@/lib/auth-utils'
+import { requireAdmin, getRoleBadgeColor, getRoleDisplayName } from '@/lib/auth-utils'
 import type { UserProfile, UserRole } from '@/types/mentorship'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -52,7 +51,6 @@ import { useToast } from '@/hooks/use-toast'
 
 export default function AdminUsersPage() {
   const router = useRouter()
-  const supabase = React.useMemo(() => createClient(), [])
   const { toast } = useToast()
 
   const [loading, setLoading] = React.useState(true)
@@ -86,17 +84,14 @@ export default function AdminUsersPage() {
     checkAuth()
   }, [router])
 
-  // Load users function
+  // Load users function via API route (bypasses RLS)
   const loadUsers = React.useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      setUsers(data || [])
-      setFilteredUsers(data || [])
+      const res = await fetch('/api/admin/users')
+      if (!res.ok) throw new Error('Failed to load users')
+      const data = await res.json()
+      setUsers(data.users || [])
+      setFilteredUsers(data.users || [])
     } catch (error) {
       console.error('Failed to load users:', error)
       toast({
@@ -107,7 +102,7 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false)
     }
-  }, [supabase, toast])
+  }, [toast])
 
   // Load users on mount
   React.useEffect(() => {
@@ -137,23 +132,17 @@ export default function AdminUsersPage() {
     setFilteredUsers(filtered)
   }, [users, searchTerm, roleFilter])
 
-  // Change user role
+  // Change user role via API
   const handleChangeRole = async () => {
     if (!selectedUser) return
 
     try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({ role: newRole })
-        .eq('id', selectedUser.id)
-
-      if (error) throw error
-
-      // Log admin action
-      await logAdminAction('change_user_role', selectedUser.id, {
-        old_role: selectedUser.role,
-        new_role: newRole,
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: selectedUser.id, updates: { role: newRole } }),
       })
+      if (!res.ok) throw new Error('Failed to change role')
 
       // Update local state
       setUsers(
@@ -179,7 +168,7 @@ export default function AdminUsersPage() {
     }
   }
 
-  // Toggle user active status
+  // Toggle user active status via API
   const handleToggleActive = async () => {
     if (!selectedUser) return
 
@@ -194,18 +183,12 @@ export default function AdminUsersPage() {
         updateData.deactivated_at = new Date().toISOString()
       }
 
-      const { error } = await supabase
-        .from('user_profiles')
-        .update(updateData)
-        .eq('id', selectedUser.id)
-
-      if (error) throw error
-
-      // Log admin action
-      await logAdminAction(
-        newStatus ? 'activate_user' : 'deactivate_user',
-        selectedUser.id
-      )
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: selectedUser.id, updates: updateData }),
+      })
+      if (!res.ok) throw new Error('Failed to update status')
 
       // Update local state
       setUsers(
@@ -238,13 +221,6 @@ export default function AdminUsersPage() {
     try {
       setConfirming(true)
 
-      // Call Supabase admin API to confirm email
-      const { data: { session } } = await supabase.auth.getSession()
-
-      if (!session) {
-        throw new Error('No active session')
-      }
-
       // Use the admin API to update the user's email confirmation status
       const response = await fetch('/api/admin/confirm-email', {
         method: 'POST',
@@ -261,9 +237,6 @@ export default function AdminUsersPage() {
         const result = await response.json()
         throw new Error(result.error || 'Failed to confirm email')
       }
-
-      // Log admin action
-      await logAdminAction('confirm_user_email', selectedUser.id)
 
       // Reload users to refresh the UI
       await loadUsers()
@@ -293,12 +266,6 @@ export default function AdminUsersPage() {
 
     try {
       setDeleting(true)
-
-      // Log admin action before deletion
-      await logAdminAction('delete_user', selectedUser.id, {
-        email: selectedUser.email,
-        full_name: selectedUser.full_name,
-      })
 
       // Call API route to delete user (uses service role to bypass RLS)
       const response = await fetch('/api/admin/delete-user', {
@@ -414,7 +381,7 @@ export default function AdminUsersPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Approval</CardTitle>
+            <CardTitle className="text-sm font-medium">Inactive</CardTitle>
             <UserX className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
@@ -497,7 +464,7 @@ export default function AdminUsersPage() {
                         ) : (
                           <Badge variant="destructive" className="gap-1 bg-yellow-600">
                             <AlertCircle className="h-3 w-3" />
-                            Pending Approval
+                            Inactive
                           </Badge>
                         )}
                       </div>

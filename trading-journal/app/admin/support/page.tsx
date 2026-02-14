@@ -18,7 +18,6 @@ import {
   X,
   Loader2,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { requireAdmin } from '@/lib/auth-utils'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -66,7 +65,6 @@ interface TicketCategory {
 
 export default function SupportCenterPage() {
   const router = useRouter()
-  const supabase = React.useMemo(() => createClient(), [])
   const { toast } = useToast()
 
   const [loading, setLoading] = React.useState(true)
@@ -94,29 +92,19 @@ export default function SupportCenterPage() {
     checkAuth()
   }, [router])
 
-  // Load tickets and categories
+  // Load tickets and categories via API route (bypasses RLS)
   React.useEffect(() => {
     if (!authorized) return
 
     const loadData = async () => {
       try {
-        const [ticketsRes, categoriesRes] = await Promise.all([
-          supabase
-            .from('support_tickets')
-            .select('*')
-            .order('created_at', { ascending: false }),
-          supabase
-            .from('ticket_categories')
-            .select('id, name, color')
-            .eq('is_active', true),
-        ])
+        const res = await fetch('/api/admin/support')
+        if (!res.ok) throw new Error('Failed to load support data')
+        const data = await res.json()
 
-        if (ticketsRes.error) throw ticketsRes.error
-        if (categoriesRes.error) throw categoriesRes.error
-
-        setTickets(ticketsRes.data || [])
-        setFilteredTickets(ticketsRes.data || [])
-        setCategories(categoriesRes.data || [])
+        setTickets(data.tickets || [])
+        setFilteredTickets(data.tickets || [])
+        setCategories(data.categories || [])
       } catch (error) {
         console.error('Failed to load data:', error)
         toast({
@@ -130,7 +118,7 @@ export default function SupportCenterPage() {
     }
 
     loadData()
-  }, [authorized, supabase, toast])
+  }, [authorized, toast])
 
   // Filter tickets
   React.useEffect(() => {
@@ -166,20 +154,16 @@ export default function SupportCenterPage() {
 
       if (newStatus === 'resolved') {
         updateData.resolved_at = new Date().toISOString()
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) updateData.resolved_by = user.id
       } else if (newStatus === 'closed') {
         updateData.closed_at = new Date().toISOString()
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) updateData.closed_by = user.id
       }
 
-      const { error } = await supabase
-        .from('support_tickets')
-        .update(updateData)
-        .eq('id', ticketId)
-
-      if (error) throw error
+      const res = await fetch('/api/admin/support', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticketId, updates: updateData }),
+      })
+      if (!res.ok) throw new Error('Failed to update ticket')
 
       setTickets(
         tickets.map((t) =>

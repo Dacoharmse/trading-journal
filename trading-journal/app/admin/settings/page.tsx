@@ -14,7 +14,6 @@ import {
   Save,
   RefreshCw,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { requireAdmin } from '@/lib/auth-utils'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -34,7 +33,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export default function AdminSettingsPage() {
   const router = useRouter()
-  const supabase = React.useMemo(() => createClient(), [])
   const { addToast } = useToast()
 
   const [loading, setLoading] = React.useState(true)
