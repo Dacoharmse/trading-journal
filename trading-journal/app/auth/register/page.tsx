@@ -100,6 +100,13 @@ export default function RegisterPage() {
       if (signUpError) throw signUpError
 
       if (authData.user) {
+        // Auto-confirm email so user can log in immediately
+        await fetch('/api/auth/auto-confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: authData.user.id }),
+        }).catch(() => {})
+
         // Create profile via server-side API route (bypasses RLS)
         const profileRes = await fetch('/api/auth/create-profile', {
           method: 'POST',
@@ -125,7 +132,10 @@ export default function RegisterPage() {
           body: JSON.stringify({ email, fullName }),
         }).catch(() => {})
 
-        setSuccess("Registration successful! You can now sign in to your account.")
+        setSuccess("Registration successful! Redirecting to login...")
+        setTimeout(() => {
+          router.push('/auth/login')
+        }, 3000)
       }
     } catch (error: any) {
       console.error("Registration error:", error)

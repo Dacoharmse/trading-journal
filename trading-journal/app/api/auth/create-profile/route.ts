@@ -27,6 +27,12 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (existing) {
+      // Auto-confirm email for existing profiles too (in case it wasn't confirmed)
+      try {
+        await adminClient.auth.admin.updateUserById(user.id, { email_confirm: true })
+      } catch {
+        // Non-critical
+      }
       return NextResponse.json({ success: true, message: 'Profile already exists' })
     }
 
@@ -38,6 +44,11 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (existingByUserId) {
+      try {
+        await adminClient.auth.admin.updateUserById(user.id, { email_confirm: true })
+      } catch {
+        // Non-critical
+      }
       return NextResponse.json({ success: true, message: 'Profile already exists' })
     }
 
@@ -64,6 +75,14 @@ export async function POST(request: NextRequest) {
     if (insertError) {
       console.error('Profile creation error:', insertError)
       return NextResponse.json({ error: insertError.message }, { status: 500 })
+    }
+
+    // Auto-confirm email so user can log in immediately without email verification
+    try {
+      await adminClient.auth.admin.updateUserById(user.id, { email_confirm: true })
+    } catch (confirmError) {
+      console.error('Email confirmation error:', confirmError)
+      // Non-critical - user can still be confirmed manually by admin
     }
 
     return NextResponse.json({ success: true })
