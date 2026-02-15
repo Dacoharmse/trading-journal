@@ -48,45 +48,57 @@ export async function GET() {
 
 /** PATCH /api/admin/users - Update a user profile */
 export async function PATCH(request: NextRequest) {
-  const auth = await verifyAdmin()
-  if (!auth) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  try {
+    const auth = await verifyAdmin()
+    if (!auth) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
-  const { userId, updates } = await request.json()
-  if (!userId || !updates) {
-    return NextResponse.json({ error: 'userId and updates required' }, { status: 400 })
-  }
+    const { userId, updates } = await request.json()
+    if (!userId || !updates) {
+      return NextResponse.json({ error: 'userId and updates required' }, { status: 400 })
+    }
 
-  // Try updating by id first, then by user_id (dual-schema support)
-  const { data: byId, error: err1 } = await auth.adminClient
-    .from('user_profiles')
-    .update(updates)
-    .eq('id', userId)
-    .select('id')
+    console.log('[PATCH /api/admin/users] userId:', userId, 'updates:', updates)
 
-  if (err1) {
-    console.error('Update by id failed:', err1)
-    return NextResponse.json({ error: err1.message }, { status: 500 })
-  }
-
-  // If no rows matched by id, try user_id
-  if (!byId || byId.length === 0) {
-    const { data: byUserId, error: err2 } = await auth.adminClient
+    // Try updating by id first, then by user_id (dual-schema support)
+    const { data: byId, error: err1 } = await auth.adminClient
       .from('user_profiles')
       .update(updates)
-      .eq('user_id', userId)
+      .eq('id', userId)
       .select('id')
 
-    if (err2) {
-      console.error('Update by user_id failed:', err2)
-      return NextResponse.json({ error: err2.message }, { status: 500 })
+    if (err1) {
+      console.error('[PATCH] Update by id failed:', err1)
+      return NextResponse.json({ error: err1.message }, { status: 500 })
     }
 
-    if (!byUserId || byUserId.length === 0) {
-      return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
+    // If no rows matched by id, try user_id
+    if (!byId || byId.length === 0) {
+      console.log('[PATCH] No match by id, trying user_id')
+      const { data: byUserId, error: err2 } = await auth.adminClient
+        .from('user_profiles')
+        .update(updates)
+        .eq('user_id', userId)
+        .select('id')
+
+      if (err2) {
+        console.error('[PATCH] Update by user_id failed:', err2)
+        return NextResponse.json({ error: err2.message }, { status: 500 })
+      }
+
+      if (!byUserId || byUserId.length === 0) {
+        console.error('[PATCH] No profile found for userId:', userId)
+        return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
+      }
     }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('[PATCH /api/admin/users] Unexpected error:', error)
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown server error' },
+      { status: 500 }
+    )
   }
-
-  return NextResponse.json({ success: true })
 }

@@ -503,7 +503,6 @@ export default function AdminUsersPage() {
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="mentor">Mentor</SelectItem>
                 <SelectItem value="trader">Trader</SelectItem>
-                <SelectItem value="premium">Premium</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -664,7 +663,6 @@ export default function AdminUsersPage() {
               <SelectContent>
                 <SelectItem value="admin">Administrator</SelectItem>
                 <SelectItem value="mentor">Mentor</SelectItem>
-                <SelectItem value="premium">Premium Trader</SelectItem>
                 <SelectItem value="trader">Trader</SelectItem>
               </SelectContent>
             </Select>
@@ -871,7 +869,6 @@ export default function AdminUsersPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="trader">Trader</SelectItem>
-                  <SelectItem value="premium">Premium Trader</SelectItem>
                   <SelectItem value="mentor">Mentor</SelectItem>
                   <SelectItem value="admin">Administrator</SelectItem>
                 </SelectContent>
