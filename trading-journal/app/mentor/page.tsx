@@ -17,6 +17,7 @@ import {
   Calendar,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { getCurrentUserProfile } from '@/lib/auth-utils'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -43,7 +44,7 @@ export default function MentorDashboardPage() {
   const supabase = React.useMemo(() => createClient(), [])
 
   const [loading, setLoading] = React.useState(true)
-  const [isMentor, setIsMentor] = React.useState(false)
+  const [authorized, setAuthorized] = React.useState(false)
   const [studentProgress, setStudentProgress] = React.useState<StudentProgress[]>([])
   const [stats, setStats] = React.useState({
     totalStudents: 0,
@@ -54,29 +55,50 @@ export default function MentorDashboardPage() {
     totalReviews: 0,
   })
 
+  // Step 1: Authorization check (separate from data loading)
   React.useEffect(() => {
-    const checkMentorStatus = async () => {
+    const checkAuth = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
+        const profile = await getCurrentUserProfile()
+        console.log('[Mentor] Profile result:', profile ? { role: profile.role, is_mentor: profile.is_mentor, mentor_approved: profile.mentor_approved } : null)
+
+        if (!profile) {
+          console.log('[Mentor] No profile, redirecting to login')
           router.push('/auth/login')
           return
         }
 
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('is_mentor, mentor_approved, mentor_rating, mentor_total_reviews')
-          .eq('id', user.id)
-          .single()
+        const isAdmin = profile.role === 'admin'
+        const isMentorApproved = profile.is_mentor && profile.mentor_approved
 
-        if (!profile?.is_mentor || !profile?.mentor_approved) {
+        if (!isAdmin && !isMentorApproved) {
+          console.log('[Mentor] Not admin or approved mentor, redirecting to /')
           router.push('/')
           return
         }
 
-        setIsMentor(true)
+        console.log('[Mentor] Authorized (admin:', isAdmin, ', mentor:', isMentorApproved, ')')
+        setAuthorized(true)
+      } catch (error) {
+        console.error('[Mentor] Auth check failed:', error)
+        router.push('/')
+      }
+    }
 
-        // Load mentor stats
+    checkAuth()
+  }, [router])
+
+  // Step 2: Load data only after authorized
+  React.useEffect(() => {
+    if (!authorized) return
+
+    const loadData = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        const profile = await getCurrentUserProfile()
+
         const [studentsCount, playbooksCount, tradesCount] = await Promise.all([
           supabase
             .from('mentorship_connections')
@@ -98,8 +120,8 @@ export default function MentorDashboardPage() {
           activeStudents: studentsCount.count || 0,
           sharedPlaybooks: playbooksCount.count || 0,
           publishedTrades: tradesCount.count || 0,
-          averageRating: profile.mentor_rating || 0,
-          totalReviews: profile.mentor_total_reviews || 0,
+          averageRating: profile?.mentor_rating || 0,
+          totalReviews: profile?.mentor_total_reviews || 0,
         })
 
         // Load student progress data
@@ -121,7 +143,6 @@ export default function MentorDashboardPage() {
           .limit(10)
 
         if (studentsData && studentsData.length > 0) {
-          // Load trades for each student to calculate progress
           const progressData: StudentProgress[] = await Promise.all(
             studentsData.map(async (student: any) => {
               const { data: trades } = await supabase
@@ -136,12 +157,10 @@ export default function MentorDashboardPage() {
               const totalPnl = closedTrades.reduce((sum: number, t: any) => sum + (t.pnl || 0), 0)
               const winRate = closedTrades.length > 0 ? (winningTrades.length / closedTrades.length) * 100 : 0
 
-              // Calculate recent performance trend (last 10 trades)
               const recentTrades = closedTrades.slice(0, 10)
               const recentPnl = recentTrades.reduce((sum: number, t: any) => sum + (t.pnl || 0), 0)
               const trend = recentPnl > 50 ? 'up' : recentPnl < -50 ? 'down' : 'stable'
 
-              // Check if student needs attention (no trades in 7 days or losing streak)
               const lastTradeDate = trades?.[0]?.entry_date || null
               const daysSinceLastTrade = lastTradeDate
                 ? Math.floor((Date.now() - new Date(lastTradeDate).getTime()) / (1000 * 60 * 60 * 24))
@@ -167,17 +186,16 @@ export default function MentorDashboardPage() {
           setStudentProgress(progressData)
         }
       } catch (error) {
-        console.error('Failed to load mentor data:', error)
-        router.push('/')
+        console.error('[Mentor] Failed to load data (non-fatal):', error)
       } finally {
         setLoading(false)
       }
     }
 
-    checkMentorStatus()
-  }, [supabase, router])
+    loadData()
+  }, [authorized, supabase])
 
-  if (loading) {
+  if (!authorized) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-muted-foreground">Loading mentor dashboard...</div>
@@ -185,8 +203,12 @@ export default function MentorDashboardPage() {
     )
   }
 
-  if (!isMentor) {
-    return null
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-muted-foreground">Loading mentor data...</div>
+      </div>
+    )
   }
 
   return (

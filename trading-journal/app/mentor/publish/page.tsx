@@ -23,6 +23,7 @@ import {
   Award,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { getCurrentUserProfile } from '@/lib/auth-utils'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -114,20 +115,21 @@ export default function PublishTradePage() {
   React.useEffect(() => {
     const loadData = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
+        const profile = await getCurrentUserProfile()
+        if (!profile) {
           router.push('/auth/login')
           return
         }
 
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('is_mentor, mentor_approved')
-          .eq('id', user.id)
-          .single()
-
-        if (!profile?.is_mentor || !profile?.mentor_approved) {
+        const isAdmin = profile.role === 'admin'
+        if (!isAdmin && (!profile.is_mentor || !profile.mentor_approved)) {
           router.push('/')
+          return
+        }
+
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          router.push('/auth/login')
           return
         }
 

@@ -169,28 +169,16 @@ export const useAccountStore = create<AccountState>()(
         set({ isLoading: true, error: null });
 
         try {
-          const supabase = createClient();
-          const { error } = await supabase
-            .from('accounts')
-            .update({
-              name: update.name,
-              broker: update.broker,
-              account_type: update.accountType,
-              currency: update.currency,
-              starting_balance: update.startingBalance,
-              trading_pairs: update.tradingPairs,
-              is_active: update.isActive,
-              phase: update.propFirmSettings?.phase,
-              profit_target: update.propFirmSettings?.profitTarget,
-              max_drawdown: update.propFirmSettings?.maxDrawdown,
-              daily_drawdown: update.propFirmSettings?.dailyDrawdown,
-              account_status: update.propFirmSettings?.status,
-              current_profits: update.propFirmSettings?.currentProfits,
-              current_drawdown: update.propFirmSettings?.currentDrawdown,
-            })
-            .eq('id', id);
+          const res = await fetch('/api/accounts', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, ...update }),
+          });
 
-          if (error) throw error;
+          if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.error || 'Failed to update account');
+          }
 
           set((state) => ({
             accounts: state.accounts.map((account) =>
@@ -205,20 +193,22 @@ export const useAccountStore = create<AccountState>()(
           }));
         } catch (error: any) {
           set({ error: error.message, isLoading: false });
-                  }
+          throw error;
+        }
       },
 
       deleteAccount: async (id: string) => {
         set({ isLoading: true, error: null });
 
         try {
-          const supabase = createClient();
-          const { error } = await supabase
-            .from('accounts')
-            .delete()
-            .eq('id', id);
+          const res = await fetch(`/api/accounts?id=${id}`, {
+            method: 'DELETE',
+          });
 
-          if (error) throw error;
+          if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.error || 'Failed to delete account');
+          }
 
           set((state) => ({
             accounts: state.accounts.filter((account) => account.id !== id),
@@ -228,7 +218,8 @@ export const useAccountStore = create<AccountState>()(
           }));
         } catch (error: any) {
           set({ error: error.message, isLoading: false });
-                  }
+          throw error;
+        }
       },
 
       selectAccount: (id: string | null) => {

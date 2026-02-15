@@ -22,8 +22,19 @@ import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
   Trash2,
   Edit,
+  Loader2,
 } from "lucide-react"
 import {
   AccountType,
@@ -142,6 +153,9 @@ export default function AccountsPage() {
 
   const [formState, setFormState] = React.useState<AccountFormState>(initialFormState)
   const [editingAccountId, setEditingAccountId] = React.useState<string | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
+  const [accountToDelete, setAccountToDelete] = React.useState<TradingAccount | null>(null)
+  const [isDeleting, setIsDeleting] = React.useState(false)
   const formRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
@@ -274,21 +288,41 @@ export default function AccountsPage() {
     }
   }
 
-  const handleDeleteAccount = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this account?")) return
+  const handleDeleteAccount = async () => {
+    if (!accountToDelete) return
 
-    await deleteAccount(id)
-    if (editingAccountId === id) {
-      resetForm()
+    setIsDeleting(true)
+    try {
+      await deleteAccount(accountToDelete.id)
+      if (editingAccountId === accountToDelete.id) {
+        resetForm()
+      }
+      await fetchAccounts()
+      recalculateMetrics(trades)
+      addToast("Account deleted successfully", "success")
+    } catch (error: any) {
+      addToast(error.message || "Failed to delete account", "error")
+    } finally {
+      setIsDeleting(false)
+      setDeleteDialogOpen(false)
+      setAccountToDelete(null)
     }
-    await fetchAccounts()
-    recalculateMetrics(trades)
+  }
+
+  const openDeleteDialog = (account: TradingAccount) => {
+    setAccountToDelete(account)
+    setDeleteDialogOpen(true)
   }
 
   const handleToggleActive = async (account: TradingAccount) => {
-    await updateAccount(account.id, { isActive: !account.isActive })
-    await fetchAccounts()
-    recalculateMetrics(trades)
+    try {
+      await updateAccount(account.id, { isActive: !account.isActive })
+      await fetchAccounts()
+      recalculateMetrics(trades)
+      addToast(`Account ${account.isActive ? 'deactivated' : 'activated'} successfully`, "success")
+    } catch (error: any) {
+      addToast(error.message || "Failed to update account", "error")
+    }
   }
 
   return (
@@ -445,7 +479,7 @@ export default function AccountsPage() {
                   variant="outline"
                   size="sm"
                   className="flex-1"
-                  onClick={() => handleDeleteAccount(account.id)}
+                  onClick={() => openDeleteDialog(account)}
                 >
                   <Trash2 className="h-4 w-4 mr-2 text-destructive" />
                   Delete
@@ -811,6 +845,38 @@ export default function AccountsPage() {
           </form>
         </CardContent>
       </Card>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Account</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-foreground">
+                {accountToDelete?.name}
+              </span>
+              ? This action cannot be undone. All associated data will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAccount}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Account"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

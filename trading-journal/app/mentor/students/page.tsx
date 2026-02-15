@@ -16,6 +16,7 @@ import {
   BarChart3,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { getCurrentUserProfile } from '@/lib/auth-utils'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -96,20 +97,21 @@ export default function MentorStudentsPage() {
   React.useEffect(() => {
     const loadStudents = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
+        const profile = await getCurrentUserProfile()
+        if (!profile) {
           router.push('/auth/login')
           return
         }
 
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('is_mentor, mentor_approved')
-          .eq('id', user.id)
-          .single()
-
-        if (!profile?.is_mentor || !profile?.mentor_approved) {
+        const isAdmin = profile.role === 'admin'
+        if (!isAdmin && (!profile.is_mentor || !profile.mentor_approved)) {
           router.push('/')
+          return
+        }
+
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          router.push('/auth/login')
           return
         }
 
@@ -130,17 +132,14 @@ export default function MentorStudentsPage() {
           .eq('status', 'active')
           .order('created_at', { ascending: false })
 
-        if (error) throw error
+        if (error) {
+          console.error('Failed to query mentorship_connections:', error)
+        }
 
         setStudents(studentsData || [])
         setFilteredStudents(studentsData || [])
       } catch (error) {
         console.error('Failed to load students:', error)
-        toast({
-          title: 'Error',
-          description: 'Failed to load students',
-          variant: 'destructive',
-        })
       } finally {
         setLoading(false)
       }
