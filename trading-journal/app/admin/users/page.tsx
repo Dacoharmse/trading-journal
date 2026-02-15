@@ -150,7 +150,10 @@ export default function AdminUsersPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: selectedUser.id, updates: { role: newRole } }),
       })
-      if (!res.ok) throw new Error('Failed to change role')
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to change role')
+      }
 
       // Update local state
       setUsers(

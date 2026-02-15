@@ -58,13 +58,34 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'userId and updates required' }, { status: 400 })
   }
 
-  const { error } = await auth.adminClient
+  // Try updating by id first, then by user_id (dual-schema support)
+  const { data: byId, error: err1 } = await auth.adminClient
     .from('user_profiles')
     .update(updates)
     .eq('id', userId)
+    .select('id')
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  if (err1) {
+    console.error('Update by id failed:', err1)
+    return NextResponse.json({ error: err1.message }, { status: 500 })
+  }
+
+  // If no rows matched by id, try user_id
+  if (!byId || byId.length === 0) {
+    const { data: byUserId, error: err2 } = await auth.adminClient
+      .from('user_profiles')
+      .update(updates)
+      .eq('user_id', userId)
+      .select('id')
+
+    if (err2) {
+      console.error('Update by user_id failed:', err2)
+      return NextResponse.json({ error: err2.message }, { status: 500 })
+    }
+
+    if (!byUserId || byUserId.length === 0) {
+      return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
+    }
   }
 
   return NextResponse.json({ success: true })
