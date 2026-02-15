@@ -39,6 +39,7 @@ export default function StudentMentorsPage() {
         .select('*')
         .eq('is_mentor', true)
         .eq('mentor_approved', true)
+        .neq('role', 'admin')
 
       const mentorsWithCounts: MentorInfo[] = []
 
