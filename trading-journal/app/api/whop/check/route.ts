@@ -22,7 +22,7 @@ export async function POST() {
     let profile = null
     const { data: profileById } = await adminClient
       .from('user_profiles')
-      .select('id, email, role, whop_username, whop_user_id, is_active')
+      .select('id, email, role, whop_username, whop_user_id, is_active, is_mentor, mentor_approved')
       .eq('id', user.id)
       .single()
 
@@ -31,7 +31,7 @@ export async function POST() {
     } else {
       const { data: profileByUserId } = await adminClient
         .from('user_profiles')
-        .select('id, email, role, whop_username, whop_user_id, is_active')
+        .select('id, email, role, whop_username, whop_user_id, is_active, is_mentor, mentor_approved')
         .eq('user_id', user.id)
         .single()
       profile = profileByUserId
@@ -47,6 +47,15 @@ export async function POST() {
         verified: true,
         is_admin: true,
         membership_status: 'admin_exempt',
+      })
+    }
+
+    // Mentor users skip WHOP checks
+    if (profile.is_mentor && profile.mentor_approved) {
+      return NextResponse.json({
+        verified: true,
+        is_mentor: true,
+        membership_status: 'mentor_exempt',
       })
     }
 

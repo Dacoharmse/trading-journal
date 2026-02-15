@@ -32,20 +32,16 @@ import {
 } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
 
-interface StudentConnection {
+interface StudentProfile {
   id: string
-  student_id: string
-  mentor_id: string
-  status: string
+  user_id: string | null
+  full_name: string | null
+  email: string
+  avatar_url: string | null
+  experience_level: string | null
+  years_of_experience: number | null
+  trading_style: string | null
   created_at: string
-  student_profile?: {
-    full_name: string | null
-    email: string
-    avatar_url: string | null
-    experience_level: string | null
-    years_of_experience: number | null
-    trading_style: string | null
-  }
 }
 
 interface StudentStats {
@@ -83,17 +79,17 @@ export default function MentorStudentsPage() {
   const { toast } = useToast()
 
   const [loading, setLoading] = React.useState(true)
-  const [students, setStudents] = React.useState<StudentConnection[]>([])
-  const [filteredStudents, setFilteredStudents] = React.useState<StudentConnection[]>([])
+  const [students, setStudents] = React.useState<StudentProfile[]>([])
+  const [filteredStudents, setFilteredStudents] = React.useState<StudentProfile[]>([])
   const [searchTerm, setSearchTerm] = React.useState('')
 
-  const [selectedStudent, setSelectedStudent] = React.useState<StudentConnection | null>(null)
+  const [selectedStudent, setSelectedStudent] = React.useState<StudentProfile | null>(null)
   const [studentStats, setStudentStats] = React.useState<StudentStats | null>(null)
   const [studentTrades, setStudentTrades] = React.useState<StudentTrade[]>([])
   const [showStudentDialog, setShowStudentDialog] = React.useState(false)
   const [loadingStudentData, setLoadingStudentData] = React.useState(false)
 
-  // Load students
+  // Load all traders as students
   React.useEffect(() => {
     const loadStudents = async () => {
       try {
@@ -109,33 +105,13 @@ export default function MentorStudentsPage() {
           return
         }
 
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-          router.push('/auth/login')
+        const res = await fetch('/api/mentor/students')
+        if (!res.ok) {
+          console.error('Failed to fetch students:', res.statusText)
           return
         }
 
-        const { data: studentsData, error } = await supabase
-          .from('mentorship_connections')
-          .select(`
-            *,
-            student_profile:student_id (
-              full_name,
-              email,
-              avatar_url,
-              experience_level,
-              years_of_experience,
-              trading_style
-            )
-          `)
-          .eq('mentor_id', user.id)
-          .eq('status', 'active')
-          .order('created_at', { ascending: false })
-
-        if (error) {
-          console.error('Failed to query mentorship_connections:', error)
-        }
-
+        const { students: studentsData } = await res.json()
         setStudents(studentsData || [])
         setFilteredStudents(studentsData || [])
       } catch (error) {
@@ -146,7 +122,7 @@ export default function MentorStudentsPage() {
     }
 
     loadStudents()
-  }, [supabase, router, toast])
+  }, [router])
 
   // Filter students by search
   React.useEffect(() => {
@@ -156,8 +132,8 @@ export default function MentorStudentsPage() {
     }
 
     const filtered = students.filter((student) => {
-      const name = student.student_profile?.full_name?.toLowerCase() || ''
-      const email = student.student_profile?.email.toLowerCase() || ''
+      const name = student.full_name?.toLowerCase() || ''
+      const email = student.email?.toLowerCase() || ''
       const search = searchTerm.toLowerCase()
 
       return name.includes(search) || email.includes(search)
@@ -167,17 +143,19 @@ export default function MentorStudentsPage() {
   }, [searchTerm, students])
 
   // Load student details
-  const handleViewStudent = async (student: StudentConnection) => {
+  const handleViewStudent = async (student: StudentProfile) => {
     setSelectedStudent(student)
     setShowStudentDialog(true)
     setLoadingStudentData(true)
+
+    const studentUserId = student.user_id || student.id
 
     try {
       // Load student's trades
       const { data: tradesData, error: tradesError } = await supabase
         .from('trades')
         .select('*')
-        .eq('user_id', student.student_id)
+        .eq('user_id', studentUserId)
         .order('entry_date', { ascending: false })
         .limit(50)
 
@@ -301,7 +279,7 @@ export default function MentorStudentsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{students.length}</div>
-            <p className="text-xs text-muted-foreground">Active connections</p>
+            <p className="text-xs text-muted-foreground">Total traders</p>
           </CardContent>
         </Card>
 
@@ -338,7 +316,7 @@ export default function MentorStudentsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Student List</CardTitle>
-          <CardDescription>View all your active student connections</CardDescription>
+          <CardDescription>View all traders</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-4 mb-6">
@@ -363,7 +341,7 @@ export default function MentorStudentsPage() {
               <p className="text-muted-foreground">
                 {searchTerm
                   ? 'Try adjusting your search'
-                  : 'Students will appear here when they connect with you'}
+                  : 'No traders found'}
               </p>
             </div>
           ) : (
@@ -373,31 +351,28 @@ export default function MentorStudentsPage() {
                   <CardHeader>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-12 w-12">
-                        <AvatarImage src={student.student_profile?.avatar_url || undefined} />
+                        <AvatarImage src={student.avatar_url || undefined} />
                         <AvatarFallback>
-                          {getInitials(
-                            student.student_profile?.full_name || null,
-                            student.student_profile?.email || ''
-                          )}
+                          {getInitials(student.full_name, student.email || '')}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold truncate">
-                          {student.student_profile?.full_name || 'Unknown Student'}
+                          {student.full_name || 'Unknown Student'}
                         </h3>
                         <p className="text-sm text-muted-foreground truncate">
-                          {student.student_profile?.email}
+                          {student.email}
                         </p>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Connected</span>
+                      <span className="text-muted-foreground">Joined</span>
                       <span className="font-medium">{formatDate(student.created_at)}</span>
                     </div>
                     <Badge variant="secondary" className="w-full justify-center">
-                      {student.status}
+                      Trader
                     </Badge>
                     <Separator />
                     <div className="flex gap-2">
@@ -428,20 +403,20 @@ export default function MentorStudentsPage() {
           <DialogHeader>
             <div className="flex items-center gap-3">
               <Avatar className="h-12 w-12">
-                <AvatarImage src={selectedStudent?.student_profile?.avatar_url || undefined} />
+                <AvatarImage src={selectedStudent?.avatar_url || undefined} />
                 <AvatarFallback>
                   {selectedStudent && getInitials(
-                    selectedStudent.student_profile?.full_name || null,
-                    selectedStudent.student_profile?.email || ''
+                    selectedStudent.full_name,
+                    selectedStudent.email || ''
                   )}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <DialogTitle>
-                  {selectedStudent?.student_profile?.full_name || 'Student'}'s Trading Journal
+                  {selectedStudent?.full_name || 'Student'}'s Trading Journal
                 </DialogTitle>
                 <DialogDescription>
-                  {selectedStudent?.student_profile?.email}
+                  {selectedStudent?.email}
                 </DialogDescription>
               </div>
             </div>
@@ -464,21 +439,21 @@ export default function MentorStudentsPage() {
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-muted-foreground">Experience Level</p>
                       <p className="text-lg font-semibold">
-                        {formatExperienceLevel(selectedStudent?.student_profile?.experience_level || null)}
+                        {formatExperienceLevel(selectedStudent?.experience_level || null)}
                       </p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-muted-foreground">Years of Experience</p>
                       <p className="text-lg font-semibold">
-                        {selectedStudent?.student_profile?.years_of_experience
-                          ? `${selectedStudent.student_profile.years_of_experience} years`
+                        {selectedStudent?.years_of_experience
+                          ? `${selectedStudent.years_of_experience} years`
                           : 'Not specified'}
                       </p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-muted-foreground">Primary Trading Style</p>
                       <p className="text-lg font-semibold">
-                        {formatTradingStyle(selectedStudent?.student_profile?.trading_style || null)}
+                        {formatTradingStyle(selectedStudent?.trading_style || null)}
                       </p>
                     </div>
                   </div>
@@ -598,7 +573,8 @@ export default function MentorStudentsPage() {
                 <Button
                   className="flex-1"
                   onClick={() => {
-                    router.push(`/trades?student=${selectedStudent?.student_id}`)
+                    const studentUserId = selectedStudent?.user_id || selectedStudent?.id
+                    router.push(`/trades?student=${studentUserId}`)
                     setShowStudentDialog(false)
                   }}
                 >
