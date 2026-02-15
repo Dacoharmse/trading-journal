@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
     const name = fullName || 'Trader'
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://journal.2gs-trading.com'
     const logoUrl = `${siteUrl}/2gs-dark-logo.png`
+    const year = new Date().getFullYear()
 
     await transporter.sendMail({
       from: `"2GS Trading" <${process.env.SMTP_USER}>`,
@@ -33,196 +34,253 @@ export async function POST(request: NextRequest) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to 2GS Trading</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #1a1d23; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #1a1d23;">
+<body style="margin: 0; padding: 0; background-color: #0c0a1a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #0c0a1a;">
     <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+      <td align="center" style="padding: 40px 16px 20px 16px;">
 
-          <!-- Logo Header -->
+        <!-- Logo -->
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%;">
           <tr>
-            <td align="center" style="padding: 0 0 30px 0;">
-              <img src="${logoUrl}" alt="2GS Trading" width="200" style="display: block; max-width: 200px; height: auto;" />
+            <td align="center" style="padding: 0 0 32px 0;">
+              <img src="${logoUrl}" alt="2GS Trading" width="260" style="display: block; max-width: 260px; height: auto;" />
+            </td>
+          </tr>
+        </table>
+
+        <!-- Main Card -->
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%; background-color: #13111f; border-radius: 12px; border: 1px solid #1e1b36;">
+
+          <!-- Purple Top Bar -->
+          <tr>
+            <td style="background-color: #7c3aed; height: 4px; font-size: 0; line-height: 0; border-radius: 12px 12px 0 0;">&nbsp;</td>
+          </tr>
+
+          <!-- Welcome Hero -->
+          <tr>
+            <td style="padding: 48px 48px 32px 48px; text-align: center;">
+              <h1 style="margin: 0 0 14px 0; color: #ffffff; font-size: 28px; font-weight: 700; line-height: 1.3; letter-spacing: -0.3px;">
+                Welcome aboard, ${name}
+              </h1>
+              <p style="margin: 0 auto; color: #8b8a9e; font-size: 15px; line-height: 1.7; max-width: 420px;">
+                Your trading journal is ready. Track every trade, analyse your performance, and build the discipline that separates consistent traders from the rest.
+              </p>
             </td>
           </tr>
 
-          <!-- Main Card -->
+          <!-- CTA Button -->
           <tr>
-            <td style="background-color: #2a2e35; border-radius: 16px; overflow: hidden;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-
-                <!-- Gold Accent Bar -->
+            <td align="center" style="padding: 0 48px 40px 48px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
                 <tr>
-                  <td style="background: linear-gradient(90deg, #f59e0b, #d97706); height: 4px; font-size: 0; line-height: 0;">&nbsp;</td>
-                </tr>
-
-                <!-- Welcome Section -->
-                <tr>
-                  <td style="padding: 40px 40px 20px 40px;">
-                    <h1 style="margin: 0 0 8px 0; color: #ffffff; font-size: 28px; font-weight: 700;">
-                      Welcome, ${name}!
-                    </h1>
-                    <p style="margin: 0; color: #9ca3af; font-size: 16px; line-height: 1.6;">
-                      Your 2GS Trading Journal account is ready. You're all set to start tracking, analyzing, and improving your trading performance.
-                    </p>
-                  </td>
-                </tr>
-
-                <!-- Divider -->
-                <tr>
-                  <td style="padding: 0 40px;">
-                    <div style="border-top: 1px solid #374151; margin: 10px 0;"></div>
-                  </td>
-                </tr>
-
-                <!-- Getting Started -->
-                <tr>
-                  <td style="padding: 20px 40px;">
-                    <h2 style="margin: 0 0 16px 0; color: #f59e0b; font-size: 18px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
-                      Getting Started
-                    </h2>
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="padding: 12px 0; vertical-align: top;">
-                          <table role="presentation" cellpadding="0" cellspacing="0">
-                            <tr>
-                              <td style="width: 36px; vertical-align: top;">
-                                <div style="width: 28px; height: 28px; background-color: #f59e0b; border-radius: 50%; text-align: center; line-height: 28px; color: #1a1d23; font-weight: 700; font-size: 14px;">1</div>
-                              </td>
-                              <td style="padding-left: 12px; vertical-align: top;">
-                                <p style="margin: 0; color: #ffffff; font-size: 15px; font-weight: 600;">Log Your First Trade</p>
-                                <p style="margin: 4px 0 0 0; color: #9ca3af; font-size: 13px; line-height: 1.5;">Click "+ New Trade" to record your entry, exit, and notes.</p>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0; vertical-align: top;">
-                          <table role="presentation" cellpadding="0" cellspacing="0">
-                            <tr>
-                              <td style="width: 36px; vertical-align: top;">
-                                <div style="width: 28px; height: 28px; background-color: #f59e0b; border-radius: 50%; text-align: center; line-height: 28px; color: #1a1d23; font-weight: 700; font-size: 14px;">2</div>
-                              </td>
-                              <td style="padding-left: 12px; vertical-align: top;">
-                                <p style="margin: 0; color: #ffffff; font-size: 15px; font-weight: 600;">Build Your Playbook</p>
-                                <p style="margin: 4px 0 0 0; color: #9ca3af; font-size: 13px; line-height: 1.5;">Create trading setups and strategies to stay consistent.</p>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 0; vertical-align: top;">
-                          <table role="presentation" cellpadding="0" cellspacing="0">
-                            <tr>
-                              <td style="width: 36px; vertical-align: top;">
-                                <div style="width: 28px; height: 28px; background-color: #f59e0b; border-radius: 50%; text-align: center; line-height: 28px; color: #1a1d23; font-weight: 700; font-size: 14px;">3</div>
-                              </td>
-                              <td style="padding-left: 12px; vertical-align: top;">
-                                <p style="margin: 0; color: #ffffff; font-size: 15px; font-weight: 600;">Review Your Analytics</p>
-                                <p style="margin: 4px 0 0 0; color: #9ca3af; font-size: 13px; line-height: 1.5;">Track your win rate, P&L, and performance trends over time.</p>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-
-                <!-- Features Grid -->
-                <tr>
-                  <td style="padding: 10px 40px 20px 40px;">
-                    <h2 style="margin: 0 0 16px 0; color: #f59e0b; font-size: 18px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
-                      What You Get
-                    </h2>
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td width="50%" style="padding: 8px 8px 8px 0; vertical-align: top;">
-                          <div style="background-color: #1a1d23; border-radius: 10px; padding: 16px;">
-                            <p style="margin: 0 0 4px 0; color: #ffffff; font-size: 14px; font-weight: 600;">Trade Journal</p>
-                            <p style="margin: 0; color: #6b7280; font-size: 12px; line-height: 1.4;">Log and review every trade with detailed notes</p>
-                          </div>
-                        </td>
-                        <td width="50%" style="padding: 8px 0 8px 8px; vertical-align: top;">
-                          <div style="background-color: #1a1d23; border-radius: 10px; padding: 16px;">
-                            <p style="margin: 0 0 4px 0; color: #ffffff; font-size: 14px; font-weight: 600;">Analytics</p>
-                            <p style="margin: 0; color: #6b7280; font-size: 12px; line-height: 1.4;">Detailed performance metrics and charts</p>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td width="50%" style="padding: 8px 8px 8px 0; vertical-align: top;">
-                          <div style="background-color: #1a1d23; border-radius: 10px; padding: 16px;">
-                            <p style="margin: 0 0 4px 0; color: #ffffff; font-size: 14px; font-weight: 600;">Playbooks</p>
-                            <p style="margin: 0; color: #6b7280; font-size: 12px; line-height: 1.4;">Save and refine your trading strategies</p>
-                          </div>
-                        </td>
-                        <td width="50%" style="padding: 8px 0 8px 8px; vertical-align: top;">
-                          <div style="background-color: #1a1d23; border-radius: 10px; padding: 16px;">
-                            <p style="margin: 0 0 4px 0; color: #ffffff; font-size: 14px; font-weight: 600;">Risk Management</p>
-                            <p style="margin: 0; color: #6b7280; font-size: 12px; line-height: 1.4;">Monitor drawdowns and position sizing</p>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td width="50%" style="padding: 8px 8px 8px 0; vertical-align: top;">
-                          <div style="background-color: #1a1d23; border-radius: 10px; padding: 16px;">
-                            <p style="margin: 0 0 4px 0; color: #ffffff; font-size: 14px; font-weight: 600;">Trade Calendar</p>
-                            <p style="margin: 0; color: #6b7280; font-size: 12px; line-height: 1.4;">Visualize your daily trading activity</p>
-                          </div>
-                        </td>
-                        <td width="50%" style="padding: 8px 0 8px 8px; vertical-align: top;">
-                          <div style="background-color: #1a1d23; border-radius: 10px; padding: 16px;">
-                            <p style="margin: 0 0 4px 0; color: #ffffff; font-size: 14px; font-weight: 600;">Mentorship</p>
-                            <p style="margin: 0; color: #6b7280; font-size: 12px; line-height: 1.4;">Learn from experienced traders in the community</p>
-                          </div>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-
-                <!-- CTA Button -->
-                <tr>
-                  <td align="center" style="padding: 20px 40px 30px 40px;">
-                    <a href="${siteUrl}/auth/login" style="display: inline-block; background-color: #f59e0b; color: #1a1d23; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 700; letter-spacing: 0.5px;">
-                      Start Trading Journal
+                  <td align="center" style="background-color: #7c3aed; border-radius: 8px;">
+                    <a href="${siteUrl}/auth/login" target="_blank" style="display: inline-block; padding: 14px 44px; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; letter-spacing: 0.4px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                      Open Your Journal
                     </a>
                   </td>
                 </tr>
-
-                <!-- Pro Tip -->
-                <tr>
-                  <td style="padding: 0 40px 30px 40px;">
-                    <div style="background-color: #1a1d23; border-left: 3px solid #f59e0b; border-radius: 0 8px 8px 0; padding: 16px 20px;">
-                      <p style="margin: 0 0 4px 0; color: #f59e0b; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Pro Tip</p>
-                      <p style="margin: 0; color: #9ca3af; font-size: 13px; line-height: 1.5;">
-                        The most successful traders journal every trade &mdash; wins and losses. Consistency in journaling leads to consistency in profits.
-                      </p>
-                    </div>
-                  </td>
-                </tr>
-
               </table>
             </td>
           </tr>
 
-          <!-- Footer -->
+          <!-- Separator -->
           <tr>
-            <td style="padding: 30px 0 0 0; text-align: center;">
-              <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 12px;">
-                You're receiving this because you registered for a 2GS Trading Journal account.
-              </p>
-              <p style="margin: 0; color: #4b5563; font-size: 11px;">
-                &copy; ${new Date().getFullYear()} 2GS Trading. All rights reserved.
-              </p>
+            <td style="padding: 0 48px;">
+              <div style="height: 1px; background-color: #1e1b36;"></div>
+            </td>
+          </tr>
+
+          <!-- Quick Start -->
+          <tr>
+            <td style="padding: 36px 48px 8px 48px;">
+              <h2 style="margin: 0 0 24px 0; color: #9b8aff; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px;">
+                Quick Start Guide
+              </h2>
+
+              <!-- Step 1 -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 14px;">
+                <tr>
+                  <td style="background-color: #19162b; border-radius: 8px; padding: 18px 20px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="width: 40px; vertical-align: middle;">
+                          <div style="width: 32px; height: 32px; background-color: #7c3aed; border-radius: 8px; text-align: center; line-height: 32px; color: #ffffff; font-weight: 700; font-size: 14px;">01</div>
+                        </td>
+                        <td style="padding-left: 16px; vertical-align: middle;">
+                          <p style="margin: 0; color: #e4e2f0; font-size: 14px; font-weight: 600;">Log your first trade</p>
+                          <p style="margin: 4px 0 0 0; color: #6b6980; font-size: 13px; line-height: 1.5;">Record your entry, exit, setup type, and notes for every position.</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Step 2 -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 14px;">
+                <tr>
+                  <td style="background-color: #19162b; border-radius: 8px; padding: 18px 20px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="width: 40px; vertical-align: middle;">
+                          <div style="width: 32px; height: 32px; background-color: #6d28d9; border-radius: 8px; text-align: center; line-height: 32px; color: #ffffff; font-weight: 700; font-size: 14px;">02</div>
+                        </td>
+                        <td style="padding-left: 16px; vertical-align: middle;">
+                          <p style="margin: 0; color: #e4e2f0; font-size: 14px; font-weight: 600;">Build your playbook</p>
+                          <p style="margin: 4px 0 0 0; color: #6b6980; font-size: 13px; line-height: 1.5;">Define your A+ setups and rules so you only take high-conviction trades.</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Step 3 -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 8px;">
+                <tr>
+                  <td style="background-color: #19162b; border-radius: 8px; padding: 18px 20px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="width: 40px; vertical-align: middle;">
+                          <div style="width: 32px; height: 32px; background-color: #5b21b6; border-radius: 8px; text-align: center; line-height: 32px; color: #ffffff; font-weight: 700; font-size: 14px;">03</div>
+                        </td>
+                        <td style="padding-left: 16px; vertical-align: middle;">
+                          <p style="margin: 0; color: #e4e2f0; font-size: 14px; font-weight: 600;">Review your analytics</p>
+                          <p style="margin: 4px 0 0 0; color: #6b6980; font-size: 13px; line-height: 1.5;">Track win rate, P&amp;L curves, and find patterns in your performance.</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Separator -->
+          <tr>
+            <td style="padding: 28px 48px;">
+              <div style="height: 1px; background-color: #1e1b36;"></div>
+            </td>
+          </tr>
+
+          <!-- Platform Features -->
+          <tr>
+            <td style="padding: 0 48px 12px 48px;">
+              <h2 style="margin: 0 0 20px 0; color: #9b8aff; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px;">
+                Platform Features
+              </h2>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="50%" style="padding: 0 6px 12px 0; vertical-align: top;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="background-color: #19162b; border-radius: 8px; padding: 20px; border-left: 3px solid #7c3aed;">
+                          <p style="margin: 0 0 4px 0; color: #e4e2f0; font-size: 13px; font-weight: 700;">Trade Journal</p>
+                          <p style="margin: 0; color: #6b6980; font-size: 11px; line-height: 1.5;">Log trades with screenshots, notes &amp; tags</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <td width="50%" style="padding: 0 0 12px 6px; vertical-align: top;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="background-color: #19162b; border-radius: 8px; padding: 20px; border-left: 3px solid #6d28d9;">
+                          <p style="margin: 0 0 4px 0; color: #e4e2f0; font-size: 13px; font-weight: 700;">Analytics</p>
+                          <p style="margin: 0; color: #6b6980; font-size: 11px; line-height: 1.5;">Performance metrics, charts &amp; insights</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="50%" style="padding: 0 6px 12px 0; vertical-align: top;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="background-color: #19162b; border-radius: 8px; padding: 20px; border-left: 3px solid #5b21b6;">
+                          <p style="margin: 0 0 4px 0; color: #e4e2f0; font-size: 13px; font-weight: 700;">Playbooks</p>
+                          <p style="margin: 0; color: #6b6980; font-size: 11px; line-height: 1.5;">Save &amp; refine your trading strategies</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <td width="50%" style="padding: 0 0 12px 6px; vertical-align: top;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="background-color: #19162b; border-radius: 8px; padding: 20px; border-left: 3px solid #4c1d95;">
+                          <p style="margin: 0 0 4px 0; color: #e4e2f0; font-size: 13px; font-weight: 700;">Risk Manager</p>
+                          <p style="margin: 0; color: #6b6980; font-size: 11px; line-height: 1.5;">Drawdown tracking &amp; position sizing</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="50%" style="padding: 0 6px 0 0; vertical-align: top;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="background-color: #19162b; border-radius: 8px; padding: 20px; border-left: 3px solid #7c3aed;">
+                          <p style="margin: 0 0 4px 0; color: #e4e2f0; font-size: 13px; font-weight: 700;">Trade Calendar</p>
+                          <p style="margin: 0; color: #6b6980; font-size: 11px; line-height: 1.5;">Visualise daily P&amp;L at a glance</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <td width="50%" style="padding: 0 0 0 6px; vertical-align: top;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="background-color: #19162b; border-radius: 8px; padding: 20px; border-left: 3px solid #6d28d9;">
+                          <p style="margin: 0 0 4px 0; color: #e4e2f0; font-size: 13px; font-weight: 700;">Mentorship</p>
+                          <p style="margin: 0; color: #6b6980; font-size: 11px; line-height: 1.5;">Learn from top community traders</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Separator -->
+          <tr>
+            <td style="padding: 24px 48px;">
+              <div style="height: 1px; background-color: #1e1b36;"></div>
+            </td>
+          </tr>
+
+          <!-- Pro Tip -->
+          <tr>
+            <td style="padding: 0 48px 40px 48px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="background-color: #19162b; border: 1px solid #2d2654; border-radius: 8px; padding: 24px;">
+                    <p style="margin: 0 0 8px 0; color: #9b8aff; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">From the Trading Desk</p>
+                    <p style="margin: 0; color: #8b8a9e; font-size: 13px; line-height: 1.7; font-style: italic;">
+                      &ldquo;The best traders journal every single trade &mdash; wins and losses. Consistency in reviewing your trades is what separates profitable traders from the rest.&rdquo;
+                    </p>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 
         </table>
+
+        <!-- Footer -->
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%;">
+          <tr>
+            <td style="padding: 28px 48px 10px 48px; text-align: center;">
+              <p style="margin: 0 0 6px 0; color: #3d3a52; font-size: 12px;">
+                You received this because you created a 2GS Trading Journal account.
+              </p>
+              <p style="margin: 0; color: #2a2841; font-size: 11px;">
+                &copy; ${year} 2GS Trading &bull; All rights reserved
+              </p>
+            </td>
+          </tr>
+        </table>
+
       </td>
     </tr>
   </table>
