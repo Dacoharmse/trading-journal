@@ -127,7 +127,8 @@ export default function PublishTradePage() {
           return
         }
 
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { session } } = await supabase.auth.getSession()
+        const user = session?.user ?? null
         if (!user) {
           router.push('/auth/login')
           return
@@ -244,7 +245,8 @@ export default function PublishTradePage() {
     setSubmitting(true)
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user ?? null
       if (!user) return
 
       const tagsArray = publishTags

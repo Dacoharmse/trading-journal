@@ -52,8 +52,8 @@ export default function AnalyticsPage() {
     const load = async () => {
       setLoading(true)
       try {
-        const { data: userData } = await supabase.auth.getUser()
-        if (!userData.user) return
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.user) return
 
         const [tradesRes, playbooksRes] = await Promise.all([
           supabase

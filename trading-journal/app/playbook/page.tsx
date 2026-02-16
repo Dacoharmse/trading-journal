@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { PlaybookListClient, type PlaybookSummary } from '@/components/playbook/PlaybookListClient'
 import { calculatePlaybookStats } from '@/components/playbook/PlaybookMiniDashboard'
@@ -35,14 +35,12 @@ interface TradeRecord {
 export default function PlaybookPage() {
   const supabase = React.useMemo(() => createClient(), [])
   const router = useRouter()
-  const pathname = usePathname()
 
   const [playbooks, setPlaybooks] = React.useState<PlaybookSummary[]>([])
   const [error, setError] = React.useState<string | null>(null)
   const [loading, setLoading] = React.useState(true)
   const [hasMounted, setHasMounted] = React.useState(false)
 
-  // Reset loading state when pathname changes (navigation)
   React.useEffect(() => {
     setHasMounted(true)
   }, [])
@@ -51,21 +49,16 @@ export default function PlaybookPage() {
     let cancelled = false
 
     const load = async () => {
-      console.log('Playbook page: Starting load function')
       setLoading(true)
       setError(null)
 
       try {
-        console.log('Playbook page: Getting user data')
-        const { data: userData } = await supabase.auth.getUser()
-        console.log('Playbook page: User data received:', !!userData.user)
-        if (!userData.user) {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.user) {
           router.replace('/auth/login')
           return
         }
 
-        // Fetch playbooks, examples, and trades in parallel
-        console.log('Playbook page: Fetching playbooks, examples, and trades...')
         const [playbooksRes, examplesRes, tradesRes] = await Promise.all([
           supabase
             .from('playbooks')
@@ -81,28 +74,12 @@ export default function PlaybookPage() {
             .not('playbook_id', 'is', 'null'),
         ])
 
-        console.log('Playbook page: Data fetched', {
-          playbooksCount: playbooksRes.data?.length,
-          examplesCount: examplesRes.data?.length,
-          tradesCount: tradesRes.data?.length,
-          playbooksError: playbooksRes.error,
-          examplesError: examplesRes.error,
-          tradesError: tradesRes.error,
-        })
-
         if (playbooksRes.error) {
           throw playbooksRes.error
         }
 
-        if (examplesRes.error) {
-          console.error('Examples query error:', examplesRes.error)
-          throw examplesRes.error
-        }
-
-        if (tradesRes.error) {
-          console.error('Trades query error:', tradesRes.error)
-          throw tradesRes.error
-        }
+        if (examplesRes.error) throw examplesRes.error
+        if (tradesRes.error) throw tradesRes.error
 
         if (!cancelled) {
           const trades = (tradesRes.data as TradeRecord[] | null) ?? []
@@ -157,7 +134,6 @@ export default function PlaybookPage() {
         }
       } finally {
         if (!cancelled) {
-          console.log('Playbook page: Setting loading to false')
           setLoading(false)
         }
       }
@@ -171,7 +147,7 @@ export default function PlaybookPage() {
     return () => {
       cancelled = true
     }
-  }, [supabase, router, hasMounted, pathname])
+  }, [supabase, router, hasMounted])
 
   if (loading) {
     return (

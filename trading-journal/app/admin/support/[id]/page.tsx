@@ -162,7 +162,8 @@ export default function TicketDetailPage() {
 
     setSending(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user ?? null
       if (!user) throw new Error('Not authenticated')
 
       const { data: newMessage, error: messageError } = await supabase
@@ -223,11 +224,13 @@ export default function TicketDetailPage() {
 
       if (newStatus === 'resolved') {
         updateData.resolved_at = new Date().toISOString()
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { session } } = await supabase.auth.getSession()
+        const user = session?.user ?? null
         if (user) updateData.resolved_by = user.id
       } else if (newStatus === 'closed') {
         updateData.closed_at = new Date().toISOString()
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { session } } = await supabase.auth.getSession()
+        const user = session?.user ?? null
         if (user) updateData.closed_by = user.id
       }
 

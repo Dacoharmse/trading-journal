@@ -65,16 +65,16 @@ export default function RiskManagementPage() {
     const load = async () => {
       setLoading(true)
       try {
-        const { data: userData } = await supabase.auth.getUser()
-        if (!userData.user || cancelled) return
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.user || cancelled) return
 
         const [tradesRes, accountsRes] = await Promise.all([
           supabase
             .from('trades')
             .select('*')
-            .eq('user_id', userData.user.id)
+            .eq('user_id', session.user.id)
             .order('closed_at', { ascending: false }),
-          supabase.from('accounts').select('*').eq('user_id', userData.user.id),
+          supabase.from('accounts').select('*').eq('user_id', session.user.id),
         ])
 
         if (!cancelled) {

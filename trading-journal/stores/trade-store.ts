@@ -53,7 +53,8 @@ export const useTradeStore = create<TradeState>()(
         try {
           const { createClient } = await import('@/lib/supabase/client');
           const supabase = createClient();
-          const { data: { user } } = await supabase.auth.getUser();
+          const { data: { session } } = await supabase.auth.getSession();
+          const user = session?.user ?? null;
 
           if (!user) {
             // Local development mode - add without Supabase
@@ -94,7 +95,8 @@ export const useTradeStore = create<TradeState>()(
         try {
           const { createClient } = await import('@/lib/supabase/client');
           const supabase = createClient();
-          const { data: { user } } = await supabase.auth.getUser();
+          const { data: { session } } = await supabase.auth.getSession();
+          const user = session?.user ?? null;
 
           if (!user) {
             // Local development mode - update without Supabase
@@ -150,7 +152,8 @@ export const useTradeStore = create<TradeState>()(
         try {
           const { createClient } = await import('@/lib/supabase/client');
           const supabase = createClient();
-          const { data: { user } } = await supabase.auth.getUser();
+          const { data: { session } } = await supabase.auth.getSession();
+          const user = session?.user ?? null;
 
           if (!user) {
             // Local development mode - delete without Supabase
@@ -219,21 +222,8 @@ export const useTradeStore = create<TradeState>()(
           const { createClient } = await import('@/lib/supabase/client');
           const supabase = createClient();
 
-          const {
-            data: { user },
-            error: authError,
-          } = await supabase.auth.getUser();
-
-          if (authError) {
-            const message = authError.message ?? '';
-            if (message.toLowerCase().includes('auth session missing')) {
-              set({ trades: [], isLoading: false, hasFetched: true });
-              return;
-            }
-
-            set({ error: message || 'Authentication error', isLoading: false, hasFetched: true });
-            return;
-          }
+          const { data: { session } } = await supabase.auth.getSession();
+          const user = session?.user ?? null;
 
           if (!user) {
             set({ trades: [], isLoading: false, hasFetched: true });

@@ -21,13 +21,13 @@ export default function SetupSymbolsPage() {
   React.useEffect(() => {
     const loadAccounts = async () => {
       const supabase = createClient()
-      const { data: userData } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
 
-      if (userData.user) {
+      if (session?.user) {
         const { data } = await supabase
           .from('accounts')
           .select('id, name')
-          .eq('user_id', userData.user.id)
+          .eq('user_id', session.user.id)
 
         if (data) {
           setAccounts(data)

@@ -68,32 +68,20 @@ export default function TradeAnalysisPage() {
         const supabase = createClient()
         console.log('[Trade Analysis] Getting user...')
 
-        const { data: userData, error: userError } = await supabase.auth.getUser()
+        const { data: { session } } = await supabase.auth.getSession()
 
-        if (userError) {
-          console.error('[Trade Analysis] User error:', userError)
+        if (!session?.user) {
           if (!cancelled) {
             setLoading(false)
             setAllTrades([])
           }
           return
         }
-
-        if (!userData.user) {
-          console.log('[Trade Analysis] No user logged in')
-          if (!cancelled) {
-            setLoading(false)
-            setAllTrades([])
-          }
-          return
-        }
-
-        console.log('[Trade Analysis] User found, fetching trades...')
 
         const { data, error } = await supabase
           .from('trades')
           .select('*')
-          .eq('user_id', userData.user.id)
+          .eq('user_id', session.user.id)
           .order('exit_date', { ascending: true, nullsFirst: false })
 
         if (error) {

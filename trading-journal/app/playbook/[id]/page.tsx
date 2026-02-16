@@ -59,15 +59,15 @@ export default function EditPlaybookPage() {
       setLoading(true)
 
       try {
-        const { data: userData } = await supabase.auth.getUser()
-        if (!userData.user) {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.user) {
           router.replace('/auth/login')
           return
         }
 
         if (cancelled) return
 
-        setUserId(userData.user.id)
+        setUserId(session.user.id)
 
         const [playbookRes, rulesRes, confRes, detailsRes, examplesRes, indicatorsRes, rubricRes, symbolsRes, tradesRes] = await Promise.all([
           supabase.from('playbooks').select('*').eq('id', playbookId).maybeSingle(),

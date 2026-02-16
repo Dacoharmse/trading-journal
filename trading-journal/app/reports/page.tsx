@@ -71,16 +71,16 @@ export default function ReportsPage() {
     const load = async () => {
       setLoading(true)
       try {
-        const { data: userData } = await supabase.auth.getUser()
-        if (!userData.user || cancelled) return
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.user || cancelled) return
 
         const [tradesRes, playbooksRes] = await Promise.all([
           supabase
             .from('trades')
             .select('*')
-            .eq('user_id', userData.user.id)
+            .eq('user_id', session.user.id)
             .order('closed_at', { ascending: false }),
-          supabase.from('playbooks').select('id, name').eq('user_id', userData.user.id),
+          supabase.from('playbooks').select('id, name').eq('user_id', session.user.id),
         ])
 
         if (!cancelled) {

@@ -69,13 +69,14 @@ export default function BacktestDetailPage() {
       // Create fresh Supabase client for each data load
       const supabase = createClient()
 
-      const { data: userData } = await supabase.auth.getUser()
-      if (!userData.user) {
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user ?? null
+      if (!user) {
         router.replace('/auth/login')
         return
       }
 
-      setUserId(userData.user.id)
+      setUserId(user.id)
 
       const [playbookRes, backtestsRes, rulesRes, confRes, rubricRes, symbolsRes] =
         await Promise.all([

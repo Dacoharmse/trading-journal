@@ -120,23 +120,16 @@ function TradesPageContent() {
     setError(null)
 
     try {
-      const { data: userData, error: authError } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
 
-      if (authError) {
-        console.error('Auth error details:', authError)
-        setAuthStatus('unauthenticated')
-        throw new Error(`Authentication error: ${authError.message}`)
-      }
-
-      if (!userData.user) {
-        console.error('No user found in session')
+      if (!session?.user) {
         setAuthStatus('unauthenticated')
         throw new Error('You must be logged in to view trades. Please sign in to continue.')
       }
 
-      console.log('User authenticated:', userData.user.id)
       setAuthStatus('authenticated')
-      setUserId(userData.user.id)
+      setUserId(session.user.id)
+      const userData = { user: session.user }
 
       // Only fetch accounts and playbooks on initial load
       if (!loadMore) {

@@ -73,11 +73,12 @@ export default function SupportPage() {
   React.useEffect(() => {
     const loadData = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.user) {
           router.push('/auth/login')
           return
         }
+        const user = session.user
 
         const [ticketsRes, categoriesRes] = await Promise.all([
           supabase
@@ -124,8 +125,9 @@ export default function SupportPage() {
 
     setCreating(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) throw new Error('Not authenticated')
+      const user = session.user
 
       const { data: profile } = await supabase
         .from('user_profiles')

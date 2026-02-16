@@ -46,8 +46,8 @@ export default function BacktestingPage() {
     const load = async () => {
       setLoading(true)
       try {
-        const { data: userData } = await supabase.auth.getUser()
-        if (!userData.user) return
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.user) return
 
         const [playbooksRes, backtestsRes] = await Promise.all([
           supabase.from('playbooks').select('id, name, trade_type, active'),
@@ -100,8 +100,8 @@ export default function BacktestingPage() {
   const loadData = React.useCallback(async () => {
     setLoading(true)
     try {
-      const { data: userData } = await supabase.auth.getUser()
-      if (!userData.user) return
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) return
 
       const [playbooksRes, backtestsRes] = await Promise.all([
         supabase.from('playbooks').select('id, name, trade_type, active'),

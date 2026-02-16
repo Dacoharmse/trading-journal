@@ -287,8 +287,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
 
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      await loadUserProfile(user)
+      const { data: { session } } = await supabase.auth.getSession()
+      await loadUserProfile(session?.user ?? null)
     }
     checkUser()
 
