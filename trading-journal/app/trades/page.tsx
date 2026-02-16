@@ -26,7 +26,7 @@ const TRADES_PER_PAGE = 100
 const INITIAL_LOAD = 50
 
 function TradesPageContent() {
-  const supabase = createClient()
+  const supabase = React.useMemo(() => createClient(), [])
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -144,6 +144,7 @@ function TradesPageContent() {
         const { data: accountsData, error: accountsError } = await supabase
           .from('accounts')
           .select('id, name, currency, account_type, phase, account_status')
+          .eq('user_id', userData.user.id)
           .order('name')
 
         if (accountsError) throw accountsError
@@ -153,6 +154,7 @@ function TradesPageContent() {
         const { data: playbooksData, error: playbooksError } = await supabase
           .from('playbooks')
           .select('id, name, category, active')
+          .eq('user_id', userData.user.id)
           .order('name')
 
         if (playbooksError) throw playbooksError
@@ -164,10 +166,11 @@ function TradesPageContent() {
       const limit = loadMore ? TRADES_PER_PAGE : INITIAL_LOAD
       const offset = loadMore ? (page + 1) * TRADES_PER_PAGE : 0
 
-      // Select all fields (using * to avoid column mismatch issues)
+      // Select all fields filtered by user
       const { data: tradesData, error: tradesError, count } = await supabase
         .from('trades')
         .select('*', { count: 'exact' })
+        .eq('user_id', userData.user.id)
         .order('exit_date', { ascending: false, nullsFirst: false })
         .order('entry_date', { ascending: false })
         .range(offset, offset + limit - 1)

@@ -51,7 +51,8 @@ export const useTradeStore = create<TradeState>()(
         set({ isLoading: true, error: null });
 
         try {
-          const { supabase } = await import('@/lib/supabase');
+          const { createClient } = await import('@/lib/supabase/client');
+          const supabase = createClient();
           const { data: { user } } = await supabase.auth.getUser();
 
           if (!user) {
@@ -91,7 +92,8 @@ export const useTradeStore = create<TradeState>()(
         set({ isLoading: true, error: null });
 
         try {
-          const { supabase } = await import('@/lib/supabase');
+          const { createClient } = await import('@/lib/supabase/client');
+          const supabase = createClient();
           const { data: { user } } = await supabase.auth.getUser();
 
           if (!user) {
@@ -146,7 +148,8 @@ export const useTradeStore = create<TradeState>()(
         set({ isLoading: true, error: null });
 
         try {
-          const { supabase } = await import('@/lib/supabase');
+          const { createClient } = await import('@/lib/supabase/client');
+          const supabase = createClient();
           const { data: { user } } = await supabase.auth.getUser();
 
           if (!user) {
@@ -213,7 +216,8 @@ export const useTradeStore = create<TradeState>()(
         set({ isLoading: true, error: null });
 
         try {
-          const { supabase } = await import('@/lib/supabase');
+          const { createClient } = await import('@/lib/supabase/client');
+          const supabase = createClient();
 
           const {
             data: { user },
