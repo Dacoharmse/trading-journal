@@ -134,49 +134,79 @@ export default function PublishTradePage() {
           return
         }
 
-        // Load mentor's trades
-        const { data: tradesData, error: tradesError } = await supabase
-          .from('trades')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('entry_date', { ascending: false })
+        // Load all data in parallel for faster loading
+        const [tradesRes, publishedRes, studentsRes] = await Promise.all([
+          supabase
+            .from('trades')
+            .select('id, symbol_id, direction, entry_date, exit_date, pnl, status, notes, setup_name, media_urls, rr_planned, tags, symbols(code, display_name)')
+            .eq('user_id', user.id)
+            .order('entry_date', { ascending: false })
+            .limit(200),
+          supabase
+            .from('published_trades')
+            .select(`
+              *,
+              trade:trade_id (id, symbol_id, direction, entry_date, pnl, status, notes, setup_name, media_urls, rr_planned, tags, symbols(code, display_name))
+            `)
+            .eq('mentor_id', user.id)
+            .order('created_at', { ascending: false }),
+          supabase
+            .from('mentorship_connections')
+            .select(`
+              student_id,
+              student_profile:student_id (
+                id,
+                full_name,
+                email
+              )
+            `)
+            .eq('mentor_id', user.id)
+            .eq('status', 'active'),
+        ])
 
-        if (tradesError) throw tradesError
+        if (tradesRes.error) throw tradesRes.error
+        if (publishedRes.error) throw publishedRes.error
+        if (studentsRes.error) throw studentsRes.error
 
-        setTrades(tradesData || [])
-        setFilteredTrades(tradesData || [])
+        // Map trades to expected format
+        const tradesData = (tradesRes.data || []).map((t: any) => ({
+          ...t,
+          symbol: t.symbols?.code || t.symbol_id,
+          trade_type: t.direction,
+          entry_price: 0,
+          exit_price: null,
+          quantity: 0,
+          chart_image_url: t.media_urls?.[0] || null,
+          timeframe: null,
+          rr_ratio: t.rr_planned,
+          win_rate: null,
+        }))
 
-        // Load published trades
-        const { data: publishedData, error: publishedError} = await supabase
-          .from('published_trades')
-          .select(`
-            *,
-            trade:trade_id (*)
-          `)
-          .eq('mentor_id', user.id)
-          .order('created_at', { ascending: false })
+        setTrades(tradesData)
+        setFilteredTrades(tradesData)
 
-        if (publishedError) throw publishedError
+        // Map published trades
+        const publishedData = (publishedRes.data || []).map((pt: any) => {
+          if (pt.trade) {
+            pt.trade = {
+              ...pt.trade,
+              symbol: pt.trade.symbols?.code || pt.trade.symbol_id,
+              trade_type: pt.trade.direction,
+              entry_price: 0,
+              exit_price: null,
+              quantity: 0,
+              chart_image_url: pt.trade.media_urls?.[0] || null,
+              timeframe: null,
+              rr_ratio: pt.trade.rr_planned,
+              win_rate: null,
+            }
+          }
+          return pt
+        })
 
-        setPublishedTrades(publishedData || [])
+        setPublishedTrades(publishedData)
 
-        // Load students
-        const { data: studentsData, error: studentsError } = await supabase
-          .from('mentorship_connections')
-          .select(`
-            student_id,
-            student_profile:student_id (
-              id,
-              full_name,
-              email
-            )
-          `)
-          .eq('mentor_id', user.id)
-          .eq('status', 'active')
-
-        if (studentsError) throw studentsError
-
-        const studentsList = studentsData?.map((conn: any) => ({
+        const studentsList = studentsRes.data?.map((conn: any) => ({
           id: conn.student_profile.id,
           full_name: conn.student_profile.full_name,
           email: conn.student_profile.email,

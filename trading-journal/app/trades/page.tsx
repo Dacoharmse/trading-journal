@@ -35,6 +35,7 @@ function TradesPageContent() {
   const [accounts, setAccounts] = React.useState<Account[]>([])
   const [playbooks, setPlaybooks] = React.useState<PlaybookSummary[]>([])
   const [userId, setUserId] = React.useState('')
+  const [isMentor, setIsMentor] = React.useState(false)
   const [loading, setLoading] = React.useState(true)
   const [loadingMore, setLoadingMore] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
@@ -130,6 +131,18 @@ function TradesPageContent() {
       setAuthStatus('authenticated')
       setUserId(session.user.id)
       const userData = { user: session.user }
+
+      // Check mentor status on initial load (don't block on it)
+      if (!loadMore) {
+        fetch('/api/user/profile')
+          .then((r) => r.ok ? r.json() : null)
+          .then((data) => {
+            if (data?.profile?.is_mentor && data?.profile?.mentor_approved) {
+              setIsMentor(true)
+            }
+          })
+          .catch(() => {})
+      }
 
       // Only fetch accounts and playbooks on initial load
       if (!loadMore) {
@@ -445,18 +458,19 @@ function TradesPageContent() {
   const handleSaveTrade = async (tradeData: Partial<Trade>) => {
     try {
       if (tradeData.id) {
-        // Update existing trade
+        // Update existing trade - don't overwrite user_id
+        const { id, ...updateData } = tradeData
         const { error } = await supabase
           .from('trades')
-          .update(tradeData)
-          .eq('id', tradeData.id)
+          .update(updateData)
+          .eq('id', id)
 
         if (error) throw error
       } else {
-        // Insert new trade
+        // Insert new trade - include user_id
         const { error } = await supabase
           .from('trades')
-          .insert([tradeData])
+          .insert([{ ...tradeData, user_id: userId }])
 
         if (error) throw error
       }
@@ -707,6 +721,7 @@ function TradesPageContent() {
         editingTrade={editingTrade ?? undefined}
         accounts={accounts}
         userId={userId}
+        isMentor={isMentor}
       />
 
       <BulkEditModal

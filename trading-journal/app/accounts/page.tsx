@@ -274,8 +274,10 @@ export default function AccountsPage() {
           await fetchAccounts()
           addToast("Account added successfully!", "success")
         } else {
-          addToast("Failed to add account. You may not be authenticated. Check browser console for details.", "error")
-          console.error("Account creation failed - likely authentication issue")
+          // Read the actual error from the store
+          const storeError = useAccountStore.getState().error
+          addToast(storeError || "Failed to add account. Please check all required fields are filled in.", "error")
+          console.error("Account creation failed:", storeError)
           return
         }
       }

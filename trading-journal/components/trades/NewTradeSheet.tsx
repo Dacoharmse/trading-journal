@@ -46,6 +46,7 @@ interface NewTradeSheetProps {
   editingTrade?: Partial<Trade> | null
   accounts: Account[]
   userId: string
+  isMentor?: boolean
 }
 
 export function NewTradeSheet({
@@ -55,6 +56,7 @@ export function NewTradeSheet({
   editingTrade,
   accounts,
   userId,
+  isMentor = false,
 }: NewTradeSheetProps) {
   const supabase = createClient()
 
@@ -173,11 +175,18 @@ export function NewTradeSheet({
         .select('symbol_id, symbols(*)')
         .eq('account_id', accId)
 
-      if (data) {
+      if (data && data.length > 0) {
         const syms = data
           .map((as) => as.symbols)
           .filter((s): s is Symbol => s !== null) as unknown as Symbol[]
         setSymbols(syms)
+      } else {
+        // No account_symbols configured - fall back to all available symbols
+        const { data: allSymbols } = await supabase
+          .from('symbols')
+          .select('*')
+          .order('code')
+        setSymbols((allSymbols as Symbol[] | null) ?? [])
       }
     },
     [supabase]
@@ -1229,6 +1238,7 @@ export function NewTradeSheet({
             />
           </section>
 
+          {!isMentor && (
           <section className="space-y-4">
             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
               Request Mentor Review
@@ -1289,6 +1299,7 @@ export function NewTradeSheet({
               </div>
             )}
           </section>
+          )}
 
           <section className="space-y-4">
             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
