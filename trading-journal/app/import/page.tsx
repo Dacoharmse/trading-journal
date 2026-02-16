@@ -2,11 +2,12 @@
 
 import * as React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Upload, FileText, CheckCircle, XCircle, Info } from "lucide-react"
+import { Upload, FileText, CheckCircle, XCircle, Info, Archive, Loader2 } from "lucide-react"
 import { useAccountStore } from "@/stores"
 import { useTradeStore } from "@/stores"
 import { createClient } from "@/lib/supabase/client"
 import Papa from "papaparse"
+import JSZip from "jszip"
 
 // Notion 2GS Journal columns we look for
 const NOTION_HEADERS = ["Pair", "Date of Trade", "Bias", "pnl"]
@@ -138,18 +139,34 @@ function mapGenericRow(
   }
 }
 
+async function extractCSVFromZip(file: File): Promise<{ csvText: string; csvName: string } | null> {
+  const zip = await JSZip.loadAsync(file)
+  // Find the first .csv file in the zip
+  for (const [name, entry] of Object.entries(zip.files)) {
+    if (!entry.dir && name.toLowerCase().endsWith(".csv")) {
+      const text = await entry.async("text")
+      return { csvText: text, csvName: name.split("/").pop() || name }
+    }
+  }
+  return null
+}
+
 export default function ImportPage() {
   const [isDragging, setIsDragging] = React.useState(false)
   const [importing, setImporting] = React.useState(false)
+  const [extracting, setExtracting] = React.useState(false)
   const [detectedFormat, setDetectedFormat] = React.useState<"notion" | "generic" | null>(null)
   const [previewRows, setPreviewRows] = React.useState<Record<string, string>[]>([])
-  const [parsedFile, setParsedFile] = React.useState<File | null>(null)
+  const [csvText, setCsvText] = React.useState<string | null>(null)
+  const [fileName, setFileName] = React.useState<string | null>(null)
+  const [wasZip, setWasZip] = React.useState(false)
   const [selectedAccountId, setSelectedAccountId] = React.useState<string>("")
   const [importResult, setImportResult] = React.useState<{
     success: number
     failed: number
     errors: string[]
   } | null>(null)
+  const [parseError, setParseError] = React.useState<string | null>(null)
 
   const accounts = useAccountStore((state) => state.accounts)
   const fetchAccounts = useAccountStore((state) => state.fetchAccounts)
@@ -181,24 +198,53 @@ export default function ImportPage() {
     e.preventDefault()
     setIsDragging(false)
     const files = Array.from(e.dataTransfer.files)
-    const csvFile = files.find((f) => f.name.endsWith(".csv"))
-    if (csvFile) {
-      previewCSV(csvFile)
+    const file = files.find((f) => f.name.endsWith(".csv") || f.name.endsWith(".zip"))
+    if (file) {
+      processFile(file)
     }
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      previewCSV(file)
+      processFile(file)
     }
   }
 
-  const previewCSV = (file: File) => {
+  const processFile = async (file: File) => {
     setImportResult(null)
-    setParsedFile(file)
+    setParseError(null)
+    setFileName(file.name)
 
-    Papa.parse(file, {
+    if (file.name.toLowerCase().endsWith(".zip")) {
+      // Extract CSV from ZIP
+      setExtracting(true)
+      setWasZip(true)
+      try {
+        const result = await extractCSVFromZip(file)
+        if (!result) {
+          setParseError("No CSV file found inside the ZIP. Make sure the Notion export contains a CSV.")
+          setExtracting(false)
+          return
+        }
+        setCsvText(result.csvText)
+        setFileName(result.csvName)
+        previewCSVText(result.csvText)
+      } catch {
+        setParseError("Failed to read ZIP file. The file may be corrupted.")
+      }
+      setExtracting(false)
+    } else {
+      // Read CSV directly
+      setWasZip(false)
+      const text = await file.text()
+      setCsvText(text)
+      previewCSVText(text)
+    }
+  }
+
+  const previewCSVText = (text: string) => {
+    Papa.parse(text, {
       header: true,
       skipEmptyLines: true,
       preview: 5,
@@ -211,13 +257,14 @@ export default function ImportPage() {
       error: () => {
         setDetectedFormat(null)
         setPreviewRows([])
-        setParsedFile(null)
+        setCsvText(null)
+        setParseError("Could not parse the CSV file. Check the file format.")
       },
     })
   }
 
   const handleImport = async () => {
-    if (!parsedFile || !selectedAccountId) return
+    if (!csvText || !selectedAccountId) return
 
     setImporting(true)
     setImportResult(null)
@@ -238,7 +285,7 @@ export default function ImportPage() {
     let failedCount = 0
     const errors: string[] = []
 
-    Papa.parse(parsedFile, {
+    Papa.parse(csvText, {
       header: true,
       skipEmptyLines: true,
       complete: async (results) => {
@@ -299,10 +346,14 @@ export default function ImportPage() {
   }
 
   const resetUpload = () => {
-    setParsedFile(null)
+    setCsvText(null)
+    setFileName(null)
+    setWasZip(false)
     setDetectedFormat(null)
     setPreviewRows([])
     setImportResult(null)
+    setParseError(null)
+    setExtracting(false)
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
     }
@@ -317,7 +368,7 @@ export default function ImportPage() {
             <CardTitle>Import Trades</CardTitle>
           </div>
           <CardDescription>
-            Upload CSV files to import your trading history. Supports the 2GS Notion Journal format.
+            Upload CSV or ZIP files to import your trading history. Supports the 2GS Notion Journal format.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -348,7 +399,7 @@ export default function ImportPage() {
               </div>
 
               {/* Upload Area */}
-              {!parsedFile && (
+              {!csvText && !extracting && !parseError && (
                 <div
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
@@ -363,30 +414,69 @@ export default function ImportPage() {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept=".csv"
+                    accept=".csv,.zip"
                     onChange={handleFileSelect}
                     className="hidden"
                   />
                   <Upload className="h-12 w-12 opacity-50" />
                   <p className="text-lg font-medium mt-4">
-                    {isDragging ? "Drop CSV file here" : "Click to upload or drag and drop"}
+                    {isDragging ? "Drop file here" : "Click to upload or drag and drop"}
                   </p>
-                  <p className="text-sm text-muted-foreground mt-2">CSV files only</p>
+                  <p className="text-sm text-muted-foreground mt-2">CSV or ZIP files (Notion exports as ZIP)</p>
+                </div>
+              )}
+
+              {/* Extracting ZIP */}
+              {extracting && (
+                <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                  <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                  <div className="text-center">
+                    <p className="text-lg font-medium">Extracting CSV from ZIP...</p>
+                    <p className="text-sm text-muted-foreground mt-1">Reading {fileName}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Parse Error */}
+              {parseError && (
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3 p-4 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800">
+                    <XCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-sm text-red-900 dark:text-red-300">Import Error</p>
+                      <p className="text-sm text-red-800 dark:text-red-400 mt-1">{parseError}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={resetUpload}
+                    className="text-sm text-muted-foreground hover:text-foreground underline"
+                  >
+                    Try another file
+                  </button>
                 </div>
               )}
 
               {/* Format Detection + Preview */}
-              {parsedFile && !importResult && (
+              {csvText && !importResult && (
                 <div className="space-y-4">
                   {/* Detected format badge */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      <span className="text-sm font-medium">{parsedFile.name}</span>
+                      {wasZip ? (
+                        <Archive className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <span className="text-sm font-medium">{fileName}</span>
+                      {wasZip && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+                          Extracted from ZIP
+                        </span>
+                      )}
                       {detectedFormat === "notion" && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
                           <CheckCircle className="h-3 w-3" />
-                          2GS Notion format detected
+                          2GS Notion format
                         </span>
                       )}
                       {detectedFormat === "generic" && (
@@ -405,30 +495,32 @@ export default function ImportPage() {
 
                   {/* Preview table */}
                   {previewRows.length > 0 && (
-                    <div className="border rounded-lg overflow-x-auto">
-                      <table className="w-full text-xs">
-                        <thead>
-                          <tr className="border-b bg-muted/50">
-                            {Object.keys(previewRows[0]).map((header) => (
-                              <th key={header} className="px-3 py-2 text-left font-medium">
-                                {header}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {previewRows.map((row, i) => (
-                            <tr key={i} className="border-b last:border-0">
-                              {Object.values(row).map((val, j) => (
-                                <td key={j} className="px-3 py-2 max-w-[200px] truncate">
-                                  {val || "-"}
-                                </td>
+                    <div className="border rounded-lg overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="border-b bg-muted/50">
+                              {Object.keys(previewRows[0]).map((header) => (
+                                <th key={header} className="px-3 py-2.5 text-left font-semibold whitespace-nowrap">
+                                  {header}
+                                </th>
                               ))}
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                      <div className="px-3 py-1.5 text-xs text-muted-foreground bg-muted/30">
+                          </thead>
+                          <tbody>
+                            {previewRows.map((row, i) => (
+                              <tr key={i} className="border-b last:border-0 hover:bg-muted/30">
+                                {Object.values(row).map((val, j) => (
+                                  <td key={j} className="px-3 py-2 max-w-[200px] truncate whitespace-nowrap">
+                                    {val || <span className="text-muted-foreground">-</span>}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="px-3 py-2 text-xs text-muted-foreground bg-muted/30 border-t">
                         Showing first {previewRows.length} rows
                       </div>
                     </div>
@@ -442,7 +534,7 @@ export default function ImportPage() {
                   >
                     {importing ? (
                       <>
-                        <Upload className="h-4 w-4 animate-pulse" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                         Importing...
                       </>
                     ) : (
@@ -505,8 +597,8 @@ export default function ImportPage() {
                       <li>Set Include databases to <strong>Current view</strong></li>
                       <li>Set Include content to <strong>Everything</strong></li>
                       <li>Leave subpages toggles <strong>off</strong></li>
-                      <li>Click <strong>Export</strong> and save the zip file</li>
-                      <li>Unzip and upload the <strong>.csv</strong> file from inside</li>
+                      <li>Click <strong>Export</strong> and save the file</li>
+                      <li>Upload the <strong>ZIP file directly</strong> here - we'll extract the CSV automatically</li>
                     </ol>
 
                     <div className="pt-2 border-t border-border">
