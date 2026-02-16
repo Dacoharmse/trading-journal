@@ -447,308 +447,98 @@ export function PlaybookEditor({
   }, [basics.name, rules.length, confluences.length])
 
   const handleSave = async () => {
-    console.log('[PlaybookEditor] handleSave called!')
     setError(null)
     setStatus(null)
 
     if (validationErrors.length > 0) {
-      console.log('[PlaybookEditor] Validation errors:', validationErrors)
       setError(validationErrors.join(' '))
       return
     }
 
     setSaving(true)
-    console.log('[PlaybookEditor] Starting save process...')
 
     try {
-      // Create a fresh Supabase client for this save operation
-      let supabase = createClient()
-      console.log('[PlaybookEditor] Created fresh Supabase client')
-
-      const payload = {
-        name: basics.name.trim(),
-        trade_type: basics.trade_type || null,
-        description: basics.description || null,
-        sessions: basics.sessions,
-        symbols: basics.symbols,
-        rr_min: basics.rr_min ? Number(basics.rr_min) : null,
-        active: basics.active,
-        analyst_tf: basics.analyst_tf || null,
-        exec_tf: basics.exec_tf || null,
-        best_sessions: basics.best_sessions,
-        notes_md: basics.notes_md || null,
-        user_id: userId,
-      }
-
-      console.log('[PlaybookEditor] Payload prepared, user_id:', userId)
-
-      let currentId = playbookId
-
-      if (!currentId) {
-        console.log('[PlaybookEditor] Inserting new playbook...')
-
-        // Add timeout wrapper
-        const insertPromise = supabase
-          .from('playbooks')
-          .insert(payload)
-          .select()
-          .single()
-
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Insert timed out after 10 seconds')), 10000)
-        )
-
-        const result = await Promise.race([insertPromise, timeoutPromise]) as any
-        const { data, error: insertError } = result
-
-        console.log('[PlaybookEditor] Playbook insert result:', { data, error: insertError })
-        if (insertError) throw insertError
-        currentId = data.id
-        setPlaybookId(data.id)
-        console.log('[PlaybookEditor] Redirecting to:', `/playbook/${data.id}`)
-        router.replace(`/playbook/${data.id}`)
-      } else {
-        console.log('[PlaybookEditor] Updating existing playbook:', currentId)
-
-        // Try update with extended timeout and retry logic
-        let updateError = null
-        let attempts = 0
-        const maxAttempts = 2
-
-        while (attempts < maxAttempts && !updateError) {
-          attempts++
-          console.log(`[PlaybookEditor] Update attempt ${attempts}/${maxAttempts}`)
-
-          try {
-            const updatePromise = supabase
-              .from('playbooks')
-              .update(payload)
-              .eq('id', currentId)
-
-            const timeoutPromise = new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('Update timed out after 15 seconds')), 15000)
-            )
-
-            const result = await Promise.race([updatePromise, timeoutPromise]) as any
-            updateError = result.error
-
-            console.log('[PlaybookEditor] Playbook update result:', { error: updateError, attempt: attempts })
-            if (!updateError) break // Success!
-
-          } catch (timeoutError) {
-            console.log('[PlaybookEditor] Update attempt timed out:', timeoutError)
-            if (attempts >= maxAttempts) {
-              throw new Error('Update failed after multiple attempts. Please refresh the page and try again.')
-            }
-            // Create fresh client for retry
-            supabase = createClient()
-            console.log('[PlaybookEditor] Created fresh client for retry')
-          }
-        }
-
-        if (updateError) throw updateError
-      }
-
       const sortedRules = [...rules].sort((a, b) => a.sort - b.sort)
       const sortedConfluences = [...confluences].sort((a, b) => a.sort - b.sort)
       const sortedDetails = [...tradeDetails].sort((a, b) => a.sort - b.sort)
       const sortedExamples = [...examples].sort((a, b) => a.sort - b.sort)
       const sortedIndicators = [...indicators].sort((a, b) => a.sort - b.sort)
 
-      if (sortedRules.length > 0) {
-        console.log('[PlaybookEditor] Upserting rules:', sortedRules.length)
-        const rulePayload = sortedRules.map((rule, index) => ({
-          id: rule.id,
-          playbook_id: currentId,
-          label: rule.label.trim(),
-          type: rule.type,
-          weight: Number(rule.weight) || 0,
-          sort: index,
-        }))
+      const res = await fetch('/api/playbooks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          playbook: {
+            id: playbookId || undefined,
+            name: basics.name.trim(),
+            trade_type: basics.trade_type || null,
+            description: basics.description || null,
+            sessions: basics.sessions,
+            symbols: basics.symbols,
+            rr_min: basics.rr_min ? Number(basics.rr_min) : null,
+            active: basics.active,
+            analyst_tf: basics.analyst_tf || null,
+            exec_tf: basics.exec_tf || null,
+            best_sessions: basics.best_sessions,
+            notes_md: basics.notes_md || null,
+            user_id: userId,
+          },
+          rules: sortedRules,
+          confluences: sortedConfluences,
+          tradeDetails: sortedDetails,
+          examples: sortedExamples,
+          indicators: sortedIndicators,
+          rubric,
+          deletedIds: {
+            rules: deletedRuleIds,
+            confluences: deletedConfluenceIds,
+            details: deletedDetailIds,
+            examples: deletedExampleIds,
+            indicators: deletedIndicatorIds,
+          },
+        }),
+      })
 
-        const { error: ruleError } = await supabase.from('playbook_rules').upsert(rulePayload)
-        console.log('[PlaybookEditor] Rules upsert result:', { error: ruleError })
-        if (ruleError) throw ruleError
+      const data = await res.json()
 
-        setRules(rulePayload.map((rule) => ({ ...rule })))
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to save playbook')
       }
 
-      if (sortedConfluences.length > 0) {
-        console.log('[PlaybookEditor] Upserting confluences:', sortedConfluences.length)
-        const confluencePayload = sortedConfluences.map((conf, index) => ({
-          id: conf.id,
-          playbook_id: currentId,
-          label: conf.label.trim(),
-          weight: Number(conf.weight) || 0,
-          primary_confluence: conf.primary_confluence,
-          sort: index,
-        }))
+      const savedId = data.id
 
-        const { error: confError } = await supabase
-          .from('playbook_confluences')
-          .upsert(confluencePayload)
-        console.log('[PlaybookEditor] Confluences upsert result:', { error: confError })
-        if (confError) throw confError
-
-        setConfluences(confluencePayload.map((conf) => ({ ...conf })))
+      if (!playbookId && savedId) {
+        setPlaybookId(savedId)
+        router.replace(`/playbook/${savedId}`)
       }
 
-      if (sortedDetails.length > 0) {
-        console.log('[PlaybookEditor] Processing trade details:', sortedDetails.length)
-        const detailPayload = sortedDetails
-          .filter((detail) => detail.label.trim().length > 0)
-          .map((detail, index) => ({
-            id: detail.id,
-            playbook_id: currentId,
-            label: detail.label.trim(),
-            type: detail.type,
-            weight: Number(detail.weight) || 1,
-            primary_item: detail.primary_item,
-            sort: index,
-          }))
+      // Update local state with sorted data
+      setRules(sortedRules.map((rule, index) => ({ ...rule, playbook_id: savedId, sort: index })))
+      setConfluences(sortedConfluences.map((conf, index) => ({ ...conf, playbook_id: savedId, sort: index })))
+      setTradeDetails(sortedDetails.filter((d) => d.label.trim().length > 0).map((d, index) => ({ ...d, playbook_id: savedId, sort: index })))
+      setExamples(sortedExamples.filter((e) => e.media_urls.length > 0).map((e, index) => ({ ...e, playbook_id: savedId, sort: index })))
+      setIndicators(sortedIndicators.filter((i) => i.name.trim().length > 0 && i.url.trim().length > 0).map((i, index) => ({ ...i, playbook_id: savedId, sort: index })))
 
-        if (detailPayload.length > 0) {
-          console.log('[PlaybookEditor] Upserting trade details:', detailPayload.length)
-          const { error: detailError } = await supabase
-            .from('playbook_trade_details')
-            .upsert(detailPayload)
-          console.log('[PlaybookEditor] Trade details upsert result:', { error: detailError })
-          if (detailError) throw detailError
-
-          setTradeDetails(detailPayload.map((detail) => ({ ...detail })))
-        }
-      }
-
-      if (sortedExamples.length > 0) {
-        const examplePayload = sortedExamples
-          .filter((example) => example.media_urls.length > 0)
-          .map((example, index) => ({
-            id: example.id,
-            playbook_id: currentId,
-            media_urls: example.media_urls,
-            caption: example.caption || null,
-            sort: index,
-          }))
-
-        if (examplePayload.length > 0) {
-          const { error: exampleError } = await supabase
-            .from('playbook_examples')
-            .upsert(examplePayload)
-          if (exampleError) throw exampleError
-
-          setExamples(examplePayload.map((example) => ({ ...example })))
-        }
-      }
-
-      if (deletedRuleIds.length > 0) {
-        const { error: deleteRuleError } = await supabase
-          .from('playbook_rules')
-          .delete()
-          .in('id', deletedRuleIds)
-        if (deleteRuleError) throw deleteRuleError
-        setDeletedRuleIds([])
-      }
-
-      if (deletedConfluenceIds.length > 0) {
-        const { error: deleteConfError } = await supabase
-          .from('playbook_confluences')
-          .delete()
-          .in('id', deletedConfluenceIds)
-        if (deleteConfError) throw deleteConfError
-        setDeletedConfluenceIds([])
-      }
-
-      if (deletedDetailIds.length > 0) {
-        const { error: deleteDetailError } = await supabase
-          .from('playbook_trade_details')
-          .delete()
-          .in('id', deletedDetailIds)
-        if (deleteDetailError) throw deleteDetailError
-        setDeletedDetailIds([])
-      }
-
-      if (deletedExampleIds.length > 0) {
-        const { error: deleteExampleError } = await supabase
-          .from('playbook_examples')
-          .delete()
-          .in('id', deletedExampleIds)
-        if (deleteExampleError) throw deleteExampleError
-        setDeletedExampleIds([])
-      }
-
-      if (deletedIndicatorIds.length > 0) {
-        const { error: deleteIndicatorError } = await supabase
-          .from('playbook_indicators')
-          .delete()
-          .in('id', deletedIndicatorIds)
-        if (deleteIndicatorError) throw deleteIndicatorError
-        setDeletedIndicatorIds([])
-      }
-
-      if (sortedIndicators.length > 0) {
-        console.log('[PlaybookEditor] Processing indicators:', sortedIndicators.length)
-        const indicatorPayload = sortedIndicators
-          .filter((indicator) => indicator.name.trim().length > 0 && indicator.url.trim().length > 0)
-          .map((indicator, index) => ({
-            id: indicator.id,
-            playbook_id: currentId,
-            name: indicator.name.trim(),
-            url: indicator.url.trim(),
-            description: indicator.description || null,
-            sort: index,
-          }))
-
-        if (indicatorPayload.length > 0) {
-          console.log('[PlaybookEditor] Upserting indicators:', indicatorPayload.length, indicatorPayload)
-          const { error: indicatorError } = await supabase
-            .from('playbook_indicators')
-            .upsert(indicatorPayload)
-          console.log('[PlaybookEditor] Indicators upsert result:', { error: indicatorError })
-          if (indicatorError) throw indicatorError
-
-          setIndicators(indicatorPayload.map((indicator) => ({ ...indicator })))
-        }
-      }
-
-      if (currentId) {
-        const rubricPayload: PlaybookRubric = {
-          ...rubric,
-          playbook_id: currentId,
-          grade_cutoffs: rubric.grade_cutoffs ? Object.fromEntries(
-            Object.entries(rubric.grade_cutoffs).map(([grade, value]) => [
-              grade.trim(),
-              Number(value) || 0,
-            ])
-          ) : {},
-        }
-
-        const { error: rubricError } = await supabase
-          .from('playbook_rubric')
-          .upsert(rubricPayload)
-        if (rubricError) throw rubricError
-
-        setRubric(rubricPayload)
-      }
+      setDeletedRuleIds([])
+      setDeletedConfluenceIds([])
+      setDeletedDetailIds([])
+      setDeletedExampleIds([])
+      setDeletedIndicatorIds([])
 
       persistedRuleIds.current = new Set(sortedRules.map((rule) => rule.id))
-      persistedConfluenceIds.current = new Set(
-        sortedConfluences.map((conf) => conf.id)
-      )
+      persistedConfluenceIds.current = new Set(sortedConfluences.map((conf) => conf.id))
       persistedDetailIds.current = new Set(sortedDetails.map((d) => d.id))
       persistedExampleIds.current = new Set(sortedExamples.map((e) => e.id))
       persistedIndicatorIds.current = new Set(sortedIndicators.map((i) => i.id))
 
-      console.log('[PlaybookEditor] Save successful!')
       setStatus('Playbook saved')
       setDirty(false)
     } catch (saveError) {
-      console.error('[PlaybookEditor] Save failed:', saveError)
       const message =
         saveError instanceof Error ? saveError.message : 'Failed to save playbook.'
       setError(message)
       console.error('Failed to save playbook:', saveError)
     } finally {
-      console.log('[PlaybookEditor] Save process completed, setting saving to false')
       setSaving(false)
     }
   }

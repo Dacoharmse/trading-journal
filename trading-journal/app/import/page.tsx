@@ -2,13 +2,149 @@
 
 import * as React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Upload, FileText, CheckCircle, XCircle } from "lucide-react"
-import { useAccountStore, useTradeStore } from "@/stores"
+import { Upload, FileText, CheckCircle, XCircle, Info } from "lucide-react"
+import { useAccountStore } from "@/stores"
+import { useTradeStore } from "@/stores"
+import { createClient } from "@/lib/supabase/client"
 import Papa from "papaparse"
+
+// Notion 2GS Journal columns we look for
+const NOTION_HEADERS = ["Pair", "Date of Trade", "Bias", "pnl"]
+
+function isNotionFormat(headers: string[]): boolean {
+  const lower = headers.map((h) => h.trim().toLowerCase())
+  return NOTION_HEADERS.every((nh) =>
+    lower.includes(nh.toLowerCase())
+  )
+}
+
+function parseNotionDate(raw: string): string | null {
+  if (!raw || !raw.trim()) return null
+  const trimmed = raw.trim()
+
+  // Notion exports dates in various formats, try parsing
+  const d = new Date(trimmed)
+  if (!isNaN(d.getTime())) {
+    return d.toISOString()
+  }
+
+  // Try DD/MM/YYYY or DD-MM-YYYY
+  const parts = trimmed.split(/[\/\-]/)
+  if (parts.length === 3) {
+    const [day, month, year] = parts
+    const parsed = new Date(`${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`)
+    if (!isNaN(parsed.getTime())) {
+      return parsed.toISOString()
+    }
+  }
+
+  return null
+}
+
+function mapNotionDirection(bias: string): "long" | "short" {
+  const lower = (bias || "").trim().toLowerCase()
+  if (lower === "bullish" || lower === "long" || lower === "buy") return "long"
+  return "short"
+}
+
+function mapNotionSession(session: string): "Asia" | "London" | "NY" | null {
+  const lower = (session || "").trim().toLowerCase()
+  if (lower.includes("asia") || lower.includes("asian")) return "Asia"
+  if (lower.includes("london") || lower.includes("ldn")) return "London"
+  if (lower.includes("ny") || lower.includes("new york") || lower.includes("newyork")) return "NY"
+  return null
+}
+
+interface NotionRow {
+  [key: string]: string
+}
+
+function mapNotionRow(
+  row: NotionRow,
+  userId: string,
+  accountId: string,
+  currency: string
+) {
+  const symbol = (row["Pair"] || "").trim()
+  if (!symbol) return null
+
+  const entryDate = parseNotionDate(row["Date of Trade"] || "")
+  if (!entryDate) return null
+
+  const direction = mapNotionDirection(row["Bias"] || "")
+  const pnl = parseFloat(row["pnl"] || "0") || 0
+  const strategy = (row["POI"] || "").trim() || null
+  const session = mapNotionSession(row["Session"] || "")
+  const outcome = (row["Outcome"] || "").trim()
+
+  // Build notes from outcome
+  let notes: string | null = null
+  if (outcome) {
+    notes = `Outcome: ${outcome}`
+  }
+
+  return {
+    id: crypto.randomUUID(),
+    user_id: userId,
+    account_id: accountId,
+    symbol,
+    direction,
+    entry_date: entryDate,
+    exit_date: entryDate, // Same day - trade is closed
+    entry_price: null,
+    stop_price: null,
+    exit_price: null,
+    size: null,
+    pnl,
+    currency,
+    strategy,
+    session,
+    notes,
+    status: "closed" as const,
+  }
+}
+
+function mapGenericRow(
+  row: Record<string, string>,
+  userId: string,
+  accountId: string,
+  currency: string
+) {
+  const symbol = (row.symbol || "").trim()
+  if (!symbol) return null
+
+  const entryDate = row.entry_date ? new Date(row.entry_date).toISOString() : null
+  if (!entryDate) return null
+
+  return {
+    id: crypto.randomUUID(),
+    user_id: userId,
+    account_id: accountId,
+    symbol,
+    direction: ((row.direction || row.trade_type || "long").trim().toLowerCase()) as "long" | "short",
+    entry_date: entryDate,
+    exit_date: row.exit_date ? new Date(row.exit_date).toISOString() : null,
+    entry_price: row.entry_price ? parseFloat(row.entry_price) : null,
+    stop_price: null,
+    exit_price: row.exit_price ? parseFloat(row.exit_price) : null,
+    size: row.quantity ? Math.floor(parseFloat(row.quantity)) : null,
+    pnl: parseFloat(row.pnl || "0") || 0,
+    currency,
+    strategy: (row.strategy || "").trim() || null,
+    notes: (row.notes || "").trim() || null,
+    tags: row.tags ? row.tags.trim() : null,
+    fees: row.fees ? Math.abs(parseFloat(row.fees)) : null,
+    status: (row.exit_date ? "closed" : "open") as "open" | "closed",
+  }
+}
 
 export default function ImportPage() {
   const [isDragging, setIsDragging] = React.useState(false)
   const [importing, setImporting] = React.useState(false)
+  const [detectedFormat, setDetectedFormat] = React.useState<"notion" | "generic" | null>(null)
+  const [previewRows, setPreviewRows] = React.useState<Record<string, string>[]>([])
+  const [parsedFile, setParsedFile] = React.useState<File | null>(null)
+  const [selectedAccountId, setSelectedAccountId] = React.useState<string>("")
   const [importResult, setImportResult] = React.useState<{
     success: number
     failed: number
@@ -16,9 +152,21 @@ export default function ImportPage() {
   } | null>(null)
 
   const accounts = useAccountStore((state) => state.accounts)
-  const addTrade = useTradeStore((state) => state.addTrade)
+  const fetchAccounts = useAccountStore((state) => state.fetchAccounts)
   const fetchTrades = useTradeStore((state) => state.fetchTrades)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
+
+  // Fetch accounts on mount
+  React.useEffect(() => {
+    fetchAccounts()
+  }, [fetchAccounts])
+
+  // Auto-select first account
+  React.useEffect(() => {
+    if (accounts.length > 0 && !selectedAccountId) {
+      setSelectedAccountId(accounts[0].id)
+    }
+  }, [accounts, selectedAccountId])
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -32,111 +180,131 @@ export default function ImportPage() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
-
     const files = Array.from(e.dataTransfer.files)
     const csvFile = files.find((f) => f.name.endsWith(".csv"))
-
     if (csvFile) {
-      processCSV(csvFile)
-    } else {
-      alert("Please upload a CSV file")
+      previewCSV(csvFile)
     }
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      processCSV(file)
+      previewCSV(file)
     }
   }
 
-  const processCSV = async (file: File) => {
-    if (accounts.length === 0) {
-      alert("Please create an account first before importing trades")
-      return
-    }
-
-    setImporting(true)
+  const previewCSV = (file: File) => {
     setImportResult(null)
-
-    // Get current user from Supabase
-    const { supabase } = await import("@/lib/supabase")
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      alert("You must be logged in to import trades")
-      setImporting(false)
-      return
-    }
-
-    const defaultAccount = accounts[0]
-    let successCount = 0
-    let failedCount = 0
-    const errors: string[] = []
+    setParsedFile(file)
 
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
+      preview: 5,
+      complete: (results) => {
+        const headers = results.meta.fields || []
+        const format = isNotionFormat(headers) ? "notion" : "generic"
+        setDetectedFormat(format)
+        setPreviewRows(results.data as Record<string, string>[])
+      },
+      error: () => {
+        setDetectedFormat(null)
+        setPreviewRows([])
+        setParsedFile(null)
+      },
+    })
+  }
+
+  const handleImport = async () => {
+    if (!parsedFile || !selectedAccountId) return
+
+    setImporting(true)
+    setImportResult(null)
+
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      setImporting(false)
+      return
+    }
+
+    const selectedAccount = accounts.find((a) => a.id === selectedAccountId)
+    const currency = selectedAccount?.currency || "USD"
+
+    let successCount = 0
+    let failedCount = 0
+    const errors: string[] = []
+
+    Papa.parse(parsedFile, {
+      header: true,
+      skipEmptyLines: true,
       complete: async (results) => {
-        for (const row of results.data as any[]) {
+        const rows = results.data as Record<string, string>[]
+        const tradesToInsert: any[] = []
+
+        for (let i = 0; i < rows.length; i++) {
           try {
-            // Skip rows with no symbol
-            if (!row.symbol || !row.entry_date) {
-              continue
-            }
+            const mapped =
+              detectedFormat === "notion"
+                ? mapNotionRow(rows[i], user.id, selectedAccountId, currency)
+                : mapGenericRow(rows[i], user.id, selectedAccountId, currency)
 
-            // Prepare trade object matching database schema
-            // Note: account_id is optional in the schema, so we include account_name instead
-            const tradeData: any = {
-              user_id: user.id,
-              symbol: row.symbol.trim(),
-              account_name: defaultAccount.name,
-              entry_date: new Date(row.entry_date).toISOString(),
-              exit_date: row.exit_date ? new Date(row.exit_date).toISOString() : null,
-              trade_type: (row.direction || row.trade_type) as "long" | "short",
-              entry_price: parseFloat(row.entry_price),
-              exit_price: row.exit_price ? parseFloat(row.exit_price) : null,
-              quantity: Math.floor(parseFloat(row.quantity)), // Ensure integer
-              pnl: parseFloat(row.pnl),
-              fees: Math.abs(parseFloat(row.fees) || 0), // Fees must be positive
-              status: row.exit_date ? "closed" : "open",
+            if (mapped) {
+              tradesToInsert.push(mapped)
+            } else {
+              failedCount++
+              errors.push(`Row ${i + 1}: Missing required fields (symbol or date)`)
             }
-
-            // Add optional fields only if they exist
-            if (row.strategy) tradeData.strategy = row.strategy.trim()
-            if (row.notes) tradeData.notes = row.notes.trim()
-            if (row.tags) {
-              tradeData.tags = row.tags.split(";").map((t: string) => t.trim()).filter(Boolean)
-            }
-
-            await addTrade(tradeData)
-            successCount++
-          } catch (error: any) {
+          } catch (err: any) {
             failedCount++
-            const errorMsg = error?.message || JSON.stringify(error) || "Unknown error"
-            errors.push(`Row ${successCount + failedCount}: ${errorMsg}`)
-            console.error("Import error:", error, "Row data:", row)
+            errors.push(`Row ${i + 1}: ${err.message || "Parse error"}`)
+          }
+        }
+
+        // Batch insert all valid trades
+        if (tradesToInsert.length > 0) {
+          const { error } = await supabase.from("trades").insert(tradesToInsert)
+
+          if (error) {
+            failedCount += tradesToInsert.length
+            errors.push(`Database error: ${error.message}`)
+          } else {
+            successCount = tradesToInsert.length
           }
         }
 
         setImportResult({
           success: successCount,
           failed: failedCount,
-          errors: errors.slice(0, 10), // Show max 10 errors
+          errors: errors.slice(0, 10),
         })
-
         setImporting(false)
 
-        // Refresh trades
         if (successCount > 0) {
           await fetchTrades()
         }
       },
       error: (error) => {
-        alert(`Error parsing CSV: ${error.message}`)
+        setImportResult({
+          success: 0,
+          failed: 1,
+          errors: [`CSV parse error: ${error.message}`],
+        })
         setImporting(false)
       },
     })
+  }
+
+  const resetUpload = () => {
+    setParsedFile(null)
+    setDetectedFormat(null)
+    setPreviewRows([])
+    setImportResult(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
   }
 
   return (
@@ -147,7 +315,9 @@ export default function ImportPage() {
             <Upload className="h-5 w-5" />
             <CardTitle>Import Trades</CardTitle>
           </div>
-          <CardDescription>Upload CSV files to import your trading history</CardDescription>
+          <CardDescription>
+            Upload CSV files to import your trading history. Supports the 2GS Notion Journal format.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {accounts.length === 0 ? (
@@ -160,49 +330,133 @@ export default function ImportPage() {
             </div>
           ) : (
             <>
-              {/* Upload Area */}
-              <div
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-                className={`
-                  flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg
-                  cursor-pointer transition-colors
-                  ${isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50"}
-                  ${importing ? "opacity-50 pointer-events-none" : ""}
-                `}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".csv"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-
-                {importing ? (
-                  <>
-                    <Upload className="h-12 w-12 opacity-50 animate-pulse" />
-                    <p className="text-lg font-medium mt-4">Importing trades...</p>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-12 w-12 opacity-50" />
-                    <p className="text-lg font-medium mt-4">
-                      {isDragging ? "Drop CSV file here" : "Click to upload or drag and drop"}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-2">CSV files only</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Importing to: <span className="font-semibold">{accounts[0].name}</span>
-                    </p>
-                  </>
-                )}
+              {/* Account Selector */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">Import to Account</label>
+                <select
+                  value={selectedAccountId}
+                  onChange={(e) => setSelectedAccountId(e.target.value)}
+                  className="w-full max-w-md rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  {accounts.map((acc) => (
+                    <option key={acc.id} value={acc.id}>
+                      {acc.name} ({acc.currency || "USD"})
+                    </option>
+                  ))}
+                </select>
               </div>
+
+              {/* Upload Area */}
+              {!parsedFile && (
+                <div
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`
+                    flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg
+                    cursor-pointer transition-colors
+                    ${isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50"}
+                  `}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                  <Upload className="h-12 w-12 opacity-50" />
+                  <p className="text-lg font-medium mt-4">
+                    {isDragging ? "Drop CSV file here" : "Click to upload or drag and drop"}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">CSV files only</p>
+                </div>
+              )}
+
+              {/* Format Detection + Preview */}
+              {parsedFile && !importResult && (
+                <div className="space-y-4">
+                  {/* Detected format badge */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      <span className="text-sm font-medium">{parsedFile.name}</span>
+                      {detectedFormat === "notion" && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                          <CheckCircle className="h-3 w-3" />
+                          2GS Notion format detected
+                        </span>
+                      )}
+                      {detectedFormat === "generic" && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                          Generic CSV format
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={resetUpload}
+                      className="text-sm text-muted-foreground hover:text-foreground underline"
+                    >
+                      Choose different file
+                    </button>
+                  </div>
+
+                  {/* Preview table */}
+                  {previewRows.length > 0 && (
+                    <div className="border rounded-lg overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b bg-muted/50">
+                            {Object.keys(previewRows[0]).map((header) => (
+                              <th key={header} className="px-3 py-2 text-left font-medium">
+                                {header}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {previewRows.map((row, i) => (
+                            <tr key={i} className="border-b last:border-0">
+                              {Object.values(row).map((val, j) => (
+                                <td key={j} className="px-3 py-2 max-w-[200px] truncate">
+                                  {val || "-"}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <div className="px-3 py-1.5 text-xs text-muted-foreground bg-muted/30">
+                        Showing first {previewRows.length} rows
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Import button */}
+                  <button
+                    onClick={handleImport}
+                    disabled={importing}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {importing ? (
+                      <>
+                        <Upload className="h-4 w-4 animate-pulse" />
+                        Importing...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4" />
+                        Import Trades
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
 
               {/* Import Result */}
               {importResult && (
-                <div className="mt-6 space-y-4">
+                <div className="space-y-4">
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2 text-green-600">
                       <CheckCircle className="h-5 w-5" />
@@ -221,34 +475,59 @@ export default function ImportPage() {
                       <p className="font-semibold text-sm text-red-900 dark:text-red-300 mb-2">Errors:</p>
                       <ul className="text-xs text-red-800 dark:text-red-400 space-y-1">
                         {importResult.errors.map((error, i) => (
-                          <li key={i}>• {error}</li>
+                          <li key={i}>{error}</li>
                         ))}
                       </ul>
                     </div>
                   )}
+
+                  <button
+                    onClick={resetUpload}
+                    className="text-sm text-muted-foreground hover:text-foreground underline"
+                  >
+                    Import another file
+                  </button>
                 </div>
               )}
 
-              {/* CSV Format Info */}
+              {/* Notion Export Instructions */}
               <div className="mt-6 p-4 bg-muted/50 rounded-lg">
                 <div className="flex items-start gap-2">
-                  <FileText className="h-5 w-5 mt-0.5 text-muted-foreground" />
-                  <div>
-                    <p className="font-semibold text-sm mb-2">Expected CSV Format:</p>
-                    <code className="text-xs bg-background px-2 py-1 rounded block overflow-x-auto">
-                      symbol,entry_date,exit_date,direction,entry_price,exit_price,quantity,pnl,fees,strategy,notes,tags
-                    </code>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      • <strong>Required:</strong> symbol, entry_date, direction, entry_price, quantity, pnl
-                      <br />
-                      • Dates format: YYYY-MM-DD HH:MM:SS (exit_date optional for open trades)
-                      <br />
-                      • Direction: long or short
-                      <br />
-                      • Tags: semicolon separated (e.g., winner;breakout)
-                      <br />
-                      • Missing fields will use default values (fees=0, notes=null, etc.)
-                    </p>
+                  <Info className="h-5 w-5 mt-0.5 text-muted-foreground flex-shrink-0" />
+                  <div className="space-y-3">
+                    <p className="font-semibold text-sm">How to export from the 2GS Notion Journal:</p>
+                    <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+                      <li>Open your 2GS Trading Journal in Notion</li>
+                      <li>Click the <strong>...</strong> (three dots) menu in the top right corner</li>
+                      <li>Select <strong>Export</strong></li>
+                      <li>Set Export format to <strong>Markdown & CSV</strong></li>
+                      <li>Set Include databases to <strong>Current view</strong></li>
+                      <li>Set Include content to <strong>Everything</strong></li>
+                      <li>Leave subpages toggles <strong>off</strong></li>
+                      <li>Click <strong>Export</strong> and save the zip file</li>
+                      <li>Unzip and upload the <strong>.csv</strong> file from inside</li>
+                    </ol>
+
+                    <div className="pt-2 border-t border-border">
+                      <p className="font-semibold text-sm mb-1">Column Mapping (2GS Notion):</p>
+                      <div className="text-xs text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5">
+                        <span>Pair &rarr; Symbol</span>
+                        <span>Date of Trade &rarr; Trade Date</span>
+                        <span>Bias &rarr; Direction (Bullish=Long)</span>
+                        <span>POI &rarr; Strategy</span>
+                        <span>pnl &rarr; P&L</span>
+                        <span>Session &rarr; Session</span>
+                        <span>Outcome &rarr; Notes</span>
+                        <span>Chart &rarr; Skipped</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-border">
+                      <p className="font-semibold text-sm mb-1">Generic CSV Format:</p>
+                      <code className="text-xs bg-background px-2 py-1 rounded block overflow-x-auto">
+                        symbol,entry_date,exit_date,direction,entry_price,exit_price,quantity,pnl,fees,strategy,notes,tags
+                      </code>
+                    </div>
                   </div>
                 </div>
               </div>

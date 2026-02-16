@@ -29,6 +29,7 @@ import {
   ClipboardCheck,
   Filter,
   Database,
+  Upload,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import type { UserProfile } from "@/types/mentorship"
@@ -129,6 +130,12 @@ const dataTools = [
     url: "/setup-symbols",
     icon: Database,
     description: "Add futures symbols",
+  },
+  {
+    title: "Import Trades",
+    url: "/import",
+    icon: Upload,
+    description: "Import trades from CSV or Notion",
   },
 ]
 

@@ -89,6 +89,31 @@ export const useAccountStore = create<AccountState>()(
           }));
 
           set({ accounts, isLoading: false });
+
+          // Recalculate metrics with current trades (fixes race condition
+          // where fetchTrades completes before fetchAccounts)
+          try {
+            const { useTradeStore } = await import('./trade-store');
+            const currentTrades = useTradeStore.getState().trades;
+            if (currentTrades.length > 0) {
+              set((state) => ({
+                accounts: state.accounts.map((acct) => ({
+                  ...acct,
+                  metrics: calculateAccountMetrics(acct, currentTrades),
+                })),
+              }));
+            } else {
+              // Even with no trades, recalculate to pick up manual prop firm offsets
+              set((state) => ({
+                accounts: state.accounts.map((acct) => ({
+                  ...acct,
+                  metrics: calculateAccountMetrics(acct, []),
+                })),
+              }));
+            }
+          } catch {
+            // Trade store not available yet - metrics will be recalculated when trades load
+          }
         } catch (error: any) {
           set({ error: error.message, isLoading: false });
                   }

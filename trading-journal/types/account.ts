@@ -107,10 +107,22 @@ export function calculateAccountMetrics(
 
   const dailyDrawdown = Math.abs(Math.min(0, worstDay));
 
+  // For prop firm accounts, factor in manually entered profit/drawdown values
+  // These represent the account state before the user started journaling trades
+  let manualOffset = 0;
+  if (account.accountType === 'prop-firm' && account.propFirmSettings) {
+    const { status, currentProfits, currentDrawdown: manualDrawdown } = account.propFirmSettings;
+    if (status === 'drawdown' && manualDrawdown) {
+      manualOffset = -manualDrawdown;
+    } else if (status === 'profits' && currentProfits) {
+      manualOffset = currentProfits;
+    }
+  }
+
   const metrics: AccountMetrics = {
-    netProfit: Number(netProfit.toFixed(2)),
+    netProfit: Number((manualOffset + netProfit).toFixed(2)),
     totalFees: Number(totalFees.toFixed(2)),
-    currentBalance: Number((account.startingBalance + netProfit).toFixed(2)),
+    currentBalance: Number((account.startingBalance + manualOffset + netProfit).toFixed(2)),
     bestDay: Number(bestDay.toFixed(2)),
     worstDay: Number(worstDay.toFixed(2)),
     maxDrawdown: Number(maxDrawdown.toFixed(2)),
@@ -122,7 +134,8 @@ export function calculateAccountMetrics(
       account.propFirmSettings;
 
     if (profitTarget && profitTarget > 0) {
-      const progress = netProfit / profitTarget;
+      const totalNet = manualOffset + netProfit;
+      const progress = totalNet / profitTarget;
       metrics.profitTargetProgress = Number(progress.toFixed(4));
       metrics.profitTargetReached = progress >= 1;
     }
