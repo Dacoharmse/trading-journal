@@ -18,6 +18,7 @@ import {
   LogOut,
   Beaker,
   Shield,
+  HelpCircle,
   UserCheck,
   GraduationCap,
   MessageSquare,
@@ -469,6 +470,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </div>
             </SidebarMenuItem>
           )}
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={() => window.dispatchEvent(new Event('open-user-guide'))}>
+              <HelpCircle />
+              <span>User Guide</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           {bottomItems.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild>
