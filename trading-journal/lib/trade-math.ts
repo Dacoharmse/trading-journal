@@ -85,7 +85,7 @@ export function calculatePositionSize(
  * Get pip/point label based on asset class
  */
 export function getPipsLabel(assetClass: string = 'FX'): string {
-  return assetClass === 'FX' ? 'pips' : 'points'
+  return 'pips'
 }
 
 /**

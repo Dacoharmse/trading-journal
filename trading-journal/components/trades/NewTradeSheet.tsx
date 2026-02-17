@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { X, Save, TrendingUp, TrendingDown, Info, Loader2 } from 'lucide-react'
+import { X, Save, TrendingUp, TrendingDown, Info, Loader2, ChevronDown, ChevronRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type {
   Trade,
@@ -70,6 +70,9 @@ export function NewTradeSheet({
   const [session, setSession] = React.useState<'Asia' | 'London' | 'NY' | ''>('')
   const [sessionHour, setSessionHour] = React.useState<string>('')
   const [orderType, setOrderType] = React.useState<string>('')
+
+  // Planned setup toggle
+  const [showPlannedSetup, setShowPlannedSetup] = React.useState(false)
 
   // Pips/R fields
   const [pips, setPips] = React.useState<string>('')
@@ -410,6 +413,9 @@ export function NewTradeSheet({
       setTargetPips(trade.target_pips?.toString() || '')
       setRrPlanned(trade.rr_planned?.toString() || '')
       setRiskR(trade.risk_r?.toString() || '1.0')
+      if (trade.stop_pips || trade.target_pips || trade.rr_planned) {
+        setShowPlannedSetup(true)
+      }
       setStrategyId(trade.strategy_id || '')
       setNotes(trade.notes || '')
       setCloseReason(trade.close_reason || '')
@@ -456,6 +462,7 @@ export function NewTradeSheet({
     setTargetPips('')
     setRrPlanned('')
     setRiskR('1.0')
+    setShowPlannedSetup(false)
     setCloseReason('')
     setEmotionalState('')
     setPlaybookId('')
@@ -1039,18 +1046,28 @@ export function NewTradeSheet({
           </section>
 
           <section className="space-y-4">
-            <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowPlannedSetup(!showPlannedSetup)}
+              className="flex items-center gap-2 w-full text-left"
+            >
+              {showPlannedSetup ? (
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-gray-500" />
+              )}
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
                 Planned Setup
               </h3>
-              <div className="group relative">
+              <div className="group relative" onClick={(e) => e.stopPropagation()}>
                 <Info className="w-4 h-4 text-gray-400 cursor-help" />
                 <div className="hidden group-hover:block absolute left-0 top-6 z-20 w-64 p-3 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg shadow-xl">
-                  Record the targets you set before entering. We’ll auto-calc planned R:R if you leave it blank.
+                  Record the targets you set before entering. We'll auto-calc planned R:R if you leave it blank.
                 </div>
               </div>
-            </div>
+            </button>
 
+            {showPlannedSetup && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -1118,6 +1135,7 @@ export function NewTradeSheet({
                 )}
               </div>
             </div>
+            )}
           </section>
 
           <section className="space-y-4">
@@ -1264,6 +1282,7 @@ export function NewTradeSheet({
                   className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
                 >
                   <option value="">-- Select --</option>
+                  <option value="Out of Session">Out of Session</option>
                   <optgroup label="Asia">
                     <option value="A1">A1 - First Hour</option>
                     <option value="A2">A2 - Second Hour</option>
