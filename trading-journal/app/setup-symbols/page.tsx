@@ -4,7 +4,7 @@ import * as React from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { CheckCircle2, XCircle, Loader2 } from 'lucide-react'
+import { CheckCircle2, XCircle, Loader2, Trash2 } from 'lucide-react'
 
 interface SymbolSetupResult {
   symbol: string
@@ -14,6 +14,7 @@ interface SymbolSetupResult {
 
 export default function SetupSymbolsPage() {
   const [loading, setLoading] = React.useState(false)
+  const [removing, setRemoving] = React.useState(false)
   const [results, setResults] = React.useState<SymbolSetupResult[]>([])
   const [accountId, setAccountId] = React.useState<string>('')
   const [accounts, setAccounts] = React.useState<Array<{ id: string; name: string }>>([])
@@ -165,6 +166,68 @@ export default function SetupSymbolsPage() {
     }
   }
 
+  const futuresSymbolCodes = ['MNQ', 'MES', 'MGC', 'NQ', 'ES', 'GC']
+
+  const removeSymbols = async () => {
+    if (!accountId) return
+    setRemoving(true)
+    setResults([])
+    const supabase = createClient()
+    const removeResults: SymbolSetupResult[] = []
+
+    try {
+      // Get all futures symbol IDs
+      const { data: symbols } = await supabase
+        .from('symbols')
+        .select('id, code')
+        .in('code', futuresSymbolCodes)
+
+      if (!symbols || symbols.length === 0) {
+        removeResults.push({
+          symbol: 'General',
+          status: 'error',
+          message: 'No futures symbols found in database'
+        })
+        setResults(removeResults)
+        return
+      }
+
+      for (const symbol of symbols) {
+        const { error } = await supabase
+          .from('account_symbols')
+          .delete()
+          .eq('account_id', accountId)
+          .eq('symbol_id', symbol.id)
+
+        if (error) {
+          removeResults.push({
+            symbol: symbol.code,
+            status: 'error',
+            message: `Failed to remove ${symbol.code}: ${error.message}`
+          })
+        } else {
+          removeResults.push({
+            symbol: symbol.code,
+            status: 'success',
+            message: `Removed ${symbol.code} from account`
+          })
+        }
+      }
+
+      setResults(removeResults)
+    } catch (error: any) {
+      console.error('Remove error:', error)
+      removeResults.push({
+        symbol: 'General',
+        status: 'error',
+        message: `Unexpected error: ${error.message}`
+      })
+      setResults(removeResults)
+    } finally {
+      setRemoving(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-100 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -207,20 +270,40 @@ export default function SetupSymbolsPage() {
               </p>
             </div>
 
-            <Button
-              onClick={setupSymbols}
-              disabled={loading}
-              className="w-full"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Setting up symbols...
-                </>
-              ) : (
-                'Setup Futures Symbols'
-              )}
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                onClick={setupSymbols}
+                disabled={loading || removing}
+                className="flex-1"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Setting up symbols...
+                  </>
+                ) : (
+                  'Setup Futures Symbols'
+                )}
+              </Button>
+              <Button
+                onClick={removeSymbols}
+                disabled={loading || removing || !accountId}
+                variant="destructive"
+                className="flex-1"
+              >
+                {removing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Removing symbols...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Remove Futures Symbols
+                  </>
+                )}
+              </Button>
+            </div>
 
             {results.length > 0 && (
               <div className="mt-6 space-y-2">
