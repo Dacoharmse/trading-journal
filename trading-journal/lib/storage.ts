@@ -21,7 +21,7 @@ export async function uploadTradeMedia(
   file: File,
   userId: string,
   tradeId?: string,
-  timeoutMs: number = 10000
+  timeoutMs: number = 60000
 ): Promise<UploadResult> {
   try {
     const supabase = createClient()

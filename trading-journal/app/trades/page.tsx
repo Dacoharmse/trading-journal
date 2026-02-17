@@ -475,9 +475,10 @@ function TradesPageContent() {
         if (error) throw error
       }
 
-      await fetchData()
       setTradeSheetOpen(false)
       setEditingTrade(null)
+      // Refresh data in background so save doesn't hang
+      fetchData().catch((err) => console.error('Error refreshing trades:', err))
     } catch (err) {
       console.error('Error saving trade:', err)
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred'
