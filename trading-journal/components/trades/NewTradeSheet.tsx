@@ -170,6 +170,7 @@ export function NewTradeSheet({
 
   const loadAccountSymbols = React.useCallback(
     async (accId: string) => {
+      // First try the account_symbols join table
       const { data } = await supabase
         .from('account_symbols')
         .select('symbol_id, symbols(*)')
@@ -180,14 +181,92 @@ export function NewTradeSheet({
           .map((as) => as.symbols)
           .filter((s): s is Symbol => s !== null) as unknown as Symbol[]
         setSymbols(syms)
-      } else {
-        // No account_symbols configured - fall back to all available symbols
-        const { data: allSymbols } = await supabase
+        return
+      }
+
+      // No account_symbols - check account's trading_pairs text array
+      const { data: accountData } = await supabase
+        .from('accounts')
+        .select('trading_pairs')
+        .eq('id', accId)
+        .single()
+
+      const pairs: string[] = accountData?.trading_pairs || []
+
+      if (pairs.length > 0) {
+        // Ensure all trading_pairs exist in symbols table
+        const { data: existingSymbols } = await supabase
           .from('symbols')
           .select('*')
+          .in('code', pairs)
+
+        const existingCodes = new Set((existingSymbols || []).map((s: any) => s.code))
+        const missingCodes = pairs.filter((code) => !existingCodes.has(code))
+
+        // Auto-create missing symbols with sensible defaults
+        if (missingCodes.length > 0) {
+          const newSymbols = missingCodes.map((code) => {
+            const upper = code.toUpperCase()
+            let asset_class = 'FX'
+            let pip_size = 0.0001
+            let point_value = 1.0
+
+            if (upper.includes('XAU') || upper.includes('GOLD')) {
+              asset_class = 'Metal'
+              pip_size = 0.01
+              point_value = 1.0
+            } else if (upper.includes('NAS') || upper.includes('SPX') || upper.includes('US30') || upper.includes('US500')) {
+              asset_class = 'Index'
+              pip_size = 0.1
+              point_value = 1.0
+            } else if (upper.includes('BTC') || upper.includes('ETH')) {
+              asset_class = 'Crypto'
+              pip_size = 0.01
+              point_value = 1.0
+            } else if (upper.includes('XAG') || upper.includes('SILVER')) {
+              asset_class = 'Metal'
+              pip_size = 0.001
+              point_value = 1.0
+            } else if (upper.includes('OIL') || upper.includes('WTI') || upper.includes('BRENT')) {
+              asset_class = 'Commodity'
+              pip_size = 0.01
+              point_value = 1.0
+            } else if (upper.includes('JPY')) {
+              pip_size = 0.01
+            }
+
+            return { code, display_name: code, asset_class, pip_size, point_value }
+          })
+
+          await supabase.from('symbols').insert(newSymbols)
+        }
+
+        // Now fetch all matched symbols
+        const { data: matchedSymbols } = await supabase
+          .from('symbols')
+          .select('*')
+          .in('code', pairs)
           .order('code')
-        setSymbols((allSymbols as Symbol[] | null) ?? [])
+
+        if (matchedSymbols && matchedSymbols.length > 0) {
+          // Also link them to account_symbols for future loads
+          const symbolIds = matchedSymbols.map((s: any) => ({
+            account_id: accId,
+            symbol_id: s.id,
+          }))
+          await supabase.from('account_symbols').upsert(symbolIds, { onConflict: 'account_id,symbol_id' })
+
+          setSymbols(matchedSymbols as Symbol[])
+          return
+        }
       }
+
+      // Final fallback - load all symbols
+      const { data: allSymbols } = await supabase
+        .from('symbols')
+        .select('*')
+        .order('code')
+      setSymbols((allSymbols as Symbol[] | null) ?? [])
     },
     [supabase]
   )
