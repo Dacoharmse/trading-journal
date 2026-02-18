@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { X, Upload, Link as LinkIcon, Image as ImageIcon } from 'lucide-react'
+import { X, Upload, Link as LinkIcon, Image as ImageIcon, Clipboard } from 'lucide-react'
 import {
   uploadTradeMedia,
   validateMediaFile,
@@ -134,7 +134,32 @@ export function ChartPaste({
     onChange(newMedia)
   }
 
-  const handleClick = () => {
+  const handleClick = async () => {
+    // Single click: read image from clipboard
+    try {
+      const clipboardItems = await navigator.clipboard.read()
+      for (const item of clipboardItems) {
+        const imageType = item.types.find((t) => t.startsWith('image/'))
+        if (imageType) {
+          const blob = await item.getType(imageType)
+          const file = new File([blob], `clipboard_${Date.now()}.png`, { type: imageType })
+          const fileList = new DataTransfer()
+          fileList.items.add(file)
+          await handleFiles(fileList.files)
+          return
+        }
+      }
+      // No image in clipboard
+      setError('No image found in clipboard. Double-click to browse files.')
+      setTimeout(() => setError(null), 3000)
+    } catch {
+      // Clipboard API not available or permission denied
+      setError('Clipboard access denied. Double-click to browse files.')
+      setTimeout(() => setError(null), 3000)
+    }
+  }
+
+  const handleDoubleClick = () => {
     fileInputRef.current?.click()
   }
 
@@ -160,6 +185,7 @@ export function ChartPaste({
         onDragLeave={() => setDragOver(false)}
         onPaste={handlePaste}
         onClick={handleClick}
+        onDoubleClick={handleDoubleClick}
         tabIndex={0}
         role="button"
         aria-label="Upload chart images"
@@ -181,12 +207,15 @@ export function ChartPaste({
           <Upload className="w-10 h-10 text-gray-400" />
           <div className="text-sm text-gray-600 dark:text-gray-400">
             <span className="font-semibold text-gray-700 dark:text-gray-300">
-              Click to upload
+              Click to paste
             </span>{' '}
-            or drag and drop
+            from clipboard,{' '}
+            <span className="font-semibold text-gray-700 dark:text-gray-300">
+              double-click to browse
+            </span>
           </div>
           <div className="text-xs text-gray-500">
-            Paste images (Ctrl/Cmd+V) or TradingView URLs
+            Also supports drag and drop, Ctrl/Cmd+V, or TradingView URLs
           </div>
           <div className="text-xs text-gray-400">
             PNG, JPG, GIF, WebP up to 10MB
