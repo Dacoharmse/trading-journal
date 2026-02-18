@@ -227,7 +227,7 @@ export interface Trade {
   strategy_id?: string | null        // NEW: FK to strategies table
   playbook_id?: string | null        // PLAYBOOK: FK to playbooks table
   session?: 'Asia' | 'London' | 'NY' | null
-  session_hour?: 'A1' | 'A2' | 'A3' | 'A4' | 'L1' | 'L2' | 'L3' | 'NY1' | 'NY2' | 'NY3' | null  // Specific hour within session
+  session_hour?: 'A1' | 'A2' | 'A3' | 'A4' | 'L1' | 'L2' | 'L3' | 'NY1' | 'NY2' | 'NY3' | 'Out of Session' | null  // Specific hour within session
   confluences?: string | null        // Legacy: comma-separated
   tags?: string | null               // Comma-separated
 
@@ -262,6 +262,15 @@ export interface Trade {
 
   // Legs (for partial entries/exits)
   legs?: unknown | null  // JSON array of leg data
+
+  // Legacy fields (kept for backward compat with old schema)
+  trade_type?: 'long' | 'short' | null
+  pnl_amount?: number | null
+  pnl_currency?: string | null
+  actual_rr?: number | null
+  outcome?: 'win' | 'loss' | 'breakeven' | null
+  entry_timeframe?: string | null
+  analysis_timeframe?: string | null
 
   // Metadata
   broker?: string | null

@@ -598,11 +598,17 @@ export function NewTradeSheet({
         }
       }
 
+    // Resolve symbol text from selected symbol ID
+    const selectedSymbol = symbols.find((s) => s.id === symbolId)
+    const symbolCode = selectedSymbol?.code || selectedSymbol?.display_name || ''
+
     const tradeData: Partial<Trade> = {
       ...(editingTrade?.id ? { id: editingTrade.id } : {}),
       account_id: accountId,
+      symbol: symbolCode,          // text code for legacy column + display
       symbol_id: symbolId,
       direction,
+      trade_type: direction,       // keep old column in sync for backward compat
       entry_date: date,
       open_time: openTime || null,
       close_time: closeTime || null,
@@ -615,6 +621,7 @@ export function NewTradeSheet({
       rr_planned: rrPlannedNum,
       risk_r: riskRNum,
       r_multiple: rMultiple,
+      pnl: 0,                      // required field, computed separately or defaults to 0
       playbook_id: playbookId || null,
       rules_checked: playbookId ? rulesSnapshot : null,
       confluences_checked: playbookId ? confluencesSnapshot : null,
@@ -626,6 +633,7 @@ export function NewTradeSheet({
       htf_media_urls: htfMedia.length > 0 ? htfMedia.map((m) => m.url) : undefined,
       pnl_amount: pnlAmount ? parseFloat(pnlAmount) : null,
       pnl_currency: selectedAccount?.currency || 'USD',
+      currency: selectedAccount?.currency || 'USD',
       actual_rr: actualRr ? parseFloat(actualRr) : null,
       outcome: outcome || null,
       entry_timeframe: entryTimeframe || null,

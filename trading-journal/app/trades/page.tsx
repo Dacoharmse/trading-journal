@@ -112,10 +112,11 @@ function TradesPageContent() {
   )
 
   // Fetch data with pagination
-  const fetchData = async (loadMore: boolean = false) => {
+  // silent=true skips the full-page loading spinner (used for background refreshes after save)
+  const fetchData = async (loadMore: boolean = false, silent: boolean = false) => {
     if (loadMore) {
       setLoadingMore(true)
-    } else {
+    } else if (!silent) {
       setLoading(true)
     }
     setError(null)
@@ -255,7 +256,7 @@ function TradesPageContent() {
 
       setError(errorMessage)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
       setLoadingMore(false)
     }
   }
@@ -477,11 +478,16 @@ function TradesPageContent() {
 
       setTradeSheetOpen(false)
       setEditingTrade(null)
-      // Refresh data in background so save doesn't hang
-      fetchData().catch((err) => console.error('Error refreshing trades:', err))
+      // Refresh silently so save doesn't trigger full-page loading spinner
+      fetchData(false, true).catch((err) => console.error('Error refreshing trades:', err))
     } catch (err) {
       console.error('Error saving trade:', err)
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred'
+      // Handle both standard Errors and Supabase PostgrestErrors
+      const supabaseErr = err as any
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : supabaseErr?.message || supabaseErr?.details || supabaseErr?.hint || JSON.stringify(err)
       alert(`Error saving trade: ${errorMessage}`)
     }
   }
