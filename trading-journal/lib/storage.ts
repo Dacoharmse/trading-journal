@@ -1,8 +1,7 @@
 /**
  * Supabase Storage helpers for trade media uploads
+ * Uploads go through /api/upload to bypass storage RLS
  */
-
-import { createClient } from '@/lib/supabase/client'
 
 export interface UploadResult {
   url: string
@@ -11,52 +10,30 @@ export interface UploadResult {
 }
 
 /**
- * Upload a file to Supabase Storage
- * @param file File to upload
- * @param userId User ID for folder structure
- * @param tradeId Optional trade ID for organization
- * @returns Upload result with public URL
+ * Upload a file via the server-side API route (bypasses storage RLS)
  */
 export async function uploadTradeMedia(
   file: File,
   userId: string,
   tradeId?: string,
-  timeoutMs: number = 60000
 ): Promise<UploadResult> {
   try {
-    const supabase = createClient()
+    const formData = new FormData()
+    formData.append('file', file)
+    if (tradeId) formData.append('tradeId', tradeId)
 
-    // Generate unique filename
-    const timestamp = Date.now()
-    const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
-    const folder = tradeId ? `${userId}/${tradeId}` : `${userId}/temp`
-    const filePath = `${folder}/${timestamp}_${sanitizedName}`
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    })
 
-    // Upload file with timeout
-    const uploadPromise = supabase.storage
-      .from('trade-media')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: false,
-      })
+    const data = await res.json()
 
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Upload timeout')), timeoutMs)
-    )
-
-    const { data, error } = await Promise.race([uploadPromise, timeoutPromise])
-
-    if (error) {
-      console.error('Upload error:', error)
-      return { url: '', path: '', error: error.message }
+    if (!res.ok) {
+      return { url: '', path: '', error: data.error || 'Upload failed' }
     }
 
-    // Get public URL
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from('trade-media').getPublicUrl(data.path)
-
-    return { url: publicUrl, path: data.path }
+    return { url: data.url, path: data.path }
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'Upload failed'
     console.error('Upload exception:', err)
@@ -65,22 +42,16 @@ export async function uploadTradeMedia(
 }
 
 /**
- * Delete a file from Supabase Storage
- * @param path File path in storage
- * @returns Success status
+ * Delete a file from Supabase Storage via API route
  */
 export async function deleteTradeMedia(path: string): Promise<boolean> {
   try {
-    const supabase = createClient()
-
-    const { error } = await supabase.storage.from('trade-media').remove([path])
-
-    if (error) {
-      console.error('Delete error:', error)
-      return false
-    }
-
-    return true
+    const res = await fetch('/api/upload', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path }),
+    })
+    return res.ok
   } catch (err) {
     console.error('Delete exception:', err)
     return false
