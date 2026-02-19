@@ -147,24 +147,14 @@ function TradesPageContent() {
 
       // Only fetch accounts and playbooks on initial load
       if (!loadMore) {
-        // Fetch accounts with selected fields only
-        const { data: accountsData, error: accountsError } = await supabase
-          .from('accounts')
-          .select('id, name, currency, account_type, phase, account_status')
-          .eq('user_id', userData.user.id)
-          .order('name')
-
-        if (accountsError) throw accountsError
+        // Fetch accounts + playbooks via server API (bypasses RLS which hangs on browser client)
+        const accountsRes = await fetch('/api/accounts')
+        if (!accountsRes.ok) {
+          const body = await accountsRes.json().catch(() => ({}))
+          throw new Error(body.error || `Failed to load accounts (${accountsRes.status})`)
+        }
+        const { accounts: accountsData, playbooks: playbooksData } = await accountsRes.json()
         setAccounts(accountsData || [])
-
-        // Fetch playbooks (for lookup) with selected fields only
-        const { data: playbooksData, error: playbooksError } = await supabase
-          .from('playbooks')
-          .select('id, name, category, active')
-          .eq('user_id', userData.user.id)
-          .order('name')
-
-        if (playbooksError) throw playbooksError
         setPlaybooks((playbooksData as PlaybookSummary[] | null) ?? [])
       }
 
