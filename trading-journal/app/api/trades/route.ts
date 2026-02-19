@@ -1,6 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 
+// GET /api/trades — fetch trades for the authenticated user (bypasses RLS)
+export async function GET(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const limit = parseInt(searchParams.get('limit') || '50')
+    const offset = parseInt(searchParams.get('offset') || '0')
+
+    const admin = createAdminClient()
+
+    const { data: trades, error, count } = await admin
+      .from('trades')
+      .select('*', { count: 'exact' })
+      .eq('user_id', session.user.id)
+      .order('exit_date', { ascending: false, nullsFirst: false })
+      .order('entry_date', { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    if (error) {
+      console.error('Trades fetch error:', error)
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    return NextResponse.json({ trades: trades || [], count: count || 0 })
+  } catch (err) {
+    console.error('GET /api/trades error:', err)
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Failed to fetch trades' },
+      { status: 500 }
+    )
+  }
+}
+
 // POST /api/trades — insert a new trade (bypasses RLS using service role)
 export async function POST(request: NextRequest) {
   try {

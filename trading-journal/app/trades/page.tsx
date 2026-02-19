@@ -168,21 +168,17 @@ function TradesPageContent() {
         setPlaybooks((playbooksData as PlaybookSummary[] | null) ?? [])
       }
 
-      // Fetch trades with pagination and selected fields
+      // Fetch trades via server API (bypasses RLS which hangs on browser client)
       const currentPage = loadMore ? page + 1 : 0
       const limit = loadMore ? TRADES_PER_PAGE : INITIAL_LOAD
       const offset = loadMore ? (page + 1) * TRADES_PER_PAGE : 0
 
-      // Select all fields filtered by user
-      const { data: tradesData, error: tradesError, count } = await supabase
-        .from('trades')
-        .select('*', { count: 'exact' })
-        .eq('user_id', userData.user.id)
-        .order('exit_date', { ascending: false, nullsFirst: false })
-        .order('entry_date', { ascending: false })
-        .range(offset, offset + limit - 1)
-
-      if (tradesError) throw tradesError
+      const tradesRes = await fetch(`/api/trades?limit=${limit}&offset=${offset}`)
+      if (!tradesRes.ok) {
+        const body = await tradesRes.json().catch(() => ({}))
+        throw new Error(body.error || `Failed to load trades (${tradesRes.status})`)
+      }
+      const { trades: tradesData, count } = await tradesRes.json()
 
       if (loadMore) {
         setTrades((prev) => [...prev, ...(tradesData || [])])
