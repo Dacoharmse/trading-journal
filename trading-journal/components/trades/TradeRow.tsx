@@ -79,7 +79,12 @@ export function TradeRow({
       {/* Date */}
       {visibleColumns.has('date') && (
         <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white whitespace-nowrap">
-          {trade.exit_date || trade.entry_date || 'N/A'}
+          {(() => {
+            const raw = trade.exit_date || trade.entry_date
+            if (!raw) return 'N/A'
+            const d = new Date(raw)
+            return isNaN(d.getTime()) ? raw : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+          })()}
         </td>
       )}
 
