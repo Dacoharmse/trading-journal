@@ -457,39 +457,28 @@ function TradesPageContent() {
   }
 
   const handleSaveTrade = async (tradeData: Partial<Trade>) => {
-    try {
-      if (tradeData.id) {
-        // Update existing trade - don't overwrite user_id
-        const { id, ...updateData } = tradeData
-        const { error } = await supabase
-          .from('trades')
-          .update(updateData)
-          .eq('id', id)
+    if (tradeData.id) {
+      // Update existing trade - don't overwrite user_id
+      const { id, ...updateData } = tradeData
+      const { error } = await supabase
+        .from('trades')
+        .update(updateData)
+        .eq('id', id)
 
-        if (error) throw error
-      } else {
-        // Insert new trade - include user_id
-        const { error } = await supabase
-          .from('trades')
-          .insert([{ ...tradeData, user_id: userId }])
+      if (error) throw error
+    } else {
+      // Insert new trade - include user_id
+      const { error } = await supabase
+        .from('trades')
+        .insert([{ ...tradeData, user_id: userId }])
 
-        if (error) throw error
-      }
-
-      setTradeSheetOpen(false)
-      setEditingTrade(null)
-      // Refresh silently so save doesn't trigger full-page loading spinner
-      fetchData(false, true).catch((err) => console.error('Error refreshing trades:', err))
-    } catch (err) {
-      console.error('Error saving trade:', err)
-      // Handle both standard Errors and Supabase PostgrestErrors
-      const supabaseErr = err as any
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : supabaseErr?.message || supabaseErr?.details || supabaseErr?.hint || JSON.stringify(err)
-      alert(`Error saving trade: ${errorMessage}`)
+      if (error) throw error
     }
+
+    // Success: close form and silently refresh
+    setTradeSheetOpen(false)
+    setEditingTrade(null)
+    fetchData(false, true).catch((err) => console.error('Error refreshing trades:', err))
   }
 
   const handleDeleteTrade = async (trade: Trade) => {

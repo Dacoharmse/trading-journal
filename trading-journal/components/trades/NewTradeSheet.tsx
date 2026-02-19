@@ -118,6 +118,7 @@ export function NewTradeSheet({
   // UI state
   const [saving, setSaving] = React.useState(false)
   const [errors, setErrors] = React.useState<Record<string, string>>({})
+  const [saveError, setSaveError] = React.useState<string | null>(null)
 
   // Trade review request state
   const [requestReview, setRequestReview] = React.useState(false)
@@ -471,6 +472,7 @@ export function NewTradeSheet({
     setHtfMedia([])
     setNotes('')
     setErrors({})
+    setSaveError(null)
     setRequestReview(false)
     setSelectedMentorId('')
     setReviewMessage('')
@@ -697,6 +699,7 @@ export function NewTradeSheet({
     if (!validate()) return
 
     setSaving(true)
+    setSaveError(null)
 
     try {
       // Compute risk to check violations
@@ -705,18 +708,27 @@ export function NewTradeSheet({
       // Check for risk violations
       const violation = await checkRiskViolation(riskRNum)
       if (violation) {
-        // Store violation and show warning dialog
         setSaving(false)
         setRiskViolation(violation)
         setRiskWarningOpen(true)
         return
       }
 
-      // No violation, proceed with save
-      await saveTradeWithRisk(null)
+      // Race against 30s timeout so save can't get stuck forever
+      await Promise.race([
+        saveTradeWithRisk(null),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Save timed out — please check your connection and try again')), 30000)
+        ),
+      ])
     } catch (err) {
       console.error('Save error:', err)
-      alert('Failed to save trade')
+      const supabaseErr = err as any
+      const msg =
+        err instanceof Error
+          ? err.message
+          : supabaseErr?.message || supabaseErr?.details || supabaseErr?.hint || JSON.stringify(err)
+      setSaveError(msg)
     } finally {
       setSaving(false)
     }
@@ -725,12 +737,23 @@ export function NewTradeSheet({
   const handleRiskWarningProceed = async (reason: string) => {
     setRiskWarningOpen(false)
     setSaving(true)
+    setSaveError(null)
 
     try {
-      await saveTradeWithRisk(reason)
+      await Promise.race([
+        saveTradeWithRisk(reason),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Save timed out — please check your connection and try again')), 30000)
+        ),
+      ])
     } catch (err) {
       console.error('Save error:', err)
-      alert('Failed to save trade')
+      const supabaseErr = err as any
+      const msg =
+        err instanceof Error
+          ? err.message
+          : supabaseErr?.message || supabaseErr?.details || supabaseErr?.hint || JSON.stringify(err)
+      setSaveError(msg)
     } finally {
       setSaving(false)
     }
@@ -768,6 +791,11 @@ export function NewTradeSheet({
       <div className="absolute right-0 top-0 bottom-0 w-full max-w-2xl bg-white dark:bg-neutral-800 shadow-xl overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-white dark:bg-neutral-800 border-b border-gray-200 dark:border-neutral-700 px-6 py-4">
+          {saveError && (
+            <div className="mb-3 px-3 py-2 bg-red-50 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg text-sm text-red-700 dark:text-red-400">
+              <strong>Save failed:</strong> {saveError}
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
               {editingTrade ? 'Edit Trade' : 'New Trade'}
