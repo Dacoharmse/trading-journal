@@ -469,10 +469,17 @@ function TradesPageContent() {
       throw new Error(body.error || body.details || `Save failed (${res.status})`)
     }
 
-    // Success: close form and silently refresh
+    const { trade: savedTrade } = await res.json()
+
+    // Update local state immediately with the returned trade (no refetch needed)
+    if (tradeData.id) {
+      setTrades((prev) => prev.map((t) => t.id === savedTrade.id ? savedTrade : t))
+    } else {
+      setTrades((prev) => [savedTrade, ...prev])
+    }
+
     setTradeSheetOpen(false)
     setEditingTrade(null)
-    fetchData(false, true).catch((err) => console.error('Error refreshing trades:', err))
   }
 
   const handleDeleteTrade = async (trade: Trade) => {
@@ -488,7 +495,8 @@ function TradesPageContent() {
         throw new Error(body.error || `Delete failed (${res.status})`)
       }
 
-      await fetchData()
+      // Remove from local state immediately
+      setTrades((prev) => prev.filter((t) => t.id !== trade.id))
       setDrawerOpen(false)
       setSelectedTrade(null)
     } catch (err) {
@@ -566,9 +574,11 @@ function TradesPageContent() {
           const body = await res.json().catch(() => ({}))
           throw new Error(body.error || `Update failed (${res.status})`)
         }
+        const { trade: saved } = await res.json()
+        // Update local state immediately
+        setTrades((prev) => prev.map((t) => t.id === saved.id ? saved : t))
       }
 
-      await fetchData()
       setBulkEditOpen(false)
       clearSelection()
     } catch (err) {
