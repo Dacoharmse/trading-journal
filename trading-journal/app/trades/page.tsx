@@ -457,22 +457,16 @@ function TradesPageContent() {
   }
 
   const handleSaveTrade = async (tradeData: Partial<Trade>) => {
-    if (tradeData.id) {
-      // Update existing trade - don't overwrite user_id
-      const { id, ...updateData } = tradeData
-      const { error } = await supabase
-        .from('trades')
-        .update(updateData)
-        .eq('id', id)
+    const method = tradeData.id ? 'PATCH' : 'POST'
+    const res = await fetch('/api/trades', {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tradeData),
+    })
 
-      if (error) throw error
-    } else {
-      // Insert new trade - include user_id
-      const { error } = await supabase
-        .from('trades')
-        .insert([{ ...tradeData, user_id: userId }])
-
-      if (error) throw error
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body.error || body.details || `Save failed (${res.status})`)
     }
 
     // Success: close form and silently refresh
@@ -483,12 +477,16 @@ function TradesPageContent() {
 
   const handleDeleteTrade = async (trade: Trade) => {
     try {
-      const { error } = await supabase
-        .from('trades')
-        .delete()
-        .eq('id', trade.id)
+      const res = await fetch('/api/trades', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: trade.id }),
+      })
 
-      if (error) throw error
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.error || `Delete failed (${res.status})`)
+      }
 
       await fetchData()
       setDrawerOpen(false)
@@ -559,12 +557,15 @@ function TradesPageContent() {
           updatedTrade.rule_breaks = newRuleBreaks.join(', ')
         }
 
-        const { error } = await supabase
-          .from('trades')
-          .update(updatedTrade)
-          .eq('id', tradeId)
-
-        if (error) throw error
+        const res = await fetch('/api/trades', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedTrade),
+        })
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}))
+          throw new Error(body.error || `Update failed (${res.status})`)
+        }
       }
 
       await fetchData()
