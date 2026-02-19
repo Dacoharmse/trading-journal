@@ -1,6 +1,3 @@
--- Add MAE/MFE columns to trades table
-ALTER TABLE trades ADD COLUMN IF NOT EXISTS mae_r NUMERIC(10, 4);
-ALTER TABLE trades ADD COLUMN IF NOT EXISTS mfe_r NUMERIC(10, 4);
-
+-- No schema changes needed (MAE/MFE columns removed per product decision)
 -- Notify PostgREST to reload schema cache
 NOTIFY pgrst, 'reload schema';

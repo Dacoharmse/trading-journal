@@ -83,11 +83,10 @@ export function NewTradeSheet({
 
   // Trade outcome fields
   const [exitDate, setExitDate] = React.useState<string>('')
+  const [size, setSize] = React.useState<string>('')
   const [pnlAmount, setPnlAmount] = React.useState<string>('')
   const [actualRr, setActualRr] = React.useState<string>('')
   const [outcome, setOutcome] = React.useState<'win' | 'loss' | 'breakeven' | ''>('')
-  const [mae, setMae] = React.useState<string>('')
-  const [mfe, setMfe] = React.useState<string>('')
 
   // Categorisation
   const [strategy, setStrategy] = React.useState<string>('')
@@ -426,8 +425,7 @@ export function NewTradeSheet({
       }
       setStrategy(trade.strategy || '')
       setExitDate(trade.exit_date || '')
-      setMae(trade.mae_r?.toString() || '')
-      setMfe(trade.mfe_r?.toString() || '')
+      setSize(trade.size?.toString() || '')
       setConfluences(trade.confluences || '')
       setNotes(trade.notes || '')
       setCloseReason(trade.close_reason || '')
@@ -476,8 +474,7 @@ export function NewTradeSheet({
     setRiskR('1.0')
     setShowPlannedSetup(false)
     setExitDate('')
-    setMae('')
-    setMfe('')
+    setSize('')
     setStrategy('')
     setConfluences('')
     setCloseReason('')
@@ -646,10 +643,9 @@ export function NewTradeSheet({
       setup_score: playbookId ? setupScore : null,
       setup_grade: playbookId ? setupGrade : null,
       exit_date: exitDate || null,
+      size: size ? parseFloat(size) : null,
       strategy: strategy || null,
       confluences: confluences || null,
-      mae_r: mae ? parseFloat(mae) : null,
-      mfe_r: mfe ? parseFloat(mfe) : null,
       close_reason: closeReason || null,
       notes: notes || null,
       media_urls: media.map((m) => m.url),
@@ -1320,28 +1316,15 @@ export function NewTradeSheet({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  MAE (R) <span className="text-xs text-gray-500">Max Adverse Excursion</span>
+                  Size (lots)
                 </label>
                 <input
                   type="number"
                   step="0.01"
-                  value={mae}
-                  onChange={(e) => setMae(e.target.value)}
-                  placeholder="e.g. -0.5"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  MFE (R) <span className="text-xs text-gray-500">Max Favorable Excursion</span>
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={mfe}
-                  onChange={(e) => setMfe(e.target.value)}
-                  placeholder="e.g. 3.2"
+                  min="0"
+                  value={size}
+                  onChange={(e) => setSize(e.target.value)}
+                  placeholder="e.g. 0.10"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
                 />
               </div>
