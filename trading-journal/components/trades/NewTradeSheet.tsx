@@ -898,21 +898,6 @@ export function NewTradeSheet({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Strategy
-                </label>
-                <input
-                  type="text"
-                  value={strategy}
-                  onChange={(e) => setStrategy(e.target.value)}
-                  placeholder="e.g. IFVG, BOS, OB..."
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Symbol *
                 </label>
                 <select
@@ -1399,19 +1384,6 @@ export function NewTradeSheet({
             </div>
 
             <div className="grid grid-cols-1 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Confluences <span className="text-xs text-gray-500">(comma-separated)</span>
-                </label>
-                <input
-                  type="text"
-                  value={confluences}
-                  onChange={(e) => setConfluences(e.target.value)}
-                  placeholder="e.g. HTF OB, FVG, BOS..."
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
-                />
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Emotional State
