@@ -82,9 +82,16 @@ export function NewTradeSheet({
   const [riskR, setRiskR] = React.useState<string>('1.0')
 
   // Trade outcome fields
+  const [exitDate, setExitDate] = React.useState<string>('')
   const [pnlAmount, setPnlAmount] = React.useState<string>('')
   const [actualRr, setActualRr] = React.useState<string>('')
   const [outcome, setOutcome] = React.useState<'win' | 'loss' | 'breakeven' | ''>('')
+  const [mae, setMae] = React.useState<string>('')
+  const [mfe, setMfe] = React.useState<string>('')
+
+  // Categorisation
+  const [strategy, setStrategy] = React.useState<string>('')
+  const [confluences, setConfluences] = React.useState<string>('')
 
   // Timeframe fields
   const [entryTimeframe, setEntryTimeframe] = React.useState<string>('')
@@ -417,7 +424,11 @@ export function NewTradeSheet({
       if (trade.stop_pips || trade.target_pips || trade.rr_planned) {
         setShowPlannedSetup(true)
       }
-      setStrategyId(trade.strategy_id || '')
+      setStrategy(trade.strategy || '')
+      setExitDate(trade.exit_date || '')
+      setMae(trade.mae_r?.toString() || '')
+      setMfe(trade.mfe_r?.toString() || '')
+      setConfluences(trade.confluences || '')
       setNotes(trade.notes || '')
       setCloseReason(trade.close_reason || '')
       setEmotionalState(trade.emotional_state || '')
@@ -464,6 +475,11 @@ export function NewTradeSheet({
     setRrPlanned('')
     setRiskR('1.0')
     setShowPlannedSetup(false)
+    setExitDate('')
+    setMae('')
+    setMfe('')
+    setStrategy('')
+    setConfluences('')
     setCloseReason('')
     setEmotionalState('')
     setPlaybookId('')
@@ -629,6 +645,11 @@ export function NewTradeSheet({
       confluences_checked: playbookId ? confluencesSnapshot : null,
       setup_score: playbookId ? setupScore : null,
       setup_grade: playbookId ? setupGrade : null,
+      exit_date: exitDate || null,
+      strategy: strategy || null,
+      confluences: confluences || null,
+      mae_r: mae ? parseFloat(mae) : null,
+      mfe_r: mfe ? parseFloat(mfe) : null,
       close_reason: closeReason || null,
       notes: notes || null,
       media_urls: media.map((m) => m.url),
@@ -875,6 +896,21 @@ export function NewTradeSheet({
                     </option>
                   ))}
                 </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Strategy
+                </label>
+                <input
+                  type="text"
+                  value={strategy}
+                  onChange={(e) => setStrategy(e.target.value)}
+                  placeholder="e.g. IFVG, BOS, OB..."
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
+                />
               </div>
             </div>
 
@@ -1216,6 +1252,18 @@ export function NewTradeSheet({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Exit Date
+                </label>
+                <input
+                  type="date"
+                  value={exitDate}
+                  onChange={(e) => setExitDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Exit Time
                 </label>
                 <input
@@ -1268,6 +1316,34 @@ export function NewTradeSheet({
                   <option value="loss">Loss</option>
                   <option value="breakeven">Break-even</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  MAE (R) <span className="text-xs text-gray-500">Max Adverse Excursion</span>
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={mae}
+                  onChange={(e) => setMae(e.target.value)}
+                  placeholder="e.g. -0.5"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  MFE (R) <span className="text-xs text-gray-500">Max Favorable Excursion</span>
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={mfe}
+                  onChange={(e) => setMfe(e.target.value)}
+                  placeholder="e.g. 3.2"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
+                />
               </div>
             </div>
 
@@ -1340,6 +1416,19 @@ export function NewTradeSheet({
             </div>
 
             <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Confluences <span className="text-xs text-gray-500">(comma-separated)</span>
+                </label>
+                <input
+                  type="text"
+                  value={confluences}
+                  onChange={(e) => setConfluences(e.target.value)}
+                  placeholder="e.g. HTF OB, FVG, BOS..."
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
+                />
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Emotional State

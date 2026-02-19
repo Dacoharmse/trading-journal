@@ -290,10 +290,21 @@ export function calculateNetPnL(trade: Trade): number {
 export function calculateHoldTime(trade: Trade): number | null {
   if (!trade.entry_date || !trade.exit_date) return null
 
-  const entry = new Date(trade.entry_date)
-  const exit = new Date(trade.exit_date)
+  // Use time components (open_time/close_time) when available for intraday accuracy
+  const entryTime = trade.open_time || trade.entry_time
+  const exitTime = trade.close_time || trade.exit_time
 
-  return Math.floor((exit.getTime() - entry.getTime()) / (1000 * 60))
+  const entryStr = entryTime
+    ? `${trade.entry_date}T${entryTime}:00`
+    : trade.entry_date
+  const exitStr = exitTime
+    ? `${trade.exit_date}T${exitTime}:00`
+    : trade.exit_date
+
+  const entry = new Date(entryStr)
+  const exit = new Date(exitStr)
+  const diff = Math.floor((exit.getTime() - entry.getTime()) / (1000 * 60))
+  return diff >= 0 ? diff : null
 }
 
 /**
