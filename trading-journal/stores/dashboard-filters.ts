@@ -214,8 +214,10 @@ export function computeDateRange(
 ): { start: Date; end: Date } {
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  // End of today (23:59:59.999) so trades entered today are not filtered out
+  const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
   let start: Date
-  let end: Date = today
+  let end: Date = endOfToday
 
   switch (dateRange) {
     case 'week':
@@ -237,7 +239,7 @@ export function computeDateRange(
       start = customStartDate
         ? new Date(customStartDate)
         : new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
-      end = customEndDate ? new Date(customEndDate) : today
+      end = customEndDate ? new Date(new Date(customEndDate).setHours(23, 59, 59, 999)) : endOfToday
       break
     case 'all':
     default:
