@@ -425,7 +425,7 @@ export function NewTradeSheet({
       }
       setStrategy(trade.strategy || '')
       setExitDate(trade.exit_date || '')
-      setSize(trade.size?.toString() || '')
+      setSize((trade.quantity ?? trade.size)?.toString() || '')
       setConfluences(trade.confluences || '')
       setNotes(trade.notes || '')
       setCloseReason(trade.close_reason || '')
@@ -643,7 +643,7 @@ export function NewTradeSheet({
       setup_score: playbookId ? setupScore : null,
       setup_grade: playbookId ? setupGrade : null,
       exit_date: exitDate || null,
-      size: size ? parseFloat(size) : null,
+      quantity: size ? parseFloat(size) : null,  // 'size' column not yet in DB; quantity is the existing column
       strategy: strategy || null,
       confluences: confluences || null,
       close_reason: closeReason || null,
