@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { X, Edit3, Copy, Trash2, TrendingUp, TrendingDown, Clock, DollarSign, Target, AlertTriangle, Loader2 } from 'lucide-react'
+import { X, Edit3, Copy, Trash2, TrendingUp, TrendingDown, Clock, DollarSign, Target, AlertTriangle, Loader2, ZoomIn } from 'lucide-react'
 import type { Trade, Account, PlaybookRule, PlaybookConfluence, PlaybookRubric } from '@/types/supabase'
 import { EMOTIONAL_STATES } from '@/types/supabase'
 import { createClient } from '@/lib/supabase/client'
@@ -25,6 +25,62 @@ import {
   type ScoreResult,
 } from '@/lib/playbook-scoring'
 import { cn } from '@/lib/utils'
+
+/** Thumbnail grid for chart screenshots with click-to-enlarge lightbox */
+function ChartImages({ label, urls }: { label: string; urls: string[] }) {
+  const [lightbox, setLightbox] = React.useState<string | null>(null)
+
+  if (urls.length === 0) return null
+
+  return (
+    <div className="mb-4">
+      {label && (
+        <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-2">{label}</p>
+      )}
+      <div className={`grid gap-2 ${urls.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+        {urls.map((url, idx) => (
+          <button
+            key={idx}
+            onClick={() => setLightbox(url)}
+            className="relative group aspect-video rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-400 dark:hover:border-neutral-500 transition-colors"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={url}
+              alt={`${label} ${idx + 1}`}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+              <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            className="absolute top-4 right-4 text-white/80 hover:text-white"
+            onClick={() => setLightbox(null)}
+          >
+            <X className="w-8 h-8" />
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={lightbox}
+            alt="Chart"
+            className="max-w-full max-h-full object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
 
 const CLOSE_REASON_LABELS: Record<string, string> = {
   tp_hit: 'Take Profit Hit',
@@ -654,20 +710,31 @@ export function TradeDrawer({
             </section>
           )}
 
-          {/* Attachments */}
-          {trade.attachments && (
-            <section>
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3 uppercase tracking-wide">
-                Attachments
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                {/* Placeholder for attachments - parse JSON and display thumbnails */}
-                <div className="aspect-video rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                  <span className="text-sm text-neutral-400">Screenshot</span>
-                </div>
-              </div>
-            </section>
-          )}
+          {/* Chart Evidence */}
+          {(() => {
+            const entryUrls: string[] = trade.media_urls ?? []
+            const htfUrls: string[] = trade.htf_media_urls ?? []
+            // Also handle legacy attachments JSON
+            const legacyUrls: string[] = (() => {
+              if (!trade.attachments) return []
+              try { return JSON.parse(trade.attachments) } catch { return [] }
+            })()
+            if (trade.image_url) legacyUrls.unshift(trade.image_url)
+
+            const hasCharts = entryUrls.length > 0 || htfUrls.length > 0 || legacyUrls.length > 0
+            if (!hasCharts) return null
+
+            return (
+              <section>
+                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3 uppercase tracking-wide">
+                  Chart Evidence
+                </h3>
+                <ChartImages label="Entry Chart" urls={entryUrls} />
+                {htfUrls.length > 0 && <ChartImages label="Analysis Chart (HTF)" urls={htfUrls} />}
+                {legacyUrls.length > 0 && <ChartImages label="Screenshots" urls={legacyUrls} />}
+              </section>
+            )
+          })()}
         </div>
       </div>
     </div>
