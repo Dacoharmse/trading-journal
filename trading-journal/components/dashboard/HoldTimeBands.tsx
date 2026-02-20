@@ -33,8 +33,14 @@ export function HoldTimeBands({ trades }: HoldTimeBandsProps) {
       const bandTrades = trades.filter(trade => {
         if (!trade.exit_date) return false
 
-        const entry = new Date(trade.entry_date)
-        const exit = new Date(trade.exit_date)
+        const entryStr = trade.open_time
+          ? `${trade.entry_date}T${trade.open_time}`
+          : trade.entry_date
+        const exitStr = trade.close_time
+          ? `${trade.exit_date}T${trade.close_time}`
+          : trade.exit_date
+        const entry = new Date(entryStr)
+        const exit = new Date(exitStr)
         const durationMs = exit.getTime() - entry.getTime()
         const durationMinutes = durationMs / (1000 * 60)
 

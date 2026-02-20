@@ -236,8 +236,14 @@ export function calculateTradeStats(trades: Trade[]): TradeStats {
     const durations = closedTrades
       .filter((trade) => trade.exit_date)
       .map((trade) => {
-        const entry = new Date(trade.entry_date)
-        const exit = new Date(trade.exit_date as string)
+        const entryStr = trade.open_time
+          ? `${trade.entry_date}T${trade.open_time}`
+          : trade.entry_date
+        const exitStr = trade.close_time
+          ? `${trade.exit_date}T${trade.close_time}`
+          : trade.exit_date as string
+        const entry = new Date(entryStr)
+        const exit = new Date(exitStr)
         return exit.getTime() - entry.getTime()
       })
       .filter((ms) => ms > 0)
@@ -269,9 +275,9 @@ export function calculateTradeStats(trades: Trade[]): TradeStats {
     total_pnl: Number(totalPnl.toFixed(2)),
     avg_win: Number(avgWin.toFixed(2)),
     avg_loss: Number(avgLoss.toFixed(2)),
-    profit_factor: Number.isFinite(rawProfitFactor) && !Number.isNaN(rawProfitFactor)
-      ? Number(rawProfitFactor.toFixed(2))
-      : 0,
+    profit_factor: Number.isNaN(rawProfitFactor) ? 0
+      : Number.isFinite(rawProfitFactor) ? Number(rawProfitFactor.toFixed(2))
+      : Infinity,
     best_day: Number(bestDay.toFixed(2)),
     worst_day: Number(worstDay.toFixed(2)),
     winning_trades: winningTrades.length,

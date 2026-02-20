@@ -11,6 +11,7 @@ import {
 import { InfoIcon, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Trade } from '@/types/trade'
+import { calculateR } from '@/lib/trade-stats'
 
 interface Playbook {
   id: string
@@ -38,15 +39,15 @@ function calculateMetrics(trades: Trade[]): PerformanceMetrics {
   const wins = trades.filter(t => t.pnl > 0).length
   const losses = trades.filter(t => t.pnl < 0).length
   const winRate = totalTrades > 0 ? (wins / totalTrades) * 100 : 0
-  const totalR = trades.reduce((sum, t) => sum + (t.r_multiple || 0), 0)
+  const totalR = trades.reduce((sum, t) => sum + (calculateR(t) ?? 0), 0)
   const avgR = totalTrades > 0 ? totalR / totalTrades : 0
 
   // Expectancy = (Win Rate × Avg Win) - (Loss Rate × Avg Loss)
   const avgWinR = wins > 0
-    ? trades.filter(t => t.pnl > 0).reduce((sum, t) => sum + (t.r_multiple || 0), 0) / wins
+    ? trades.filter(t => t.pnl > 0).reduce((sum, t) => sum + (calculateR(t) ?? 0), 0) / wins
     : 0
   const avgLossR = losses > 0
-    ? Math.abs(trades.filter(t => t.pnl < 0).reduce((sum, t) => sum + (t.r_multiple || 0), 0) / losses)
+    ? Math.abs(trades.filter(t => t.pnl < 0).reduce((sum, t) => sum + (calculateR(t) ?? 0), 0) / losses)
     : 0
   const expectancy = (winRate / 100) * avgWinR - ((100 - winRate) / 100) * avgLossR
 
