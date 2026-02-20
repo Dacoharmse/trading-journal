@@ -60,7 +60,7 @@ interface Trade {
   exit_date: string | null
   status: 'open' | 'closed'
   notes: string | null
-  setup_name: string | null
+  setup_grade: string | null
   chart_image_url: string | null
   timeframe: string | null
   rr_ratio: number | null
@@ -138,7 +138,7 @@ export default function PublishTradePage() {
         const [tradesRes, publishedRes, studentsRes] = await Promise.all([
           supabase
             .from('trades')
-            .select('id, symbol_id, direction, entry_date, exit_date, pnl, status, notes, setup_name, media_urls, rr_planned, tags, symbols(code, display_name)')
+            .select('id, symbol_id, direction, entry_date, exit_date, pnl, status, notes, setup_grade, media_urls, rr_planned, tags, symbols(code, display_name)')
             .eq('user_id', user.id)
             .order('entry_date', { ascending: false })
             .limit(200),
@@ -146,7 +146,7 @@ export default function PublishTradePage() {
             .from('published_trades')
             .select(`
               *,
-              trade:trade_id (id, symbol_id, direction, entry_date, pnl, status, notes, setup_name, media_urls, rr_planned, tags, symbols(code, display_name))
+              trade:trade_id (id, symbol_id, direction, entry_date, pnl, status, notes, setup_grade, media_urls, rr_planned, tags, symbols(code, display_name))
             `)
             .eq('mentor_id', user.id)
             .order('created_at', { ascending: false }),
@@ -243,7 +243,7 @@ export default function PublishTradePage() {
       filtered = filtered.filter(
         (t) =>
           t.symbol.toLowerCase().includes(search) ||
-          t.setup_name?.toLowerCase().includes(search) ||
+          t.setup_grade?.toLowerCase().includes(search) ||
           t.notes?.toLowerCase().includes(search)
       )
     }
@@ -692,7 +692,7 @@ export default function PublishTradePage() {
                         <div className="flex-1">
                           <CardTitle className="text-lg">{trade.symbol}</CardTitle>
                           <CardDescription>
-                            {trade.setup_name || 'No setup name'}
+                            {trade.setup_grade || 'No setup grade'}
                           </CardDescription>
                         </div>
                       </div>
