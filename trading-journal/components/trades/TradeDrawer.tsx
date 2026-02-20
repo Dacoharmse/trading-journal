@@ -191,7 +191,7 @@ export function TradeDrawer({
                 {trade.symbol}
               </h2>
               <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-                {account?.name} · {trade.exit_date || trade.entry_date}
+                {account?.name} · {(trade.exit_date || trade.entry_date || '').split('T')[0]}
               </p>
             </div>
             <button
@@ -393,42 +393,90 @@ export function TradeDrawer({
                   {getDirectionIcon(trade.direction)} {trade.direction}
                 </span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-neutral-600 dark:text-neutral-400">Entry Price</span>
-                <span className="font-medium text-neutral-900 dark:text-white">
-                  {trade.entry_price?.toFixed(2) || 'N/A'}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-neutral-600 dark:text-neutral-400">Stop Loss</span>
-                <span className="font-medium text-neutral-900 dark:text-white">
-                  {trade.stop_price?.toFixed(2) || 'N/A'}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-neutral-600 dark:text-neutral-400">Exit Price</span>
-                <span className="font-medium text-neutral-900 dark:text-white">
-                  {trade.exit_price?.toFixed(2) || 'N/A'}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-neutral-600 dark:text-neutral-400">Size</span>
-                <span className="font-medium text-neutral-900 dark:text-white">
-                  {trade.size || 'N/A'}
-                </span>
-              </div>
+              {/* Entry time */}
               <div className="flex justify-between text-sm">
                 <span className="text-neutral-600 dark:text-neutral-400">Entry Time</span>
                 <span className="font-medium text-neutral-900 dark:text-white">
-                  {trade.entry_date} {trade.entry_time || ''}
+                  {(trade.entry_date || '').split('T')[0]}
+                  {(trade.open_time || trade.entry_time) ? ` · ${trade.open_time || trade.entry_time}` : ''}
                 </span>
               </div>
+              {/* Exit time */}
               {trade.exit_date && (
                 <div className="flex justify-between text-sm">
                   <span className="text-neutral-600 dark:text-neutral-400">Exit Time</span>
                   <span className="font-medium text-neutral-900 dark:text-white">
-                    {trade.exit_date} {trade.exit_time || ''}
+                    {trade.exit_date.split('T')[0]}
+                    {(trade.close_time || trade.exit_time) ? ` · ${trade.close_time || trade.exit_time}` : ''}
                   </span>
+                </div>
+              )}
+              {/* Size */}
+              {(trade.quantity ?? trade.size) != null && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-600 dark:text-neutral-400">Size (lots)</span>
+                  <span className="font-medium text-neutral-900 dark:text-white">
+                    {(trade.quantity ?? trade.size)?.toFixed(2)}
+                  </span>
+                </div>
+              )}
+              {/* Result pips */}
+              {trade.pips != null && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-600 dark:text-neutral-400">Result (pips)</span>
+                  <span className={`font-medium ${trade.pips >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                    {trade.pips >= 0 ? '+' : ''}{trade.pips.toFixed(1)}
+                  </span>
+                </div>
+              )}
+              {/* Stop distance */}
+              {(trade.actual_stop_pips ?? trade.stop_pips) != null && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-600 dark:text-neutral-400">Stop Distance (pips)</span>
+                  <span className="font-medium text-neutral-900 dark:text-white">
+                    {(trade.actual_stop_pips ?? trade.stop_pips)!.toFixed(1)}
+                    {trade.actual_stop_pips != null && trade.stop_pips != null && trade.actual_stop_pips !== trade.stop_pips && (
+                      <span className="text-neutral-400 dark:text-neutral-500 text-xs ml-1">(planned: {trade.stop_pips.toFixed(1)})</span>
+                    )}
+                  </span>
+                </div>
+              )}
+              {/* TP distance */}
+              {(trade.actual_target_pips ?? trade.target_pips) != null && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-600 dark:text-neutral-400">TP Distance (pips)</span>
+                  <span className="font-medium text-neutral-900 dark:text-white">
+                    {(trade.actual_target_pips ?? trade.target_pips)!.toFixed(1)}
+                    {trade.actual_target_pips != null && trade.target_pips != null && trade.actual_target_pips !== trade.target_pips && (
+                      <span className="text-neutral-400 dark:text-neutral-500 text-xs ml-1">(planned: {trade.target_pips.toFixed(1)})</span>
+                    )}
+                  </span>
+                </div>
+              )}
+              {/* Planned R:R */}
+              {trade.rr_planned != null && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-600 dark:text-neutral-400">Planned R:R</span>
+                  <span className="font-medium text-neutral-900 dark:text-white">1:{trade.rr_planned.toFixed(2)}</span>
+                </div>
+              )}
+              {/* Entry / Stop / Exit price — only shown if present */}
+              {trade.entry_price != null && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-600 dark:text-neutral-400">Entry Price</span>
+                  <span className="font-medium text-neutral-900 dark:text-white">{trade.entry_price.toFixed(5)}</span>
+                </div>
+              )}
+              {trade.stop_price != null && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-600 dark:text-neutral-400">Stop Loss Price</span>
+                  <span className="font-medium text-neutral-900 dark:text-white">{trade.stop_price.toFixed(5)}</span>
+                </div>
+              )}
+              {trade.exit_price != null && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-600 dark:text-neutral-400">Exit Price</span>
+                  <span className="font-medium text-neutral-900 dark:text-white">{trade.exit_price.toFixed(5)}</span>
                 </div>
               )}
               {trade.close_reason && (
@@ -442,32 +490,32 @@ export function TradeDrawer({
             </div>
           </section>
 
-          {/* MAE/MFE */}
-          {(trade.mae_r !== null || trade.mfe_r !== null) && (
+          {/* MAE/MFE — only shown when at least one value was recorded */}
+          {(trade.mae_pips != null || trade.mfe_pips != null) && (
             <section>
               <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3 uppercase tracking-wide">
                 Excursion
               </h3>
               <div className="grid grid-cols-2 gap-4">
-                {trade.mae_r !== null && (
+                {trade.mae_pips != null && (
                   <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/30">
                     <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-xs mb-1">
                       <TrendingDown className="w-4 h-4" />
                       MAE (Max Adverse Excursion)
                     </div>
                     <div className="text-xl font-bold text-red-600 dark:text-red-400">
-                      {formatR(trade.mae_r)}
+                      {trade.mae_pips.toFixed(1)} pips
                     </div>
                   </div>
                 )}
-                {trade.mfe_r !== null && (
+                {trade.mfe_pips != null && (
                   <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950/30">
                     <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-xs mb-1">
                       <TrendingUp className="w-4 h-4" />
                       MFE (Max Favorable Excursion)
                     </div>
                     <div className="text-xl font-bold text-green-600 dark:text-green-400">
-                      {formatR(trade.mfe_r)}
+                      {trade.mfe_pips.toFixed(1)} pips
                     </div>
                   </div>
                 )}
