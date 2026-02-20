@@ -182,7 +182,7 @@ export default function Home() {
   }, [filters.accountId, filters.units, filters.baseCurrency, accounts])
 
   return (
-    <div className="flex-1 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-neutral-950 dark:to-neutral-900">
+    <div className="flex-1 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#06050e] dark:to-[#0c0a1a]">
       {/* Sticky Filter Bar */}
       <FilterBar />
 

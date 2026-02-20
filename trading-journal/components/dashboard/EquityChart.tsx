@@ -5,6 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Trade } from "@/types/trade"
 import { calculateR, calculateMaxDrawdownR } from "@/lib/trade-stats"
 import { TrendingUp } from "lucide-react"
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine,
+} from "recharts"
 
 interface EquityChartProps {
   trades: Trade[]
@@ -15,8 +25,22 @@ interface EquityChartProps {
 export function EquityChart({ trades, units, currency }: EquityChartProps) {
   const [timeRange, setTimeRange] = React.useState<'week' | 'month'>('month')
 
-  // Calculate equity curve data with markers
-  const equityCurve = React.useMemo(() => {
+  const formatValue = React.useCallback((value: number) => {
+    if (units === 'r') return `${value.toFixed(1)}R`
+    if (currency === 'R') return `${value.toFixed(0)}R`
+    try {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(value)
+    } catch {
+      return `$${value.toFixed(0)}`
+    }
+  }, [units, currency])
+
+  const { chartData, markers, drawdownInfo } = React.useMemo(() => {
     const sorted = [...trades].sort((a, b) => {
       const dateA = new Date(a.exit_date || a.entry_date).getTime()
       const dateB = new Date(b.exit_date || b.entry_date).getTime()
@@ -38,42 +62,26 @@ export function EquityChart({ trades, units, currency }: EquityChartProps) {
     let ddStartIndex = -1
     let ddEndIndex = -1
     let maxDD = 0
-
-    const points: Array<{
-      date: string
-      value: number
-      cumulative: number
-      drawdown: number
-      trade: Trade
-    }> = []
-
-    // Track best/worst trades
     let bestTradeIndex = -1
     let worstTradeIndex = -1
     let bestR = -Infinity
     let worstR = Infinity
 
+    const points: Array<{
+      label: string
+      cumulative: number
+      marker?: string
+    }> = []
+
     filtered.forEach((trade, idx) => {
       const value = units === 'r' ? (calculateR(trade) || 0) : trade.pnl
       const r = calculateR(trade) || 0
-
       cumulativeValue += value
 
-      // Track best/worst by R
-      if (r > bestR) {
-        bestR = r
-        bestTradeIndex = idx
-      }
-      if (r < worstR) {
-        worstR = r
-        worstTradeIndex = idx
-      }
+      if (r > bestR) { bestR = r; bestTradeIndex = idx }
+      if (r < worstR) { worstR = r; worstTradeIndex = idx }
 
-      // Track drawdown
-      if (cumulativeValue > peak) {
-        peak = cumulativeValue
-        peakIndex = idx
-      }
+      if (cumulativeValue > peak) { peak = cumulativeValue; peakIndex = idx }
 
       const drawdown = peak - cumulativeValue
       if (drawdown > maxDD) {
@@ -82,66 +90,51 @@ export function EquityChart({ trades, units, currency }: EquityChartProps) {
         ddEndIndex = idx
       }
 
+      const tradeDate = new Date(trade.exit_date || trade.entry_date)
       points.push({
-        date: new Date(trade.exit_date || trade.entry_date).toISOString(),
-        value,
-        cumulative: cumulativeValue,
-        drawdown: -drawdown,
-        trade
+        label: tradeDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        cumulative: +cumulativeValue.toFixed(4),
       })
     })
 
-    // Find first recovery to new high after max DD
+    // Mark special points
+    const markerSet = new Set<number>()
+    if (bestTradeIndex >= 0) markerSet.add(bestTradeIndex)
+    if (worstTradeIndex >= 0) markerSet.add(worstTradeIndex)
+    if (ddStartIndex >= 0) markerSet.add(ddStartIndex)
+    if (ddEndIndex >= 0) markerSet.add(ddEndIndex)
+
+    // Find recovery
     let recoveryIndex = -1
     if (ddEndIndex >= 0) {
       const ddPeak = points[ddStartIndex]?.cumulative || 0
       for (let i = ddEndIndex + 1; i < points.length; i++) {
-        if (points[i].cumulative > ddPeak) {
-          recoveryIndex = i
-          break
-        }
+        if (points[i].cumulative > ddPeak) { recoveryIndex = i; break }
       }
     }
 
+    // Add start point at 0
+    const chartData = [
+      { label: '', cumulative: 0 },
+      ...points,
+    ]
+
     return {
-      points,
-      markers: {
-        bestTradeIndex,
-        worstTradeIndex,
-        ddStartIndex,
-        ddEndIndex,
-        recoveryIndex,
-        bestR,
-        worstR,
-      }
+      chartData,
+      markers: { bestTradeIndex, worstTradeIndex, ddStartIndex, ddEndIndex, recoveryIndex, bestR, worstR },
+      drawdownInfo: calculateMaxDrawdownR(trades),
     }
   }, [trades, units, timeRange])
 
-  // Calculate max drawdown info
-  const drawdownInfo = React.useMemo(() => {
-    return calculateMaxDrawdownR(trades)
-  }, [trades])
+  const maxDD = units === 'r' ? drawdownInfo.maxDrawdownR : drawdownInfo.maxDrawdownCurrency
 
-  const formatCurrency = (value: number) => {
-    try {
-      return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: currency,
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(value)
-    } catch {
-      return `$${value.toFixed(0)}`
-    }
-  }
+  const dataPoints = chartData.slice(1) // exclude the leading 0
+  const currentValue = dataPoints.length > 0 ? dataPoints[dataPoints.length - 1].cumulative : 0
+  const isPositive = currentValue >= 0
 
-  const formatValue = (value: number) => {
-    return units === 'r' ? `${value.toFixed(1)}R` : formatCurrency(value)
-  }
-
-  if (equityCurve.points.length === 0) {
+  if (dataPoints.length === 0) {
     return (
-      <Card className="border-0 bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm shadow-lg">
+      <Card className="border-0 bg-white/60 dark:bg-[#13111f]/60 backdrop-blur-sm shadow-lg">
         <CardHeader>
           <CardTitle className="text-sm font-semibold">Equity Curve</CardTitle>
         </CardHeader>
@@ -157,27 +150,61 @@ export function EquityChart({ trades, units, currency }: EquityChartProps) {
     )
   }
 
-  const { points, markers } = equityCurve
+  // Custom dot renderer — shows emoji for special points, nothing otherwise
+  const renderDot = (props: any) => {
+    const { cx, cy, index } = props
+    const dataIndex = index - 1 // offset for the leading 0 start point
 
-  const maxValue = Math.max(...points.map(d => d.cumulative), 0)
-  const minValue = Math.min(...points.map(d => Math.min(d.cumulative, d.drawdown)), 0)
-  const range = maxValue - minValue || 1
+    if (index === 0 || dataIndex < 0) return <g key={`dot-${index}`} />
 
-  const maxDD = units === 'r' ? drawdownInfo.maxDrawdownR : drawdownInfo.maxDrawdownCurrency
+    const emojis: string[] = []
+    if (dataIndex === markers.bestTradeIndex) emojis.push('🏆')
+    if (dataIndex === markers.worstTradeIndex) emojis.push('💥')
+    if (dataIndex === markers.ddStartIndex && dataIndex !== markers.bestTradeIndex) emojis.push('📉')
+    if (dataIndex === markers.ddEndIndex && dataIndex !== markers.worstTradeIndex) emojis.push('📍')
+    if (dataIndex === markers.recoveryIndex) emojis.push('✅')
+
+    if (emojis.length === 0) return <g key={`dot-${index}`} />
+
+    return (
+      <text
+        key={`dot-${index}`}
+        x={cx}
+        y={cy - 12}
+        textAnchor="middle"
+        fontSize="14"
+        dominantBaseline="auto"
+      >
+        {emojis.join('')}
+      </text>
+    )
+  }
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (!active || !payload?.[0]) return null
+    const pt = payload[0].payload
+    if (!pt.label) return null
+    return (
+      <div className="bg-[#13111f] border border-[#2d2654] rounded-lg px-3 py-2 shadow-xl text-xs">
+        <p className="text-[#9b8aff] font-medium mb-0.5">{pt.label}</p>
+        <p className={`font-bold text-sm ${pt.cumulative >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+          {formatValue(pt.cumulative)}
+        </p>
+      </div>
+    )
+  }
+
+  const gradientId = isPositive ? 'equityPos' : 'equityNeg'
+  const strokeColor = isPositive ? '#22c55e' : '#ef4444'
 
   return (
-    <Card className="border-0 bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm shadow-lg">
+    <Card className="border-0 bg-white/60 dark:bg-[#13111f]/60 backdrop-blur-sm shadow-lg">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-sm font-semibold">Equity Curve</CardTitle>
             <div className="text-xs text-muted-foreground mt-1">
               Max DD: {formatValue(maxDD)}
-              {drawdownInfo.peakDate && drawdownInfo.troughDate && (
-                <span className="ml-2">
-                  ({new Date(drawdownInfo.peakDate).toLocaleDateString()} → {new Date(drawdownInfo.troughDate).toLocaleDateString()})
-                </span>
-              )}
             </div>
           </div>
           <div className="flex gap-1 bg-muted rounded-md p-1">
@@ -203,192 +230,70 @@ export function EquityChart({ trades, units, currency }: EquityChartProps) {
 
       <CardContent>
         <div className="h-64 relative">
-          {/* Y-axis labels */}
-          <div className="absolute left-0 top-0 bottom-0 w-12 flex flex-col justify-between text-xs text-muted-foreground pr-2 text-right">
-            <span>{formatValue(maxValue)}</span>
-            <span>0</span>
-            <span>{formatValue(minValue)}</span>
-          </div>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 24, right: 8, left: 0, bottom: 4 }}>
+              <defs>
+                <linearGradient id="equityPos" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#22c55e" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="#22c55e" stopOpacity={0.03} />
+                </linearGradient>
+                <linearGradient id="equityNeg" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#ef4444" stopOpacity={0.03} />
+                  <stop offset="100%" stopColor="#ef4444" stopOpacity={0.25} />
+                </linearGradient>
+              </defs>
 
-          {/* Chart area */}
-          <div className="absolute left-12 right-0 top-0 bottom-0">
-            <svg className="w-full h-full" viewBox="0 0 1000 300" preserveAspectRatio="none">
-              {/* Zero line */}
-              <line
-                x1="0"
-                y1={((maxValue - 0) / range) * 300}
-                x2="1000"
-                y2={((maxValue - 0) / range) * 300}
-                stroke="currentColor"
-                strokeWidth="1"
-                strokeDasharray="4 4"
-                className="text-muted-foreground/30"
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="rgba(255,255,255,0.05)"
+                vertical={false}
               />
+              <XAxis
+                dataKey="label"
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                axisLine={false}
+                tickLine={false}
+                interval="preserveStartEnd"
+              />
+              <YAxis
+                tickFormatter={formatValue}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                axisLine={false}
+                tickLine={false}
+                width={52}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <ReferenceLine y={0} stroke="rgba(255,255,255,0.15)" strokeDasharray="4 4" />
+              <Area
+                type="monotone"
+                dataKey="cumulative"
+                stroke={strokeColor}
+                strokeWidth={2}
+                fill={`url(#${gradientId})`}
+                dot={renderDot}
+                activeDot={{ r: 4, fill: strokeColor, strokeWidth: 0 }}
+                isAnimationActive={false}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
 
-              {/* Drawdown area (red) */}
-              {points.length > 1 && (
-                <path
-                  d={`
-                    M 0,${((maxValue - 0) / range) * 300}
-                    ${points.map((point, i) => {
-                      const x = (i / (points.length - 1)) * 1000
-                      const y = ((maxValue - Math.min(point.drawdown, 0)) / range) * 300
-                      return `L ${x},${y}`
-                    }).join(' ')}
-                    L 1000,${((maxValue - 0) / range) * 300}
-                    Z
-                  `}
-                  fill="rgba(239, 68, 68, 0.1)"
-                  stroke="none"
-                />
-              )}
-
-              {/* Equity curve line */}
-              {points.length > 1 && (
-                <polyline
-                  points={points.map((point, i) => {
-                    const x = (i / (points.length - 1)) * 1000
-                    const y = ((maxValue - point.cumulative) / range) * 300
-                    return `${x},${y}`
-                  }).join(' ')}
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  className={points[points.length - 1].cumulative >= 0 ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'}
-                />
-              )}
-
-              {/* Markers */}
-              {/* Best Trade (Trophy) */}
-              {markers.bestTradeIndex >= 0 && (
-                <g>
-                  <circle
-                    cx={(markers.bestTradeIndex / (points.length - 1)) * 1000}
-                    cy={((maxValue - points[markers.bestTradeIndex].cumulative) / range) * 300}
-                    r="5"
-                    fill="rgb(34, 197, 94)"
-                    stroke="white"
-                    strokeWidth="2"
-                  />
-                  <text
-                    x={(markers.bestTradeIndex / (points.length - 1)) * 1000}
-                    y={((maxValue - points[markers.bestTradeIndex].cumulative) / range) * 300 - 12}
-                    textAnchor="middle"
-                    className="text-[10px] font-bold"
-                  >
-                    🏆
-                  </text>
-                </g>
-              )}
-
-              {/* Worst Trade (Explosion) */}
-              {markers.worstTradeIndex >= 0 && (
-                <g>
-                  <circle
-                    cx={(markers.worstTradeIndex / (points.length - 1)) * 1000}
-                    cy={((maxValue - points[markers.worstTradeIndex].cumulative) / range) * 300}
-                    r="5"
-                    fill="rgb(239, 68, 68)"
-                    stroke="white"
-                    strokeWidth="2"
-                  />
-                  <text
-                    x={(markers.worstTradeIndex / (points.length - 1)) * 1000}
-                    y={((maxValue - points[markers.worstTradeIndex].cumulative) / range) * 300 - 12}
-                    textAnchor="middle"
-                    className="text-[10px] font-bold"
-                  >
-                    💥
-                  </text>
-                </g>
-              )}
-
-              {/* Max DD Start (Trending Down) */}
-              {markers.ddStartIndex >= 0 && (
-                <g>
-                  <circle
-                    cx={(markers.ddStartIndex / (points.length - 1)) * 1000}
-                    cy={((maxValue - points[markers.ddStartIndex].cumulative) / range) * 300}
-                    r="4"
-                    fill="rgb(249, 115, 22)"
-                    stroke="white"
-                    strokeWidth="1.5"
-                  />
-                  <text
-                    x={(markers.ddStartIndex / (points.length - 1)) * 1000}
-                    y={((maxValue - points[markers.ddStartIndex].cumulative) / range) * 300 - 10}
-                    textAnchor="middle"
-                    className="text-[10px] font-bold"
-                  >
-                    📉
-                  </text>
-                </g>
-              )}
-
-              {/* Max DD End (Trough) */}
-              {markers.ddEndIndex >= 0 && (
-                <g>
-                  <circle
-                    cx={(markers.ddEndIndex / (points.length - 1)) * 1000}
-                    cy={((maxValue - points[markers.ddEndIndex].cumulative) / range) * 300}
-                    r="5"
-                    fill="rgb(220, 38, 38)"
-                    stroke="white"
-                    strokeWidth="2"
-                    className="animate-pulse"
-                  />
-                  <text
-                    x={(markers.ddEndIndex / (points.length - 1)) * 1000}
-                    y={((maxValue - points[markers.ddEndIndex].cumulative) / range) * 300 + 18}
-                    textAnchor="middle"
-                    className="fill-red-600 dark:fill-red-500 text-[9px] font-bold"
-                  >
-                    Max DD
-                  </text>
-                </g>
-              )}
-
-              {/* Recovery Point (Check) */}
-              {markers.recoveryIndex >= 0 && (
-                <g>
-                  <circle
-                    cx={(markers.recoveryIndex / (points.length - 1)) * 1000}
-                    cy={((maxValue - points[markers.recoveryIndex].cumulative) / range) * 300}
-                    r="4"
-                    fill="rgb(34, 197, 94)"
-                    stroke="white"
-                    strokeWidth="1.5"
-                  />
-                  <text
-                    x={(markers.recoveryIndex / (points.length - 1)) * 1000}
-                    y={((maxValue - points[markers.recoveryIndex].cumulative) / range) * 300 - 10}
-                    textAnchor="middle"
-                    className="text-[10px] font-bold"
-                  >
-                    ✅
-                  </text>
-                </g>
-              )}
-            </svg>
-          </div>
-
-          {/* Current value indicator */}
-          <div className="absolute bottom-0 right-0 text-right">
-            <div className={`text-2xl font-bold ${points[points.length - 1].cumulative >= 0 ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'}`}>
-              {formatValue(points[points.length - 1].cumulative)}
+          {/* Current value overlay */}
+          <div className="absolute bottom-6 right-10 text-right pointer-events-none">
+            <div className={`text-2xl font-bold ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+              {formatValue(currentValue)}
             </div>
           </div>
         </div>
 
         {/* Legend */}
-        <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
+        <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5">
             <span>🏆</span>
-            <span>Best trade ({markers.bestR > 0 ? '+' : ''}{markers.bestR.toFixed(1)}R)</span>
+            <span>Best trade ({markers.bestR > -Infinity ? `${markers.bestR > 0 ? '+' : ''}${markers.bestR.toFixed(1)}R` : '--'})</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span>💥</span>
-            <span>Worst trade ({markers.worstR.toFixed(1)}R)</span>
+            <span>Worst trade ({markers.worstR < Infinity ? `${markers.worstR.toFixed(1)}R` : '--'})</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span>📉</span>
@@ -404,15 +309,6 @@ export function EquityChart({ trades, units, currency }: EquityChartProps) {
               <span>Recovery</span>
             </div>
           )}
-        </div>
-
-        {/* Screen reader description */}
-        <div className="sr-only">
-          Equity curve showing cumulative {units === 'r' ? 'R' : 'profit and loss'} over {timeRange}.
-          Current value: {formatValue(points[points.length - 1].cumulative)}.
-          Maximum drawdown: {formatValue(maxDD)}.
-          Best trade: {markers.bestR.toFixed(1)}R.
-          Worst trade: {markers.worstR.toFixed(1)}R.
         </div>
       </CardContent>
     </Card>
