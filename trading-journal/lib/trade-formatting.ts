@@ -148,8 +148,9 @@ export function getDirectionIcon(direction: 'long' | 'short'): string {
  * @param tags - Tags string or null
  * @returns Array of tags
  */
-export function parseTags(tags: string | null | undefined): string[] {
-  if (!tags) return []
+export function parseTags(tags: string | string[] | null | undefined): string[] {
+  if (!tags || (Array.isArray(tags) && tags.length === 0)) return []
+  if (Array.isArray(tags)) return tags.filter(Boolean)
   return tags.split(',').map(t => t.trim()).filter(Boolean)
 }
 
@@ -158,8 +159,9 @@ export function parseTags(tags: string | null | undefined): string[] {
  * @param confluences - Confluences string or null
  * @returns Array of confluences
  */
-export function parseConfluences(confluences: string | null | undefined): string[] {
-  if (!confluences) return []
+export function parseConfluences(confluences: string | string[] | null | undefined): string[] {
+  if (!confluences || (Array.isArray(confluences) && confluences.length === 0)) return []
+  if (Array.isArray(confluences)) return confluences.filter(Boolean)
   return confluences.split(',').map(c => c.trim()).filter(Boolean)
 }
 

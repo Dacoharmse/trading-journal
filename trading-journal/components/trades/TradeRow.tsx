@@ -4,6 +4,16 @@ import React from 'react'
 import { Paperclip, Edit3, Trash2 } from 'lucide-react'
 import type { Trade, Account } from '@/types/supabase'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
   calculateR,
   formatPnL,
   formatR,
@@ -45,6 +55,7 @@ export function TradeRow({
   onEdit,
   onDelete,
 }: TradeRowProps) {
+  const [deleteOpen, setDeleteOpen] = React.useState(false)
   const r = calculateR(trade)
   const holdTime = calculateHoldTime(trade)
 
@@ -60,6 +71,7 @@ export function TradeRow({
   }
 
   return (
+    <>
     <tr
       onClick={handleRowClick}
       className={`border-b border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 cursor-pointer transition-colors ${
@@ -326,9 +338,7 @@ export function TradeRow({
           <button
             onClick={(e) => {
               e.stopPropagation()
-              if (window.confirm('Delete this trade? This cannot be undone.')) {
-                onDelete(trade)
-              }
+              setDeleteOpen(true)
             }}
             className="p-1.5 rounded text-neutral-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
             title="Delete trade"
@@ -338,5 +348,26 @@ export function TradeRow({
         </div>
       </td>
     </tr>
+
+    <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete trade?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This will permanently delete the trade for <strong>{trade.symbol}</strong>. This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => onDelete(trade)}
+            className="bg-red-600 hover:bg-red-700 text-white"
+          >
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   )
 }

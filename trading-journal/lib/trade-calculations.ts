@@ -298,12 +298,10 @@ export function calculateHoldTime(trade: Trade): number | null {
   const entryDateOnly = (trade.entry_date || '').split('T')[0]
   const exitDateOnly = (trade.exit_date || '').split('T')[0]
 
-  const entryStr = entryTime
-    ? `${entryDateOnly}T${entryTime}:00`
-    : entryDateOnly
-  const exitStr = exitTime
-    ? `${exitDateOnly}T${exitTime}:00`
-    : exitDateOnly
+  // Normalise HH:MM → HH:MM:SS (only append :00 when seconds are absent)
+  const normaliseTime = (t: string) => /^\d{2}:\d{2}$/.test(t) ? `${t}:00` : t
+  const entryStr = entryTime ? `${entryDateOnly}T${normaliseTime(entryTime)}` : entryDateOnly
+  const exitStr = exitTime ? `${exitDateOnly}T${normaliseTime(exitTime)}` : exitDateOnly
 
   const entry = new Date(entryStr)
   const exit = new Date(exitStr)
