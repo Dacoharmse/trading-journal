@@ -51,6 +51,8 @@ const COLUMN_HEADERS: Record<string, string> = {
   // Optional columns
   planned_stop_pips: 'Planned Stop (pips)',
   planned_target_pips: 'Planned TP (pips)',
+  mae_pips: 'MAE (pips)',
+  mfe_pips: 'MFE (pips)',
   tags: 'Tags',
   rule_breaks: 'Rule Breaks',
   notes: 'Notes',

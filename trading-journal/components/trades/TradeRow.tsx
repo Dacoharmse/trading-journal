@@ -175,6 +175,20 @@ export function TradeRow({
         </td>
       )}
 
+      {/* MAE */}
+      {visibleColumns.has('mae_pips') && (
+        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
+          {trade.mae_pips != null ? trade.mae_pips.toFixed(1) : '—'}
+        </td>
+      )}
+
+      {/* MFE */}
+      {visibleColumns.has('mfe_pips') && (
+        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
+          {trade.mfe_pips != null ? trade.mfe_pips.toFixed(1) : '—'}
+        </td>
+      )}
+
       {/* Exit Time */}
       {visibleColumns.has('exit_time') && (
         <td className="px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
