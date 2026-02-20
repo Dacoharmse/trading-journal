@@ -221,6 +221,13 @@ export function TradeRow({
         </td>
       )}
 
+      {/* Session Hour */}
+      {visibleColumns.has('session_hour') && (
+        <td className="px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
+          {trade.session_hour || '—'}
+        </td>
+      )}
+
       {/* Hold Time */}
       {visibleColumns.has('hold_time') && (
         <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white whitespace-nowrap">
@@ -244,13 +251,6 @@ export function TradeRow({
           ) : (
             <span className="text-xs text-neutral-400">—</span>
           )}
-        </td>
-      )}
-
-      {/* Session Hour */}
-      {visibleColumns.has('session_hour') && (
-        <td className="px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
-          {trade.session_hour || '—'}
         </td>
       )}
 
