@@ -182,7 +182,8 @@ export function calculateTradeStats(trades: Trade[]): TradeStats {
     }
   }
 
-  const closedTrades = trades.filter((trade) => trade.status === 'closed')
+  // Use all trades with a recorded PnL (open trades with pnl set count toward stats)
+  const closedTrades = trades.filter((trade) => trade.status === 'closed' || (trade.pnl != null && trade.pnl !== 0))
   const winningTrades = closedTrades.filter((trade) => trade.pnl > 0)
   const losingTrades = closedTrades.filter((trade) => trade.pnl < 0)
 
@@ -199,7 +200,7 @@ export function calculateTradeStats(trades: Trade[]): TradeStats {
       losingTrades.length
     : 0
 
-  const rawProfitFactor = grossLosses > 0 ? grossWins / grossLosses : grossWins > 0 ? grossWins : 0
+  const rawProfitFactor = grossLosses > 0 ? grossWins / grossLosses : grossWins > 0 ? Infinity : 0
 
   let bestDay = Number.NEGATIVE_INFINITY
   let worstDay = Number.POSITIVE_INFINITY

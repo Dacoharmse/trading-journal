@@ -193,7 +193,9 @@ export function KpiRow({
             </div>
           </CardHeader>
           <CardContent className="pt-0 flex items-center justify-between">
-            <div className="text-3xl font-bold">{profitFactor.toFixed(2)}</div>
+            <div className="text-3xl font-bold">
+              {!isFinite(profitFactor) ? '∞' : profitFactor.toFixed(2)}
+            </div>
             <div className="relative w-16 h-16">
               <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
                 <circle
@@ -213,7 +215,7 @@ export function KpiRow({
                   stroke={profitFactor < 1 ? "#ef4444" : profitFactor < 1.5 ? "#f59e0b" : "#22c55e"}
                   strokeWidth="12"
                   strokeLinecap="round"
-                  strokeDasharray={`${Math.min(profitFactor / 3, 1) * 251.2} 251.2`}
+                  strokeDasharray={`${Math.min((isFinite(profitFactor) ? profitFactor : 3) / 3, 1) * 251.2} 251.2`}
                 />
               </svg>
             </div>
