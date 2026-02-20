@@ -232,8 +232,6 @@ export default function Home() {
         <div className="grid gap-4 lg:grid-cols-2">
           <CalendarHeatmap
             trades={normalizedTrades as Trade[]}
-            startDate={dateRange.start}
-            endDate={dateRange.end}
           />
           <EquityChart
             trades={normalizedTrades as Trade[]}
