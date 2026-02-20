@@ -62,6 +62,13 @@ export function getCalendarGrid(year: number, month: number): Date[] {
 }
 
 /**
+ * Format a Date as a local YYYY-MM-DD string (avoids UTC timezone shift)
+ */
+function localDateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+/**
  * Group trades by day
  */
 export function groupTradesByDay(
@@ -71,8 +78,11 @@ export function groupTradesByDay(
   const dailyMap = new Map<string, DailyStats>()
 
   trades.forEach(trade => {
-    const tradeDate = new Date(trade.exit_date || trade.entry_date)
-    const dateKey = tradeDate.toISOString().slice(0, 10)
+    const rawDate = trade.exit_date || trade.entry_date
+    // Append T00:00 to date-only strings so they parse as local time, not UTC midnight
+    const dateStr = rawDate.length === 10 ? `${rawDate}T00:00` : rawDate
+    const tradeDate = new Date(dateStr)
+    const dateKey = localDateKey(tradeDate)
 
     if (!dailyMap.has(dateKey)) {
       dailyMap.set(dateKey, {

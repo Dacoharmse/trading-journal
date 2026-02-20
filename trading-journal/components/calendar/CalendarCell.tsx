@@ -32,22 +32,29 @@ export function CalendarCell({
   onDateClick,
 }: CalendarCellProps) {
   const dayNumber = date.getDate()
-  const isInCurrentMonth = isCurrentMonth(date, currentMonth)
+  const inMonth = isCurrentMonth(date, currentMonth)
   const isTodayDate = isToday(date)
+  const hasData = !!stats && inMonth
 
   const value = displayUnit === 'r' ? stats?.totalR || 0 : stats?.totalPnL || 0
-  const colorClass = stats ? getPnLColor(value, maxAbsValue) : 'bg-neutral-50 dark:bg-neutral-900/50'
+  const colorClass = hasData ? getPnLColor(value, maxAbsValue) : ''
 
   const formattedValue = React.useMemo(() => {
-    if (!stats) return null
-
+    if (!hasData) return null
     if (displayUnit === 'r') {
       return `${value > 0 ? '+' : ''}${value.toFixed(1)}R`
     } else {
       const symbol = getCurrencySymbol(currency as any)
-      return `${symbol}${Math.abs(value).toFixed(0)}`
+      const sign = value < 0 ? '-' : ''
+      return `${sign}${symbol}${Math.abs(value).toFixed(0)}`
     }
-  }, [stats, displayUnit, value, currency])
+  }, [hasData, displayUnit, value, currency])
+
+  const bgClass = hasData
+    ? colorClass
+    : inMonth
+      ? 'bg-neutral-50 dark:bg-neutral-900/30'
+      : 'bg-neutral-50/20 dark:bg-neutral-900/10'
 
   return (
     <TooltipProvider>
@@ -56,31 +63,38 @@ export function CalendarCell({
           <button
             onClick={() => onDateClick(date, stats)}
             className={`
-              aspect-square flex flex-col items-center justify-center rounded-lg text-sm transition-all
-              ${colorClass}
-              ${isInCurrentMonth ? 'opacity-100' : 'opacity-30'}
-              ${isTodayDate ? 'ring-2 ring-neutral-500 ring-offset-2 dark:ring-offset-neutral-900' : ''}
-              ${isHighlightedBest ? 'ring-2 ring-amber-400 ring-offset-2 dark:ring-offset-neutral-900' : ''}
-              ${stats ? 'hover:scale-105 hover:shadow-lg cursor-pointer' : 'cursor-default'}
+              min-h-[84px] flex flex-col p-2 transition-all text-left w-full
+              ${bgClass}
+              ${!inMonth ? 'opacity-25' : ''}
+              ${isHighlightedBest ? 'outline outline-2 outline-amber-400 outline-offset-[-2px]' : ''}
+              ${hasData ? 'hover:brightness-95 cursor-pointer' : 'cursor-default'}
             `}
           >
-            {/* Day Number */}
-            <span className={`text-xs ${isInCurrentMonth ? '' : 'text-muted-foreground/50'}`}>
-              {dayNumber}
-            </span>
+            {/* Day number */}
+            <div className="flex justify-start">
+              <span
+                className={`
+                  text-xs font-semibold leading-none w-6 h-6 flex items-center justify-center rounded-full
+                  ${isTodayDate
+                    ? 'bg-white text-neutral-900 shadow-sm'
+                    : ''
+                  }
+                `}
+              >
+                {dayNumber}
+              </span>
+            </div>
 
-            {/* P&L Value */}
+            {/* P&L and trade count */}
             {formattedValue && (
-              <span className="text-xs font-semibold mt-0.5">
-                {formattedValue}
-              </span>
-            )}
-
-            {/* Trade Count Indicator */}
-            {stats && stats.trades > 0 && (
-              <span className="text-[10px] opacity-70 mt-0.5">
-                {stats.trades} {stats.trades === 1 ? 'trade' : 'trades'}
-              </span>
+              <div className="mt-auto flex flex-col gap-0.5">
+                <span className="text-sm font-bold leading-tight">
+                  {formattedValue}
+                </span>
+                <span className="text-[10px] opacity-70 leading-none">
+                  {stats!.trades} {stats!.trades === 1 ? 'trade' : 'trades'}
+                </span>
+              </div>
             )}
           </button>
         </TooltipTrigger>

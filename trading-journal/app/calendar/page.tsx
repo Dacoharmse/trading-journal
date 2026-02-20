@@ -5,7 +5,6 @@ import { useShallow } from "zustand/react/shallow"
 import { useTradeStore, useAccountStore } from "@/stores"
 import { useDashboardFilters } from "@/stores/dashboard-filters"
 import { CalendarGrid, DailyDrawer, StreakCounter } from "@/components/calendar"
-import { WeeklySummary } from "@/components/calendar/WeeklySummary"
 import { CalendarStatistics } from "@/components/calendar/CalendarStatistics"
 import { groupTradesByDay, calculateStreaks, type DailyStats } from "@/lib/calendar-utils"
 import { Button } from "@/components/ui/button"
@@ -192,32 +191,18 @@ export default function CalendarPage() {
           worstLossStreakDates={streaks.worstLossStreakDates}
         />
 
-        {/* Calendar Grid with Weekly Summary */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
-          {/* Calendar */}
-          <div className="bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm rounded-lg border border-neutral-200 dark:border-neutral-700 p-6 shadow-lg">
-            <CalendarGrid
-              year={currentYear}
-              month={currentMonth}
-              dailyStats={dailyStats}
-              displayUnit={filters.units}
-              currency={displayCurrency}
-              bestDay={bestDay}
-              onDateClick={handleDateClick}
-              onMonthChange={handleMonthChange}
-            />
-          </div>
-
-          {/* Weekly Summary */}
-          <div className="lg:block">
-            <WeeklySummary
-              year={currentYear}
-              month={currentMonth}
-              dailyStats={dailyStats}
-              displayUnit={filters.units}
-              currency={displayCurrency}
-            />
-          </div>
+        {/* Calendar Grid (with inline week summary column) */}
+        <div className="bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm rounded-lg border border-neutral-200 dark:border-neutral-700 p-6 shadow-lg">
+          <CalendarGrid
+            year={currentYear}
+            month={currentMonth}
+            dailyStats={dailyStats}
+            displayUnit={filters.units}
+            currency={displayCurrency}
+            bestDay={bestDay}
+            onDateClick={handleDateClick}
+            onMonthChange={handleMonthChange}
+          />
         </div>
 
         {/* Statistics Cards */}

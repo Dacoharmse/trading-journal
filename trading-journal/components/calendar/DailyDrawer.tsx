@@ -9,7 +9,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
-import { X } from "lucide-react"
 import type { Trade } from "@/types/trade"
 import type { DailyStats } from "@/lib/calendar-utils"
 import { formatCurrency } from "@/lib/fx-converter"
@@ -24,11 +23,7 @@ interface DailyDrawerProps {
 }
 
 export function DailyDrawer({ open, onClose, date, stats, currency }: DailyDrawerProps) {
-  if (!date || !stats) {
-    return null
-  }
-
-  const formattedDate = date.toLocaleDateString('en-US', {
+  const formattedDate = date?.toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -36,12 +31,17 @@ export function DailyDrawer({ open, onClose, date, stats, currency }: DailyDrawe
   })
 
   const sortedTrades = React.useMemo(() => {
+    if (!stats) return []
     return [...stats.tradesList].sort((a, b) => {
-      const dateA = new Date(a.entry_date).getTime()
-      const dateB = new Date(b.entry_date).getTime()
-      return dateA - dateB
+      const timeA = a.open_time || a.entry_date
+      const timeB = b.open_time || b.entry_date
+      return timeA.localeCompare(timeB)
     })
   }, [stats])
+
+  if (!date || !stats) {
+    return null
+  }
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
@@ -75,10 +75,9 @@ export function DailyDrawer({ open, onClose, date, stats, currency }: DailyDrawe
             <h3 className="text-sm font-semibold text-foreground">Trades</h3>
             {sortedTrades.map((trade) => {
               const r = calculateR(trade) || 0
-              const entryTime = new Date(trade.entry_date).toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })
+              const entryTime = trade.open_time
+                ? trade.open_time.substring(0, 5)
+                : '—'
 
               return (
                 <div
