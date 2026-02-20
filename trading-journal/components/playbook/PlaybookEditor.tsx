@@ -616,7 +616,7 @@ export function PlaybookEditor({
 
         <TabsContent value="basics" className="mt-4 space-y-6">
           <div className={cn("grid gap-6 lg:grid-cols-[2fr_1fr]", mode === 'view' && "pointer-events-none opacity-90")}>
-            <div className="space-y-6 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-[#070707]">
+            <div className="self-start space-y-6 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-[#070707]">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-neutral-700 dark:text-neutral-200">
                   Playbook Name
