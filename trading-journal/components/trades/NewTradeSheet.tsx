@@ -653,7 +653,7 @@ export function NewTradeSheet({
       rr_planned: rrPlannedNum,
       risk_r: riskRNum,
       r_multiple: rMultiple,
-      pnl: 0,                      // required field, computed separately or defaults to 0
+      pnl: pnlAmount ? parseFloat(pnlAmount) : 0,  // sync with pnl_amount so table display works
       playbook_id: playbookId || null,
       rules_checked: playbookId ? rulesSnapshot : null,
       confluences_checked: playbookId ? confluencesSnapshot : null,

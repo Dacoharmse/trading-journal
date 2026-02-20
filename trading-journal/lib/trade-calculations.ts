@@ -16,8 +16,8 @@ export function calculateR(trade: Trade): number | null {
   // Check for required fields - handle both stop_loss and stop_price
   const stopPrice = trade.stop_price
   if (!trade.entry_price || !stopPrice || !trade.exit_price) {
-    // Fallback: if r_multiple is pre-calculated in DB, use it
-    return trade.r_multiple ?? null
+    // Fallback chain: pre-calculated r_multiple → manually entered actual_rr
+    return trade.r_multiple ?? trade.actual_rr ?? null
   }
 
   const risk = Math.abs(trade.entry_price - stopPrice)
@@ -294,12 +294,16 @@ export function calculateHoldTime(trade: Trade): number | null {
   const entryTime = trade.open_time || trade.entry_time
   const exitTime = trade.close_time || trade.exit_time
 
+  // Slice to YYYY-MM-DD in case entry/exit_date is stored as a full TIMESTAMPTZ string
+  const entryDateOnly = (trade.entry_date || '').split('T')[0]
+  const exitDateOnly = (trade.exit_date || '').split('T')[0]
+
   const entryStr = entryTime
-    ? `${trade.entry_date}T${entryTime}:00`
-    : trade.entry_date
+    ? `${entryDateOnly}T${entryTime}:00`
+    : entryDateOnly
   const exitStr = exitTime
-    ? `${trade.exit_date}T${exitTime}:00`
-    : trade.exit_date
+    ? `${exitDateOnly}T${exitTime}:00`
+    : exitDateOnly
 
   const entry = new Date(entryStr)
   const exit = new Date(exitStr)
