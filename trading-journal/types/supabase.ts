@@ -221,8 +221,10 @@ export interface Trade {
   currency: string
 
   // Metrics
-  mae_r?: number | null  // Maximum Adverse Excursion in R
-  mfe_r?: number | null  // Maximum Favorable Excursion in R
+  mae_pips?: number | null  // Maximum Adverse Excursion in pips (how far price moved against you)
+  mfe_pips?: number | null  // Maximum Favorable Excursion in pips (furthest price moved in your favor)
+  mae_r?: number | null     // Maximum Adverse Excursion in R (derived)
+  mfe_r?: number | null     // Maximum Favorable Excursion in R (derived)
 
   // Categorization
   strategy?: string | null           // Legacy: string name

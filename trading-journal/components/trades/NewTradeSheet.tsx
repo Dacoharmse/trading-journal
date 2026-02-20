@@ -89,6 +89,8 @@ export function NewTradeSheet({
   const [outcome, setOutcome] = React.useState<'win' | 'loss' | 'breakeven' | ''>('')
   const [actualStopPips, setActualStopPips] = React.useState<string>('')
   const [actualTargetPips, setActualTargetPips] = React.useState<string>('')
+  const [maePips, setMaePips] = React.useState<string>('')
+  const [mfePips, setMfePips] = React.useState<string>('')
 
   // Categorisation
   const [strategy, setStrategy] = React.useState<string>('')
@@ -436,6 +438,8 @@ export function NewTradeSheet({
       setAnalysisTimeframe(trade.analysis_timeframe || '')
       setActualStopPips(trade.actual_stop_pips?.toString() || '')
       setActualTargetPips(trade.actual_target_pips?.toString() || '')
+      setMaePips(trade.mae_pips?.toString() || '')
+      setMfePips(trade.mfe_pips?.toString() || '')
       setConfluences(trade.confluences || '')
       setNotes(trade.notes || '')
       setCloseReason(trade.close_reason || '')
@@ -492,6 +496,8 @@ export function NewTradeSheet({
     setAnalysisTimeframe('')
     setActualStopPips('')
     setActualTargetPips('')
+    setMaePips('')
+    setMfePips('')
     setStrategy('')
     setConfluences('')
     setCloseReason('')
@@ -665,6 +671,8 @@ export function NewTradeSheet({
       confluences: confluences || null,
       actual_stop_pips: actualStopPips ? parseFloat(actualStopPips) : null,
       actual_target_pips: actualTargetPips ? parseFloat(actualTargetPips) : null,
+      mae_pips: maePips ? parseFloat(maePips) : null,
+      mfe_pips: mfePips ? parseFloat(mfePips) : null,
       close_reason: closeReason || null,
       notes: notes || null,
       media_urls: media.map((m) => m.url),
@@ -1261,6 +1269,60 @@ export function NewTradeSheet({
                   placeholder="e.g. 40"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
                 />
+              </div>
+
+              {/* MAE */}
+              <div>
+                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  MAE — Max Adverse Excursion ({pipsLabel})
+                  <span className="group relative cursor-help">
+                    <Info className="w-3.5 h-3.5 text-gray-400" />
+                    <span className="hidden group-hover:block absolute left-0 top-5 z-20 w-72 p-3 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg shadow-xl leading-relaxed">
+                      <strong>Maximum Adverse Excursion</strong> — how far price moved <em>against</em> you before reversing.
+                      <br /><br />
+                      Example: You go long, price dips 15 pips before rallying to your target. MAE = 15.
+                      <br /><br />
+                      <strong>Why record it?</strong> If MAE is consistently close to your stop, your stops are well-placed. If MAE is tiny, you may be using stops that are too wide. Winners with large MAE are "close calls" — they relied on luck.
+                    </span>
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  value={maePips}
+                  onChange={(e) => setMaePips(e.target.value)}
+                  placeholder="e.g. 15"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">How far did price go against you? (positive number)</p>
+              </div>
+
+              {/* MFE */}
+              <div>
+                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  MFE — Max Favorable Excursion ({pipsLabel})
+                  <span className="group relative cursor-help">
+                    <Info className="w-3.5 h-3.5 text-gray-400" />
+                    <span className="hidden group-hover:block absolute left-0 top-5 z-20 w-72 p-3 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg shadow-xl leading-relaxed">
+                      <strong>Maximum Favorable Excursion</strong> — the furthest price moved <em>in your favor</em> while the trade was open.
+                      <br /><br />
+                      Example: Price runs 60 pips in your direction before you exit at 45 pips. MFE = 60.
+                      <br /><br />
+                      <strong>Why record it?</strong> Compare MFE to your actual exit to see how much profit you left on the table. If MFE is consistently much larger than your exit, you may be closing trades too early.
+                    </span>
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  value={mfePips}
+                  onChange={(e) => setMfePips(e.target.value)}
+                  placeholder="e.g. 60"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">How far did price go in your favor? (positive number)</p>
               </div>
 
               <div>
