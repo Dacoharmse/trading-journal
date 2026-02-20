@@ -2,7 +2,7 @@
 
 import React, { Suspense } from 'react'
 import { useShallow } from 'zustand/shallow'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useDashboardFilters, computeDateRange } from '@/stores/dashboard-filters'
 import { useTradesFilters } from '@/stores/trades-filters'
@@ -28,7 +28,6 @@ const INITIAL_LOAD = 50
 function TradesPageContent() {
   const supabase = React.useMemo(() => createClient(), [])
   const searchParams = useSearchParams()
-  const router = useRouter()
 
   // State
   const [trades, setTrades] = React.useState<Trade[]>([])
@@ -56,10 +55,10 @@ function TradesPageContent() {
   React.useEffect(() => {
     if (searchParams.get('new') === 'true') {
       setTradeSheetOpen(true)
-      // Remove the query parameter from URL
-      router.replace('/trades', { scroll: false })
+      // Clean the URL without triggering a Next.js navigation (avoids Suspense re-render)
+      window.history.replaceState(null, '', '/trades')
     }
-  }, [searchParams, router])
+  }, [searchParams])
 
   // Dashboard Filters - use shallow equality for primitive values
   const {
@@ -121,6 +120,14 @@ function TradesPageContent() {
     }
     setError(null)
 
+    // Helper: fetch with a 15-second timeout so the page never hangs indefinitely
+    const fetchWithTimeout = (url: string, options?: RequestInit) => {
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), 15000)
+      return fetch(url, { ...options, signal: controller.signal })
+        .finally(() => clearTimeout(timer))
+    }
+
     try {
       const { data: { session } } = await supabase.auth.getSession()
 
@@ -131,7 +138,6 @@ function TradesPageContent() {
 
       setAuthStatus('authenticated')
       setUserId(session.user.id)
-      const userData = { user: session.user }
 
       // Check mentor status on initial load (don't block on it)
       if (!loadMore) {
@@ -148,7 +154,7 @@ function TradesPageContent() {
       // Only fetch accounts and playbooks on initial load
       if (!loadMore) {
         // Fetch accounts + playbooks via server API (bypasses RLS which hangs on browser client)
-        const accountsRes = await fetch('/api/accounts')
+        const accountsRes = await fetchWithTimeout('/api/accounts')
         if (!accountsRes.ok) {
           const body = await accountsRes.json().catch(() => ({}))
           throw new Error(body.error || `Failed to load accounts (${accountsRes.status})`)
@@ -163,7 +169,7 @@ function TradesPageContent() {
       const limit = loadMore ? TRADES_PER_PAGE : INITIAL_LOAD
       const offset = loadMore ? (page + 1) * TRADES_PER_PAGE : 0
 
-      const tradesRes = await fetch(`/api/trades?limit=${limit}&offset=${offset}`)
+      const tradesRes = await fetchWithTimeout(`/api/trades?limit=${limit}&offset=${offset}`)
       if (!tradesRes.ok) {
         const body = await tradesRes.json().catch(() => ({}))
         throw new Error(body.error || `Failed to load trades (${tradesRes.status})`)
@@ -226,7 +232,9 @@ function TradesPageContent() {
       // Extract meaningful error message
       let errorMessage = 'Failed to load trades. Please try again.'
 
-      if (err instanceof Error) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        errorMessage = 'Request timed out after 15 seconds. The server may be starting up — please wait a moment and retry.'
+      } else if (err instanceof Error) {
         errorMessage = err.message || 'An error occurred while loading trades'
       } else if (typeof err === 'object' && err !== null) {
         // Handle Supabase PostgrestError
