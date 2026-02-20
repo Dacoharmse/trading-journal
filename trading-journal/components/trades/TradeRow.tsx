@@ -12,8 +12,6 @@ import {
   getDirectionIcon,
   getPnLColorClass,
   getDirectionColorClass,
-  parseConfluences,
-  formatChips,
 } from '@/lib/trades-selectors'
 import { getGradeColor, formatScore } from '@/lib/playbook-scoring'
 import { cn } from '@/lib/utils'
@@ -45,8 +43,6 @@ export function TradeRow({
 }: TradeRowProps) {
   const r = calculateR(trade)
   const holdTime = calculateHoldTime(trade)
-  const confluences = parseConfluences(trade.confluences)
-  const { visible: visibleConfluences, overflow: overflowConfluences } = formatChips(confluences, 2)
 
   const pnlValue = units === 'r' ? r : trade.pnl
   const pnlDisplay = units === 'r' ? formatR(r) : formatPnL(trade.pnl, displayCurrency || account?.currency || 'USD')
@@ -169,17 +165,6 @@ export function TradeRow({
         </td>
       )}
 
-      {/* Strategy */}
-      {visibleColumns.has('strategy') && (
-        <td className="px-4 py-3">
-          {trade.strategy && (
-            <span className="text-xs px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
-              {trade.strategy}
-            </span>
-          )}
-        </td>
-      )}
-
       {/* Playbook */}
       {visibleColumns.has('playbook') && (
         <td className="px-4 py-3">
@@ -225,27 +210,6 @@ export function TradeRow({
         </td>
       )}
 
-      {/* Confluences */}
-      {visibleColumns.has('confluences') && (
-        <td className="px-4 py-3">
-          <div className="flex items-center gap-1 flex-wrap">
-            {visibleConfluences.map((conf, idx) => (
-              <span
-                key={idx}
-                className="text-xs px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-900/30 text-neutral-700 dark:text-neutral-400"
-              >
-                {conf}
-              </span>
-            ))}
-            {overflowConfluences > 0 && (
-              <span className="text-xs px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
-                +{overflowConfluences}
-              </span>
-            )}
-          </div>
-        </td>
-      )}
-
       {/* Session */}
       {visibleColumns.has('session') && (
         <td className="px-4 py-3">
@@ -287,48 +251,6 @@ export function TradeRow({
       {visibleColumns.has('session_hour') && (
         <td className="px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
           {trade.session_hour || '—'}
-        </td>
-      )}
-
-      {/* MAE (R) */}
-      {visibleColumns.has('mae_r') && (
-        <td className="px-4 py-3 text-sm text-red-600 dark:text-red-400">
-          {trade.mae_r !== null && trade.mae_r !== undefined ? formatR(trade.mae_r) : 'N/A'}
-        </td>
-      )}
-
-      {/* MFE (R) */}
-      {visibleColumns.has('mfe_r') && (
-        <td className="px-4 py-3 text-sm text-green-600 dark:text-green-400">
-          {trade.mfe_r !== null && trade.mfe_r !== undefined ? formatR(trade.mfe_r) : 'N/A'}
-        </td>
-      )}
-
-      {/* Entry Price (optional) */}
-      {visibleColumns.has('entry_price') && (
-        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
-          {trade.entry_price?.toFixed(2) || '—'}
-        </td>
-      )}
-
-      {/* Stop Loss price (optional) */}
-      {visibleColumns.has('stop_price') && (
-        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
-          {trade.stop_price?.toFixed(2) || '—'}
-        </td>
-      )}
-
-      {/* Exit Price (optional) */}
-      {visibleColumns.has('exit_price') && (
-        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
-          {trade.exit_price?.toFixed(2) || '—'}
-        </td>
-      )}
-
-      {/* Fees */}
-      {visibleColumns.has('fees') && (
-        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
-          {((trade.commission || 0) + (trade.swap || 0) + (trade.slippage || 0)).toFixed(2)}
         </td>
       )}
 
