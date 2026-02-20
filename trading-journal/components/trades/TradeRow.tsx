@@ -80,10 +80,11 @@ export function TradeRow({
       {visibleColumns.has('date') && (
         <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white whitespace-nowrap">
           {(() => {
-            const raw = trade.exit_date || trade.entry_date
+            const raw = (trade.exit_date || trade.entry_date || '').split('T')[0]
             if (!raw) return 'N/A'
-            const d = new Date(raw)
-            return isNaN(d.getTime()) ? raw : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+            const [y, m, d] = raw.split('-').map(Number)
+            if (!y || !m || !d) return raw
+            return new Date(y, m - 1, d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
           })()}
         </td>
       )}

@@ -411,7 +411,8 @@ export function NewTradeSheet({
       setAccountId(trade.account_id || '')
       setSymbolId(trade.symbol_id || '')
       setDirection(trade.direction || 'long')
-      setDate(trade.entry_date || new Date().toISOString().split('T')[0])
+      // Slice timestamps to YYYY-MM-DD — date inputs require that exact format
+      setDate((trade.entry_date || '').split('T')[0] || new Date().toISOString().split('T')[0])
       setOpenTime(trade.open_time || '')
       setCloseTime(trade.close_time || '')
       setSession(trade.session || '')
@@ -426,7 +427,7 @@ export function NewTradeSheet({
         setShowPlannedSetup(true)
       }
       setStrategy(trade.strategy || '')
-      setExitDate(trade.exit_date || '')
+      setExitDate((trade.exit_date || '').split('T')[0] || '')
       setSize((trade.quantity ?? trade.size)?.toString() || '')
       setActualStopPips(trade.actual_stop_pips?.toString() || '')
       setActualTargetPips(trade.actual_target_pips?.toString() || '')
