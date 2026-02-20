@@ -126,15 +126,33 @@ export function TradeRow({
         </td>
       )}
 
-      {/* Stops (pips) */}
+      {/* Stop (pips) — shows actual stop, falls back to planned */}
       {visibleColumns.has('stop_pips') && (
+        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
+          {(trade.actual_stop_pips ?? trade.stop_pips) != null
+            ? (trade.actual_stop_pips ?? trade.stop_pips)!.toFixed(1)
+            : '—'}
+        </td>
+      )}
+
+      {/* TP (pips) — shows actual TP, falls back to planned */}
+      {visibleColumns.has('target_pips') && (
+        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
+          {(trade.actual_target_pips ?? trade.target_pips) != null
+            ? (trade.actual_target_pips ?? trade.target_pips)!.toFixed(1)
+            : '—'}
+        </td>
+      )}
+
+      {/* Planned Stop (pips) — optional column */}
+      {visibleColumns.has('planned_stop_pips') && (
         <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
           {trade.stop_pips != null ? trade.stop_pips.toFixed(1) : '—'}
         </td>
       )}
 
-      {/* TP (pips) */}
-      {visibleColumns.has('target_pips') && (
+      {/* Planned TP (pips) — optional column */}
+      {visibleColumns.has('planned_target_pips') && (
         <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
           {trade.target_pips != null ? trade.target_pips.toFixed(1) : '—'}
         </td>

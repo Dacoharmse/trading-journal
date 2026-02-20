@@ -53,21 +53,20 @@ const defaultColumns = [
   'account',
   'symbol',
   'direction',
-  'entry_price',
-  'stop_price',
-  'exit_price',
+  'entry_time',
   'size',
+  'stop_pips',
+  'target_pips',
+  'exit_time',
   'pnl_currency',
   'r_multiple',
-  'strategy',
   'playbook',
   'setup_grade',
   'setup_score',
-  'confluences',
   'session',
+  'session_hour',
   'hold_time',
-  'mae_r',
-  'mfe_r',
+  'outcome',
 ]
 
 const defaultFilters: TradesFilters = {
@@ -199,10 +198,17 @@ export const useTradesFilters = create<TradesFiltersState>()(
         },
       }),
       onRehydrateStorage: () => (state) => {
-        // Always reset selection and search
         if (state) {
+          // Always reset selection and search
           state.filters.selectedTradeIds = []
           state.filters.searchQuery = ''
+
+          // Migrate stale columns: if any old removed column IDs are present, reset to defaults
+          const removedColumns = ['entry_price', 'stop_price', 'exit_price', 'strategy', 'confluences', 'mae_r', 'mfe_r']
+          const hasStaleColumns = state.filters.visibleColumns.some(c => removedColumns.includes(c))
+          if (hasStaleColumns) {
+            state.filters.visibleColumns = [...defaultColumns]
+          }
         }
       },
     }

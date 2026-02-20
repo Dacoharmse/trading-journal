@@ -30,6 +30,8 @@ const AVAILABLE_COLUMNS = [
   { id: 'hold_time', label: 'Hold Time', default: true },
   { id: 'outcome', label: 'Outcome', default: true },
   // Optional / hidden by default
+  { id: 'planned_stop_pips', label: 'Planned Stop (pips)', default: false },
+  { id: 'planned_target_pips', label: 'Planned TP (pips)', default: false },
   { id: 'tags', label: 'Tags', default: false },
   { id: 'rule_breaks', label: 'Rule Breaks', default: false },
   { id: 'notes', label: 'Notes', default: false },

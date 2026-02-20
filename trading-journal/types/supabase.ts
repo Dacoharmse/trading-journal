@@ -200,6 +200,8 @@ export interface Trade {
   pips?: number | null                 // Realized pips/points (+/-)
   stop_pips?: number | null            // Planned stop distance in pips
   target_pips?: number | null          // Planned target distance in pips
+  actual_stop_pips?: number | null     // Actual stop loss distance in pips
+  actual_target_pips?: number | null   // Actual take profit distance in pips
   rr_planned?: number | null           // Planned R:R (e.g., 1:2 → 2)
   risk_r?: number | null               // Risk per trade in R (usually 1.0)
   r_multiple?: number | null           // Realized R (+/-)

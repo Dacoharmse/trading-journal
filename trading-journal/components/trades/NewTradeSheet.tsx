@@ -87,6 +87,8 @@ export function NewTradeSheet({
   const [pnlAmount, setPnlAmount] = React.useState<string>('')
   const [actualRr, setActualRr] = React.useState<string>('')
   const [outcome, setOutcome] = React.useState<'win' | 'loss' | 'breakeven' | ''>('')
+  const [actualStopPips, setActualStopPips] = React.useState<string>('')
+  const [actualTargetPips, setActualTargetPips] = React.useState<string>('')
 
   // Categorisation
   const [strategy, setStrategy] = React.useState<string>('')
@@ -426,6 +428,8 @@ export function NewTradeSheet({
       setStrategy(trade.strategy || '')
       setExitDate(trade.exit_date || '')
       setSize((trade.quantity ?? trade.size)?.toString() || '')
+      setActualStopPips(trade.actual_stop_pips?.toString() || '')
+      setActualTargetPips(trade.actual_target_pips?.toString() || '')
       setConfluences(trade.confluences || '')
       setNotes(trade.notes || '')
       setCloseReason(trade.close_reason || '')
@@ -475,6 +479,8 @@ export function NewTradeSheet({
     setShowPlannedSetup(false)
     setExitDate('')
     setSize('')
+    setActualStopPips('')
+    setActualTargetPips('')
     setStrategy('')
     setConfluences('')
     setCloseReason('')
@@ -646,6 +652,8 @@ export function NewTradeSheet({
       quantity: size ? parseFloat(size) : null,  // 'size' column not yet in DB; quantity is the existing column
       strategy: strategy || null,
       confluences: confluences || null,
+      actual_stop_pips: actualStopPips ? parseFloat(actualStopPips) : null,
+      actual_target_pips: actualTargetPips ? parseFloat(actualTargetPips) : null,
       close_reason: closeReason || null,
       notes: notes || null,
       media_urls: media.map((m) => m.url),
@@ -1212,6 +1220,36 @@ export function NewTradeSheet({
                 {errors.pips && (
                   <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.pips}</p>
                 )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Actual Stop Loss ({pipsLabel})
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  value={actualStopPips}
+                  onChange={(e) => setActualStopPips(e.target.value)}
+                  placeholder="e.g. 20"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Actual Take Profit ({pipsLabel})
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  value={actualTargetPips}
+                  onChange={(e) => setActualTargetPips(e.target.value)}
+                  placeholder="e.g. 40"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
+                />
               </div>
 
               <div>
