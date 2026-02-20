@@ -116,31 +116,38 @@ export function TradeRow({
         </td>
       )}
 
-      {/* Entry Price */}
-      {visibleColumns.has('entry_price') && (
-        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
-          {trade.entry_price?.toFixed(2) || 'N/A'}
+      {/* Entry Time */}
+      {visibleColumns.has('entry_time') && (
+        <td className="px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
+          {trade.open_time || trade.entry_time || '—'}
         </td>
       )}
 
-      {/* Stop Loss */}
-      {visibleColumns.has('stop_price') && (
-        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
-          {trade.stop_price?.toFixed(2) || 'N/A'}
-        </td>
-      )}
-
-      {/* Exit Price */}
-      {visibleColumns.has('exit_price') && (
-        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
-          {trade.exit_price?.toFixed(2) || 'N/A'}
-        </td>
-      )}
-
-      {/* Size */}
+      {/* Lots */}
       {visibleColumns.has('size') && (
         <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
-          {(trade.quantity ?? trade.size)?.toFixed(2) || 'N/A'}
+          {(trade.quantity ?? trade.size)?.toFixed(2) || '—'}
+        </td>
+      )}
+
+      {/* Stops (pips) */}
+      {visibleColumns.has('stop_pips') && (
+        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
+          {trade.stop_pips != null ? trade.stop_pips.toFixed(1) : '—'}
+        </td>
+      )}
+
+      {/* TP (pips) */}
+      {visibleColumns.has('target_pips') && (
+        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
+          {trade.target_pips != null ? trade.target_pips.toFixed(1) : '—'}
+        </td>
+      )}
+
+      {/* Exit Time */}
+      {visibleColumns.has('exit_time') && (
+        <td className="px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
+          {trade.close_time || trade.exit_time || '—'}
         </td>
       )}
 
@@ -257,6 +264,32 @@ export function TradeRow({
         </td>
       )}
 
+      {/* Outcome */}
+      {visibleColumns.has('outcome') && (
+        <td className="px-4 py-3">
+          {trade.outcome ? (
+            <span className={`text-xs px-2 py-1 rounded-full font-medium capitalize ${
+              trade.outcome === 'win'
+                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                : trade.outcome === 'loss'
+                ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
+            }`}>
+              {trade.outcome}
+            </span>
+          ) : (
+            <span className="text-xs text-neutral-400">—</span>
+          )}
+        </td>
+      )}
+
+      {/* Session Hour */}
+      {visibleColumns.has('session_hour') && (
+        <td className="px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
+          {trade.session_hour || '—'}
+        </td>
+      )}
+
       {/* MAE (R) */}
       {visibleColumns.has('mae_r') && (
         <td className="px-4 py-3 text-sm text-red-600 dark:text-red-400">
@@ -271,17 +304,24 @@ export function TradeRow({
         </td>
       )}
 
-      {/* Entry Time */}
-      {visibleColumns.has('entry_time') && (
-        <td className="px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400">
-          {trade.entry_time || 'N/A'}
+      {/* Entry Price (optional) */}
+      {visibleColumns.has('entry_price') && (
+        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
+          {trade.entry_price?.toFixed(2) || '—'}
         </td>
       )}
 
-      {/* Exit Time */}
-      {visibleColumns.has('exit_time') && (
-        <td className="px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400">
-          {trade.exit_time || 'N/A'}
+      {/* Stop Loss price (optional) */}
+      {visibleColumns.has('stop_price') && (
+        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
+          {trade.stop_price?.toFixed(2) || '—'}
+        </td>
+      )}
+
+      {/* Exit Price (optional) */}
+      {visibleColumns.has('exit_price') && (
+        <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
+          {trade.exit_price?.toFixed(2) || '—'}
         </td>
       )}
 
