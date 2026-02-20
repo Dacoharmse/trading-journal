@@ -219,20 +219,41 @@ export function CalendarHeatmap({ trades, startDate, endDate }: CalendarHeatmapP
             {/* Weeks */}
             {weeks.map((week, weekIdx) => (
               <div key={weekIdx} className="grid grid-cols-7 gap-1">
-                {week.map((day, dayIdx) => (
-                  <div
-                    key={dayIdx}
-                    className={`aspect-square rounded-md ${getColor(day.pnl, day.trades)} transition-all hover:scale-110 hover:shadow-lg cursor-pointer relative group`}
-                    title={`${formatDate(day.date)}: ${day.trades} trades, ${formatCurrency(day.pnl)}`}
-                  >
-                    {/* Tooltip on hover */}
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-neutral-900 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                      {formatDate(day.date)}<br />
-                      {day.trades} trade{day.trades !== 1 ? 's' : ''}<br />
-                      {formatCurrency(day.pnl)}
+                {week.map((day, dayIdx) => {
+                  const dayNum = parseInt(day.date.slice(-2), 10)
+                  const isWeekend = dayIdx === 0 || dayIdx === 6
+                  const hasTradesDay = day.trades > 0
+                  return (
+                    <div
+                      key={dayIdx}
+                      className={`rounded-md ${getColor(day.pnl, day.trades)} cursor-pointer relative group flex flex-col p-1.5 min-h-[64px]`}
+                    >
+                      {/* Day number */}
+                      <span className={`text-[10px] font-medium leading-none ${hasTradesDay ? 'text-white/70' : isWeekend ? 'text-muted-foreground/30' : 'text-muted-foreground/50'}`}>
+                        {dayNum}
+                      </span>
+
+                      {/* Trade info */}
+                      {hasTradesDay && (
+                        <div className="mt-auto flex flex-col gap-0.5">
+                          <span className="text-[11px] font-bold text-white leading-none truncate">
+                            {day.pnl >= 0 ? '+' : ''}{formatCurrency(day.pnl)}
+                          </span>
+                          <span className="text-[9px] text-white/60 leading-none">
+                            {day.trades} trade{day.trades !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Tooltip on hover */}
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1.5 bg-neutral-900 border border-neutral-700 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                        <p className="font-semibold">{formatDate(day.date)}</p>
+                        <p className="text-neutral-400">{day.trades} trade{day.trades !== 1 ? 's' : ''}</p>
+                        {hasTradesDay && <p className={`font-bold ${day.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>{day.pnl >= 0 ? '+' : ''}{formatCurrency(day.pnl)}</p>}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             ))}
           </div>
