@@ -234,14 +234,15 @@ export function calculateTradeStats(trades: Trade[]): TradeStats {
 
   const avgDurationHours = (() => {
     const durations = closedTrades
-      .filter((trade) => trade.exit_date)
+      .filter((trade) => trade.exit_date || trade.close_time)
       .map((trade) => {
+        const exitBaseDate = trade.exit_date || trade.entry_date
         const entryStr = trade.open_time
           ? `${trade.entry_date}T${trade.open_time}`
           : trade.entry_date
         const exitStr = trade.close_time
-          ? `${trade.exit_date}T${trade.close_time}`
-          : trade.exit_date as string
+          ? `${exitBaseDate}T${trade.close_time}`
+          : exitBaseDate
         const entry = new Date(entryStr)
         const exit = new Date(exitStr)
         return exit.getTime() - entry.getTime()

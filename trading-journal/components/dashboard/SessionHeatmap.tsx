@@ -40,9 +40,19 @@ export function SessionHeatmap({ trades }: SessionHeatmapProps) {
 
       for (let hour = 0; hour < 24; hour++) {
         const hourTrades = trades.filter(trade => {
-          const date = new Date(trade.exit_date || trade.entry_date)
-          const tradeHour = date.getHours()
-          const tradeSession = getSession(tradeHour)
+          // Use open_time for hour (stored in local time)
+          let tradeHour: number
+          if (trade.open_time) {
+            tradeHour = parseInt(trade.open_time.split(':')[0], 10)
+          } else {
+            const rawDate = trade.exit_date || trade.entry_date
+            const dateStr = rawDate.length === 10 ? `${rawDate}T00:00` : rawDate
+            tradeHour = new Date(dateStr).getHours()
+          }
+          // Use stored session tag when available (handles DST shifts correctly)
+          const tradeSession = trade.session
+            ? trade.session.charAt(0).toUpperCase() + trade.session.slice(1).toLowerCase()
+            : getSession(tradeHour)
           return tradeHour === hour && tradeSession === session
         })
 

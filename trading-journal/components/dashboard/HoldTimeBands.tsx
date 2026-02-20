@@ -31,14 +31,15 @@ export function HoldTimeBands({ trades }: HoldTimeBandsProps) {
 
     const results: Band[] = bandsConfig.map(config => {
       const bandTrades = trades.filter(trade => {
-        if (!trade.exit_date) return false
+        if (!trade.exit_date && !trade.close_time) return false
 
+        const exitBaseDate = trade.exit_date || trade.entry_date
         const entryStr = trade.open_time
           ? `${trade.entry_date}T${trade.open_time}`
           : trade.entry_date
         const exitStr = trade.close_time
-          ? `${trade.exit_date}T${trade.close_time}`
-          : trade.exit_date
+          ? `${exitBaseDate}T${trade.close_time}`
+          : exitBaseDate
         const entry = new Date(entryStr)
         const exit = new Date(exitStr)
         const durationMs = exit.getTime() - entry.getTime()

@@ -11,14 +11,22 @@ interface CalendarHeatmapProps {
   endDate: Date
 }
 
+// Format a Date as a local YYYY-MM-DD string (avoids UTC timezone shift)
+function localDateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export function CalendarHeatmap({ trades, startDate, endDate }: CalendarHeatmapProps) {
   // Calculate daily P&L
   const dailyPnL = React.useMemo(() => {
     const map = new Map<string, { pnl: number; trades: number }>()
 
     trades.forEach(trade => {
-      const date = new Date(trade.exit_date || trade.entry_date)
-      const key = date.toISOString().slice(0, 10)
+      // Date-only strings (YYYY-MM-DD) parse as UTC midnight; add T00:00 to force local parse
+      const rawDate = trade.exit_date || trade.entry_date
+      const dateStr = rawDate.length === 10 ? `${rawDate}T00:00` : rawDate
+      const date = new Date(dateStr)
+      const key = localDateKey(date)
       const current = map.get(key) || { pnl: 0, trades: 0 }
       map.set(key, {
         pnl: current.pnl + trade.pnl,
@@ -42,7 +50,7 @@ export function CalendarHeatmap({ trades, startDate, endDate }: CalendarHeatmapP
     let bestDay = { date: '', pnl: -Infinity }
     let worstDay = { date: '', pnl: Infinity }
 
-    const today = new Date().toISOString().slice(0, 10)
+    const today = localDateKey(new Date())
 
     sortedDates.forEach(([date, data]) => {
       // Track best/worst days
@@ -93,7 +101,7 @@ export function CalendarHeatmap({ trades, startDate, endDate }: CalendarHeatmapP
     // Generate days until we pass end date
     const currentDate = new Date(firstDay)
     while (currentDate <= endDate) {
-      const key = currentDate.toISOString().slice(0, 10)
+      const key = localDateKey(currentDate)
       const data = dailyPnL.get(key) || { pnl: 0, trades: 0 }
 
       days.push({
