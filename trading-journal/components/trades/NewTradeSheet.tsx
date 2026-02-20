@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { X, Save, TrendingUp, TrendingDown, Info, Loader2, ChevronDown, ChevronRight } from 'lucide-react'
+import { X, Save, TrendingUp, TrendingDown, Info, Loader2, ChevronDown, ChevronRight, Settings2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type {
   Trade,
@@ -26,6 +26,7 @@ import {
 import { SetupChecklist } from '@/components/trades/SetupChecklist'
 import { scoreSetup, getDefaultRubric } from '@/lib/playbook-scoring'
 import { RiskWarningDialog, type RiskViolationDetails } from '@/components/risk-management/RiskWarningDialog'
+import { useTradeFormFields, OPTIONAL_FIELDS } from '@/stores/trade-form-fields'
 
 type PlaybookOption = Pick<Playbook, 'id' | 'name' | 'category' | 'active'>
 
@@ -129,6 +130,11 @@ export function NewTradeSheet({
   const [saving, setSaving] = React.useState(false)
   const [errors, setErrors] = React.useState<Record<string, string>>({})
   const [saveError, setSaveError] = React.useState<string | null>(null)
+  const [fieldsOpen, setFieldsOpen] = React.useState(false)
+
+  // Optional field visibility
+  const { enabledFields, toggleField, enableAll, resetToDefaults } = useTradeFormFields()
+  const fieldEnabled = (id: string) => enabledFields.includes(id)
 
   // Trade review request state
   const [requestReview, setRequestReview] = React.useState(false)
@@ -846,6 +852,13 @@ export function NewTradeSheet({
             </h2>
             <div className="flex items-center gap-2">
               <button
+                onClick={() => setFieldsOpen(!fieldsOpen)}
+                title="Customize optional fields"
+                className={`p-2 rounded-lg transition-colors ${fieldsOpen ? 'bg-neutral-200 dark:bg-neutral-600 text-neutral-900 dark:text-white' : 'hover:bg-gray-100 dark:hover:bg-neutral-700 text-gray-500 dark:text-gray-400'}`}
+              >
+                <Settings2 className="w-5 h-5" />
+              </button>
+              <button
                 onClick={handleSubmit}
                 disabled={saving}
                 style={{
@@ -872,6 +885,39 @@ export function NewTradeSheet({
               </button>
             </div>
           </div>
+
+          {/* Optional fields panel */}
+          {fieldsOpen && (
+            <div className="mt-4 p-4 rounded-lg border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Optional Fields</p>
+                <div className="flex gap-2">
+                  <button onClick={enableAll} className="text-xs text-blue-600 dark:text-blue-400 hover:underline">Enable all</button>
+                  <span className="text-gray-300 dark:text-neutral-600">·</span>
+                  <button onClick={resetToDefaults} className="text-xs text-gray-500 dark:text-gray-400 hover:underline">Reset</button>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {OPTIONAL_FIELDS.map((field) => (
+                  <label
+                    key={field.id}
+                    className="flex items-start gap-2.5 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-neutral-800 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={enabledFields.includes(field.id)}
+                      onChange={() => toggleField(field.id)}
+                      className="mt-0.5 w-4 h-4 rounded border-gray-300 text-neutral-600 focus:ring-neutral-500"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{field.label}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{field.description}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Form */}
@@ -970,6 +1016,7 @@ export function NewTradeSheet({
               </div>
             </div>
 
+            {fieldEnabled('execution_method') && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Execution Method
@@ -989,6 +1036,7 @@ export function NewTradeSheet({
                 How you entered this trade
               </p>
             </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -1019,10 +1067,11 @@ export function NewTradeSheet({
               </div>
             </div>
 
+            {fieldEnabled('timeframes') && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Entry Timeframe *
+                  Entry Timeframe
                 </label>
                 <select
                   value={entryTimeframe}
@@ -1086,8 +1135,10 @@ export function NewTradeSheet({
                 />
               </div>
             )}
+            )}
           </section>
 
+          {fieldEnabled('playbook_checklist') && (
           <section className="space-y-4">
             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
               Playbook Checklist
@@ -1124,7 +1175,9 @@ export function NewTradeSheet({
               </div>
             )}
           </section>
+          )}
 
+          {fieldEnabled('planned_setup') && (
           <section className="space-y-4">
             <button
               type="button"
@@ -1217,6 +1270,7 @@ export function NewTradeSheet({
             </div>
             )}
           </section>
+          )}
 
           <section className="space-y-4">
             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
@@ -1272,6 +1326,7 @@ export function NewTradeSheet({
               </div>
 
               {/* MAE */}
+              {fieldEnabled('mae_mfe') && (
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   MAE — Max Adverse Excursion ({pipsLabel})
@@ -1297,8 +1352,10 @@ export function NewTradeSheet({
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">How far did price go against you? (positive number)</p>
               </div>
+              )}
 
               {/* MFE */}
+              {fieldEnabled('mae_mfe') && (
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   MFE — Max Favorable Excursion ({pipsLabel})
@@ -1324,6 +1381,7 @@ export function NewTradeSheet({
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">How far did price go in your favor? (positive number)</p>
               </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -1366,6 +1424,7 @@ export function NewTradeSheet({
                 />
               </div>
 
+              {fieldEnabled('pnl_amount') && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   P/L Amount ({selectedAccount?.currency || 'USD'})
@@ -1379,6 +1438,7 @@ export function NewTradeSheet({
                   className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
                 />
               </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -1446,6 +1506,7 @@ export function NewTradeSheet({
             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
               Session & Journal
             </h3>
+            {fieldEnabled('session') && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -1493,7 +1554,9 @@ export function NewTradeSheet({
                 </select>
               </div>
             </div>
+            )}
 
+            {fieldEnabled('emotional_state') && (
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -1516,7 +1579,9 @@ export function NewTradeSheet({
                 </p>
               </div>
             </div>
+            )}
 
+            {fieldEnabled('notes') && (
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -1524,9 +1589,10 @@ export function NewTradeSheet({
               placeholder="Trade notes, observations, lessons learned..."
               className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700 resize-none"
             />
+            )}
           </section>
 
-          {!isMentor && (
+          {!isMentor && fieldEnabled('mentor_review') && (
           <section className="space-y-4">
             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
               Request Mentor Review
