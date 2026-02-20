@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Paperclip } from 'lucide-react'
+import { Paperclip, Edit3, Trash2 } from 'lucide-react'
 import type { Trade, Account } from '@/types/supabase'
 import {
   calculateR,
@@ -27,6 +27,8 @@ interface TradeRowProps {
   isSelected: boolean
   onSelect: (id: string) => void
   onClick: (trade: Trade) => void
+  onEdit: (trade: Trade) => void
+  onDelete: (trade: Trade) => void
 }
 
 export function TradeRow({
@@ -40,6 +42,8 @@ export function TradeRow({
   isSelected,
   onSelect,
   onClick,
+  onEdit,
+  onDelete,
 }: TradeRowProps) {
   const r = calculateR(trade)
   const holdTime = calculateHoldTime(trade)
@@ -307,6 +311,31 @@ export function TradeRow({
           )}
         </td>
       )}
+
+      {/* Actions */}
+      <td className="px-4 py-3 sticky right-0 bg-white dark:bg-neutral-950 z-10">
+        <div className="flex items-center gap-1">
+          <button
+            onClick={(e) => { e.stopPropagation(); onEdit(trade) }}
+            className="p-1.5 rounded text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+            title="Edit trade"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              if (window.confirm('Delete this trade? This cannot be undone.')) {
+                onDelete(trade)
+              }
+            }}
+            className="p-1.5 rounded text-neutral-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            title="Delete trade"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </td>
     </tr>
   )
 }

@@ -25,6 +25,8 @@ interface TradesTableProps {
   units: 'currency' | 'r'
   displayCurrency?: string
   onTradeClick: (trade: Trade) => void
+  onEdit: (trade: Trade) => void
+  onDelete: (trade: Trade) => void
 }
 
 const COLUMN_HEADERS: Record<string, string> = {
@@ -63,6 +65,8 @@ export function TradesTable({
   units,
   displayCurrency,
   onTradeClick,
+  onEdit,
+  onDelete,
 }: TradesTableProps) {
   const { filters, setSortColumn, toggleTradeSelection, selectAllTrades, clearSelection } = useTradesFilters()
   const { sortColumn, sortDirection, selectedTradeIds } = filters
@@ -170,6 +174,11 @@ export function TradesTable({
                   </div>
                 </th>
               ))}
+
+              {/* Actions column */}
+              <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider sticky right-0 bg-neutral-50 dark:bg-neutral-900 z-30">
+                Actions
+              </th>
             </tr>
           </thead>
 
@@ -193,6 +202,8 @@ export function TradesTable({
                   isSelected={selectedTradeIdsSet.has(trade.id)}
                   onSelect={toggleTradeSelection}
                   onClick={onTradeClick}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
                 />
               )
             })}

@@ -655,6 +655,8 @@ function TradesPageContent() {
             units={units}
             displayCurrency={displayCurrency}
             onTradeClick={handleTradeClick}
+            onEdit={handleEditTrade}
+            onDelete={handleDeleteTrade}
           />
         </div>
 
