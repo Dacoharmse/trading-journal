@@ -545,7 +545,7 @@ export function PlaybookEditor({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-black">
+      <div className="flex flex-col gap-3 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-[#070707]">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
@@ -616,7 +616,7 @@ export function PlaybookEditor({
 
         <TabsContent value="basics" className="mt-4 space-y-6">
           <div className={cn("grid gap-6 lg:grid-cols-[2fr_1fr]", mode === 'view' && "pointer-events-none opacity-90")}>
-            <div className="space-y-6 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-black">
+            <div className="space-y-6 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-[#070707]">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-neutral-700 dark:text-neutral-200">
                   Playbook Name
@@ -725,7 +725,7 @@ export function PlaybookEditor({
             </div>
 
             <div className="space-y-6">
-              <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-black">
+              <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-[#070707]">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">
                     Trading Sessions
@@ -743,7 +743,7 @@ export function PlaybookEditor({
                           'rounded-full border px-3 py-1 text-xs font-medium uppercase transition-colors',
                           selected
                             ? 'border-emerald-400 bg-emerald-100 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
-                            : 'border-neutral-200 bg-white text-neutral-500 hover:border-neutral-300 dark:border-neutral-800 dark:bg-black dark:text-neutral-300'
+                            : 'border-neutral-200 bg-white text-neutral-500 hover:border-neutral-300 dark:border-neutral-800 dark:bg-[#070707] dark:text-neutral-300'
                         )}
                       >
                         {session}
@@ -753,7 +753,7 @@ export function PlaybookEditor({
                 </div>
               </div>
 
-              <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-black">
+              <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-[#070707]">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">
                     Best Sessions
@@ -774,7 +774,7 @@ export function PlaybookEditor({
                           'rounded-full border px-3 py-1 text-xs font-medium uppercase transition-colors',
                           selected
                             ? 'border-purple-400 bg-purple-100 text-purple-700 dark:border-purple-700 dark:bg-purple-900/40 dark:text-purple-200'
-                            : 'border-neutral-200 bg-white text-neutral-500 hover:border-neutral-300 dark:border-neutral-800 dark:bg-black dark:text-neutral-300'
+                            : 'border-neutral-200 bg-white text-neutral-500 hover:border-neutral-300 dark:border-neutral-800 dark:bg-[#070707] dark:text-neutral-300'
                         )}
                       >
                         {session}
@@ -784,7 +784,7 @@ export function PlaybookEditor({
                 </div>
               </div>
 
-              <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-black">
+              <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-[#070707]">
                 <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">
                   Symbols
                 </h3>
@@ -803,7 +803,7 @@ export function PlaybookEditor({
                           'rounded-md border px-2 py-1 text-xs transition-colors',
                           selected
                             ? 'border-purple-400 bg-purple-100 text-purple-700 dark:border-purple-700 dark:bg-purple-900/40 dark:text-purple-200'
-                            : 'border-neutral-200 bg-white text-neutral-500 hover:border-neutral-300 dark:border-neutral-800 dark:bg-black dark:text-neutral-300'
+                            : 'border-neutral-200 bg-white text-neutral-500 hover:border-neutral-300 dark:border-neutral-800 dark:bg-[#070707] dark:text-neutral-300'
                         )}
                         title={symbol.display_name}
                       >
@@ -814,7 +814,7 @@ export function PlaybookEditor({
                 </div>
               </div>
 
-              <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-black">
+              <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-[#070707]">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">
@@ -838,7 +838,7 @@ export function PlaybookEditor({
                 </div>
               </div>
 
-              <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-black">
+              <div className="space-y-3 rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-[#070707]">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">

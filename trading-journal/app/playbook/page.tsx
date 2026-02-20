@@ -151,7 +151,7 @@ export default function PlaybookPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 bg-neutral-50 p-6 dark:bg-neutral-900">
+      <div className="flex-1 bg-neutral-50 p-6 dark:bg-[#070707]">
         <div className="mx-auto w-full max-w-6xl animate-pulse space-y-4">
           <div className="h-8 w-56 rounded-lg bg-neutral-200/70 dark:bg-neutral-800/60" />
           <div className="h-10 w-full rounded-lg bg-neutral-200/70 dark:bg-neutral-800/60" />
@@ -159,7 +159,7 @@ export default function PlaybookPage() {
             {Array.from({ length: 3 }).map((_, index) => (
               <div
                 key={index}
-                className="rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-neutral-900"
+                className="rounded-xl border border-neutral-200/70 bg-white p-6 dark:border-neutral-800/60 dark:bg-[#070707]"
               >
                 <div className="h-6 w-1/2 rounded bg-neutral-200/70 dark:bg-neutral-800/60" />
                 <div className="mt-4 h-20 rounded bg-neutral-200/70 dark:bg-neutral-800/60" />
@@ -172,7 +172,7 @@ export default function PlaybookPage() {
   }
 
   return (
-    <div className="flex-1 bg-neutral-50 p-6 dark:bg-neutral-900">
+    <div className="flex-1 bg-neutral-50 p-6 dark:bg-[#070707]">
       <div className="mx-auto w-full max-w-6xl">
         <PlaybookListClient initialPlaybooks={playbooks} initialError={error} />
       </div>
