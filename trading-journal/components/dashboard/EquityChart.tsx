@@ -134,7 +134,7 @@ export function EquityChart({ trades, units, currency }: EquityChartProps) {
 
   if (dataPoints.length === 0) {
     return (
-      <Card className="border-0 bg-white/60 dark:bg-[#13111f]/60 backdrop-blur-sm shadow-lg">
+      <Card className="border-0 bg-white/60 dark:bg-card backdrop-blur-sm shadow-lg">
         <CardHeader>
           <CardTitle className="text-sm font-semibold">Equity Curve</CardTitle>
         </CardHeader>
@@ -185,8 +185,8 @@ export function EquityChart({ trades, units, currency }: EquityChartProps) {
     const pt = payload[0].payload
     if (!pt.label) return null
     return (
-      <div className="bg-[#13111f] border border-[#2d2654] rounded-lg px-3 py-2 shadow-xl text-xs">
-        <p className="text-[#9b8aff] font-medium mb-0.5">{pt.label}</p>
+      <div className="bg-card border border-border rounded-lg px-3 py-2 shadow-xl text-xs">
+        <p className="text-muted-foreground font-medium mb-0.5">{pt.label}</p>
         <p className={`font-bold text-sm ${pt.cumulative >= 0 ? 'text-green-400' : 'text-red-400'}`}>
           {formatValue(pt.cumulative)}
         </p>
@@ -198,7 +198,7 @@ export function EquityChart({ trades, units, currency }: EquityChartProps) {
   const strokeColor = isPositive ? '#22c55e' : '#ef4444'
 
   return (
-    <Card className="border-0 bg-white/60 dark:bg-[#13111f]/60 backdrop-blur-sm shadow-lg">
+    <Card className="border-0 bg-white/60 dark:bg-card backdrop-blur-sm shadow-lg">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
