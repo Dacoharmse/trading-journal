@@ -39,12 +39,17 @@ export function PnLDurationScatter({ trades, currency = 'USD' }: PnLDurationScat
   }
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value)
+    if (currency === 'R') return `${value.toFixed(1)}R`
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(value)
+    } catch {
+      return `${value.toFixed(0)}`
+    }
   }
 
   if (scatterData.length === 0) {

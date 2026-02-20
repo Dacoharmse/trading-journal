@@ -76,10 +76,14 @@ export function RiskWarningDialog({
     if (type === 'percentage') {
       return `${value.toFixed(2)}%`
     }
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-    }).format(value)
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency,
+      }).format(value)
+    } catch {
+      return `${value.toFixed(2)}`
+    }
   }
 
   const getViolationTypeLabel = (type: string) => {

@@ -94,12 +94,17 @@ export function PnLDurationBoxPlot({ trades, currency = 'USD' }: PnLDurationBoxP
   const yScale = 250 / (maxPnL * 2) // Scale to fit in 250px height
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(value)
+    if (currency === 'R') return `${value.toFixed(2)}R`
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(value)
+    } catch {
+      return `${value.toFixed(2)}`
+    }
   }
 
   if (trades.filter(t => t.exit_date).length === 0) {
