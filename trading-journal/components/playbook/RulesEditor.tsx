@@ -66,7 +66,7 @@ export function RulesEditor({
       {sortedRules.length === 0 ? (
         <div className="rounded-lg border border-dashed border-neutral-300/70 p-8 text-center dark:border-neutral-700/60">
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            No rules yet. Add rules to describe your ideal setup.
+            No rules yet. Add rules like &ldquo;Only trade in session&rdquo;, &ldquo;Only one trade per session&rdquo;.
           </p>
           <Button className="mt-4" variant="outline" onClick={onAddRule}>
             <Plus className="h-4 w-4" />

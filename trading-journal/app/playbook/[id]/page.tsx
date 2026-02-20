@@ -146,7 +146,7 @@ export default function EditPlaybookPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 bg-neutral-50 p-6 dark:bg-black">
+      <div className="flex-1 bg-neutral-50 p-6 dark:bg-neutral-900">
         <div className="mx-auto w-full max-w-5xl animate-pulse space-y-4">
           <div className="h-8 w-64 rounded-lg bg-neutral-200/70 dark:bg-neutral-800/60" />
           <div className="h-32 rounded-lg bg-neutral-200/70 dark:bg-neutral-800/60" />
@@ -161,7 +161,7 @@ export default function EditPlaybookPage() {
   }
 
   return (
-    <div className="flex-1 bg-neutral-50 p-6 dark:bg-black">
+    <div className="flex-1 bg-neutral-50 p-6 dark:bg-neutral-900">
       <div className="mx-auto w-full max-w-5xl space-y-6">
         {/* Playbook Performance Dashboard */}
         <div className="rounded-xl border border-neutral-200/70 bg-white/70 p-6 backdrop-blur dark:border-neutral-800/60 dark:bg-neutral-900/60">

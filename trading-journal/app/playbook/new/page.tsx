@@ -58,7 +58,7 @@ export default function NewPlaybookPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 bg-neutral-50 p-6 dark:bg-black">
+      <div className="flex-1 bg-neutral-50 p-6 dark:bg-neutral-900">
         <div className="mx-auto w-full max-w-5xl animate-pulse space-y-4">
           <div className="h-8 w-64 rounded-lg bg-neutral-200/70 dark:bg-neutral-800/60" />
           <div className="h-32 rounded-lg bg-neutral-200/70 dark:bg-neutral-800/60" />
@@ -72,7 +72,7 @@ export default function NewPlaybookPage() {
   }
 
   return (
-    <div className="flex-1 bg-neutral-50 p-6 dark:bg-black">
+    <div className="flex-1 bg-neutral-50 p-6 dark:bg-neutral-900">
       <div className="mx-auto w-full max-w-5xl">
         <PlaybookEditor
           mode="create"
