@@ -79,7 +79,7 @@ export function ExpectancyLadder({ trades }: ExpectancyLadderProps) {
   }, [metrics])
 
   return (
-    <Card className="bg-gradient-to-br from-white/80 to-white/60 dark:from-neutral-800/80 dark:to-neutral-900/60 backdrop-blur-sm border-neutral-200 dark:border-neutral-700">
+    <Card className="border-0 bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm shadow-lg">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium">Expectancy Breakdown</CardTitle>

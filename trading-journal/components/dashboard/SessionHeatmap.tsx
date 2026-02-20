@@ -155,9 +155,9 @@ export function SessionHeatmap({ trades }: SessionHeatmapProps) {
                         title={`${cell.session} ${cell.hour}:00 - ${cell.trades.length} trades, ${formatValue(getValue(cell))}`}
                       >
                         {/* Tooltip */}
-                        <div className={`absolute ${tooltipPosition} left-1/2 transform -translate-x-1/2 px-3 py-2 bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 text-xs font-medium rounded-md shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-[100] border border-neutral-800 dark:border-neutral-200`}>
+                        <div className={`absolute ${tooltipPosition} left-1/2 transform -translate-x-1/2 px-3 py-2 bg-neutral-900 text-white text-xs font-medium rounded-md shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-[100] border border-neutral-700`}>
                           <div className="font-semibold">{cell.session} {cell.hour.toString().padStart(2, '0')}:00</div>
-                          <div className="text-neutral-300 dark:text-neutral-600">{cell.trades.length} trade{cell.trades.length !== 1 ? 's' : ''}</div>
+                          <div className="text-neutral-400">{cell.trades.length} trade{cell.trades.length !== 1 ? 's' : ''}</div>
                           <div className="font-bold text-sm">{formatValue(getValue(cell))}</div>
                         </div>
                       </div>

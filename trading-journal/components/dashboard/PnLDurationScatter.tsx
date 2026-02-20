@@ -137,10 +137,10 @@ export function PnLDurationScatter({ trades, currency = 'USD' }: PnLDurationScat
                       className="pointer-events-none"
                     >
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 text-xs rounded shadow-lg p-2">
+                        <div className="bg-neutral-900 text-white text-xs rounded shadow-lg p-2">
                           <div className="font-bold">{point.symbol}</div>
                           <div>Hold: {formatHoldTime(point.holdMinutes)}</div>
-                          <div className={point.pnl >= 0 ? 'text-green-300 dark:text-green-700' : 'text-red-300 dark:text-red-700'}>
+                          <div className={point.pnl >= 0 ? 'text-green-400' : 'text-red-400'}>
                             {formatCurrency(point.pnl)}
                           </div>
                         </div>
