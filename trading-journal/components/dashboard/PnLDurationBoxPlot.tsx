@@ -65,10 +65,11 @@ export function PnLDurationBoxPlot({ trades, currency = 'USD' }: PnLDurationBoxP
 
     return bands.map(band => {
       const bandTrades = trades.filter(trade => {
-        if (!trade.exit_date) return false
+        const exitStr = trade.exit_date || trade.closed_at
+        if (!exitStr) return false
 
         const entry = new Date(trade.entry_date)
-        const exit = new Date(trade.exit_date)
+        const exit = new Date(exitStr)
         const durationMinutes = (exit.getTime() - entry.getTime()) / (1000 * 60)
 
         if (band.maxMinutes === null) {
@@ -89,7 +90,7 @@ export function PnLDurationBoxPlot({ trades, currency = 'USD' }: PnLDurationBoxP
     })
   }, [trades])
 
-  const allPnLs = trades.filter(t => t.exit_date).map(t => t.pnl)
+  const allPnLs = trades.filter(t => t.exit_date || t.closed_at).map(t => t.pnl)
   const maxPnL = Math.max(...allPnLs.map(p => Math.abs(p)), 100)
   const yScale = 250 / (maxPnL * 2) // Scale to fit in 250px height
 
@@ -107,7 +108,7 @@ export function PnLDurationBoxPlot({ trades, currency = 'USD' }: PnLDurationBoxP
     }
   }
 
-  if (trades.filter(t => t.exit_date).length === 0) {
+  if (trades.filter(t => t.exit_date || t.closed_at).length === 0) {
     return (
       <Card className="border-0 bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm shadow-lg">
         <CardHeader>

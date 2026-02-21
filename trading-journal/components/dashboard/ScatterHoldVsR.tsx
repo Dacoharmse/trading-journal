@@ -69,8 +69,8 @@ export function ScatterHoldVsR({ trades }: ScatterHoldVsRProps) {
             </div>
 
             {/* Chart area */}
-            <div className="absolute left-12 right-0 top-0 bottom-8">
-              <svg className="w-full h-full" viewBox="0 0 1000 300">
+            <div className="absolute left-12 right-0 top-0 bottom-8 overflow-hidden">
+              <svg className="w-full h-full" viewBox="0 0 1000 300" overflow="hidden">
                 {/* Grid lines */}
                 <line
                   x1="0"

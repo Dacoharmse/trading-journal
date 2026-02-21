@@ -77,7 +77,7 @@ export function Histogram({ trades }: HistogramProps) {
             {/* Y-axis labels */}
             <div className="absolute left-0 top-0 bottom-8 w-8 flex flex-col justify-between text-xs text-muted-foreground pr-2 text-right">
               <span>{maxCount}</span>
-              <span>{Math.floor(maxCount / 2)}</span>
+              {maxCount > 1 && <span>{Math.ceil(maxCount / 2)}</span>}
               <span>0</span>
             </div>
 
@@ -118,13 +118,9 @@ export function Histogram({ trades }: HistogramProps) {
 
               {/* Zero line */}
               <div
-                className="absolute top-0 bottom-0 w-px bg-yellow-500 z-10"
+                className="absolute top-0 bottom-0 w-px bg-yellow-500/60 z-10"
                 style={{ left: `${(5 / 10) * 100}%` }}
-              >
-                <span className="absolute top-0 left-2 text-xs font-bold text-yellow-600">
-                  0R
-                </span>
-              </div>
+              />
             </div>
 
             {/* X-axis labels */}

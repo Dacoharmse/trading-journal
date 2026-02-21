@@ -12,10 +12,11 @@ interface PnLDurationScatterProps {
 export function PnLDurationScatter({ trades, currency = 'USD' }: PnLDurationScatterProps) {
   const scatterData = React.useMemo(() => {
     return trades
-      .filter(trade => trade.exit_date)
+      .filter(trade => trade.exit_date || trade.closed_at)
       .map(trade => {
+        const exitStr = (trade.exit_date || trade.closed_at)!
         const entryDate = new Date(trade.entry_date)
-        const exitDate = new Date(trade.exit_date!)
+        const exitDate = new Date(exitStr)
         const holdMinutes = (exitDate.getTime() - entryDate.getTime()) / (1000 * 60)
 
         return {
@@ -23,7 +24,7 @@ export function PnLDurationScatter({ trades, currency = 'USD' }: PnLDurationScat
           pnl: trade.pnl,
           symbol: trade.symbol,
           strategy: trade.strategy,
-          date: trade.exit_date,
+          date: exitStr,
         }
       })
   }, [trades])
