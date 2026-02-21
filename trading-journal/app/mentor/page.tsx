@@ -16,7 +16,6 @@ import {
   Target,
   Calendar,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { getCurrentUserProfile } from '@/lib/auth-utils'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -41,7 +40,6 @@ interface StudentProgress {
 
 export default function MentorDashboardPage() {
   const router = useRouter()
-  const supabase = React.useMemo(() => createClient(), [])
 
   const [loading, setLoading] = React.useState(true)
   const [authorized, setAuthorized] = React.useState(false)
@@ -94,98 +92,14 @@ export default function MentorDashboardPage() {
 
     const loadData = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        const user = session?.user ?? null
-        if (!user) return
-
-        const profile = await getCurrentUserProfile()
-
-        const [studentsCount, playbooksCount, tradesCount] = await Promise.all([
-          supabase
-            .from('mentorship_connections')
-            .select('id', { count: 'exact', head: true })
-            .eq('mentor_id', user.id)
-            .eq('status', 'active'),
-          supabase
-            .from('shared_playbooks')
-            .select('id', { count: 'exact', head: true })
-            .eq('mentor_id', user.id),
-          supabase
-            .from('published_trades')
-            .select('id', { count: 'exact', head: true })
-            .eq('mentor_id', user.id),
-        ])
-
-        setStats({
-          totalStudents: studentsCount.count || 0,
-          activeStudents: studentsCount.count || 0,
-          sharedPlaybooks: playbooksCount.count || 0,
-          publishedTrades: tradesCount.count || 0,
-          averageRating: profile?.mentor_rating || 0,
-          totalReviews: profile?.mentor_total_reviews || 0,
-        })
-
-        // Load student progress data
-        const { data: studentsData } = await supabase
-          .from('mentorship_connections')
-          .select(`
-            id,
-            student_id,
-            created_at,
-            student_profile:student_id (
-              full_name,
-              email,
-              avatar_url
-            )
-          `)
-          .eq('mentor_id', user.id)
-          .eq('status', 'active')
-          .order('created_at', { ascending: false })
-          .limit(10)
-
-        if (studentsData && studentsData.length > 0) {
-          const progressData: StudentProgress[] = await Promise.all(
-            studentsData.map(async (student: any) => {
-              const { data: trades } = await supabase
-                .from('trades')
-                .select('pnl, status, entry_date')
-                .eq('user_id', student.student_id)
-                .order('entry_date', { ascending: false })
-                .limit(50)
-
-              const closedTrades = (trades || []).filter((t: any) => t.status === 'closed')
-              const winningTrades = closedTrades.filter((t: any) => t.pnl > 0)
-              const totalPnl = closedTrades.reduce((sum: number, t: any) => sum + (t.pnl || 0), 0)
-              const winRate = closedTrades.length > 0 ? (winningTrades.length / closedTrades.length) * 100 : 0
-
-              const recentTrades = closedTrades.slice(0, 10)
-              const recentPnl = recentTrades.reduce((sum: number, t: any) => sum + (t.pnl || 0), 0)
-              const trend = recentPnl > 50 ? 'up' : recentPnl < -50 ? 'down' : 'stable'
-
-              const lastTradeDate = trades?.[0]?.entry_date || null
-              const daysSinceLastTrade = lastTradeDate
-                ? Math.floor((Date.now() - new Date(lastTradeDate).getTime()) / (1000 * 60 * 60 * 24))
-                : 999
-              const needsAttention = daysSinceLastTrade > 7 || (winRate < 40 && closedTrades.length >= 5)
-
-              return {
-                id: student.id,
-                student_id: student.student_id,
-                full_name: student.student_profile?.full_name || null,
-                email: student.student_profile?.email || '',
-                avatar_url: student.student_profile?.avatar_url || null,
-                connected_at: student.created_at,
-                total_trades: (trades || []).length,
-                win_rate: winRate,
-                total_pnl: totalPnl,
-                last_trade_date: lastTradeDate,
-                needs_attention: needsAttention,
-                trend,
-              }
-            })
-          )
-          setStudentProgress(progressData)
+        const res = await fetch('/api/mentor/dashboard')
+        if (!res.ok) {
+          console.error('[Mentor] Dashboard API error:', res.status)
+          return
         }
+        const data = await res.json()
+        setStats(data.stats)
+        setStudentProgress(data.studentProgress || [])
       } catch (error) {
         console.error('[Mentor] Failed to load data (non-fatal):', error)
       } finally {
@@ -194,7 +108,7 @@ export default function MentorDashboardPage() {
     }
 
     loadData()
-  }, [authorized, supabase])
+  }, [authorized])
 
   if (!authorized) {
     return (
