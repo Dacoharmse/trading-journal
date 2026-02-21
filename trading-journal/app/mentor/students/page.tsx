@@ -399,7 +399,7 @@ export default function MentorStudentsPage() {
 
       {/* Student Detail Dialog */}
       <Dialog open={showStudentDialog} onOpenChange={setShowStudentDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <DialogHeader>
             <div className="flex items-center gap-4">
