@@ -399,25 +399,25 @@ export default function MentorStudentsPage() {
 
       {/* Student Detail Dialog */}
       <Dialog open={showStudentDialog} onOpenChange={setShowStudentDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <DialogHeader>
-            <div className="flex items-center gap-4">
-              <Avatar className="h-14 w-14 ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
+            <div className="flex items-center gap-5">
+              <Avatar className="h-20 w-20 ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
                 <AvatarImage src={selectedStudent?.avatar_url || undefined} />
-                <AvatarFallback className="text-lg font-bold bg-primary/10 text-primary">
+                <AvatarFallback className="text-2xl font-bold bg-primary/10 text-primary">
                   {selectedStudent && getInitials(selectedStudent.full_name, selectedStudent.email || '')}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <DialogTitle className="text-xl">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <DialogTitle className="text-2xl">
                     {selectedStudent?.full_name || 'Student'}
                   </DialogTitle>
-                  <Badge variant="secondary">Trader</Badge>
+                  <Badge variant="secondary" className="text-sm px-3 py-0.5">Trader</Badge>
                 </div>
-                <DialogDescription className="mt-0.5">{selectedStudent?.email}</DialogDescription>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <DialogDescription className="mt-1 text-base">{selectedStudent?.email}</DialogDescription>
+                <p className="text-sm text-muted-foreground mt-1">
                   Joined {selectedStudent?.created_at ? formatDate(selectedStudent.created_at) : '—'}
                 </p>
               </div>
@@ -425,44 +425,44 @@ export default function MentorStudentsPage() {
           </DialogHeader>
 
           {loadingStudentData ? (
-            <div className="flex items-center justify-center py-12">
+            <div className="flex items-center justify-center py-16">
               <div className="text-muted-foreground">Loading trading data...</div>
             </div>
           ) : (
-            <div className="space-y-5 mt-2">
+            <div className="space-y-6 mt-4">
               {/* Profile strip */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg shrink-0">
-                    <GraduationCap className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <div className="grid grid-cols-3 gap-4">
+                <div className="flex items-center gap-4 p-4 rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20">
+                  <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg shrink-0">
+                    <GraduationCap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs text-muted-foreground">Experience</p>
-                    <p className="text-sm font-semibold truncate">
+                    <p className="text-base font-semibold truncate">
                       {formatExperienceLevel(selectedStudent?.experience_level || null)}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-900/20">
-                  <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg shrink-0">
-                    <Calendar className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                <div className="flex items-center gap-4 p-4 rounded-xl bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-900/20">
+                  <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg shrink-0">
+                    <Calendar className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs text-muted-foreground">Years Trading</p>
-                    <p className="text-sm font-semibold">
+                    <p className="text-base font-semibold">
                       {selectedStudent?.years_of_experience
                         ? `${selectedStudent.years_of_experience} yrs`
                         : 'Not set'}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20">
-                  <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg shrink-0">
-                    <Zap className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                <div className="flex items-center gap-4 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20">
+                  <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-lg shrink-0">
+                    <Zap className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs text-muted-foreground">Style</p>
-                    <p className="text-sm font-semibold truncate">
+                    <p className="text-base font-semibold truncate">
                       {formatTradingStyle(selectedStudent?.trading_style || null)}
                     </p>
                   </div>
@@ -472,46 +472,46 @@ export default function MentorStudentsPage() {
               {/* Stats grid */}
               {studentStats && (
                 <>
-                  <div className="grid grid-cols-4 gap-3">
-                    <div className="text-center p-3 rounded-xl border bg-muted/30">
-                      <p className="text-xs text-muted-foreground mb-1">Total P&L</p>
-                      <p className={`text-base font-bold ${studentStats.total_pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="text-center p-5 rounded-xl border bg-muted/30">
+                      <p className="text-sm text-muted-foreground mb-2">Total P&L</p>
+                      <p className={`text-2xl font-bold ${studentStats.total_pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {formatCurrency(studentStats.total_pnl)}
                       </p>
-                      <p className="text-xs text-muted-foreground">{studentStats.total_trades} trades</p>
+                      <p className="text-xs text-muted-foreground mt-1">{studentStats.total_trades} trades</p>
                     </div>
-                    <div className="text-center p-3 rounded-xl border bg-muted/30">
-                      <p className="text-xs text-muted-foreground mb-1">Win Rate</p>
-                      <p className="text-base font-bold">{studentStats.win_rate.toFixed(1)}%</p>
-                      <p className="text-xs text-muted-foreground">
+                    <div className="text-center p-5 rounded-xl border bg-muted/30">
+                      <p className="text-sm text-muted-foreground mb-2">Win Rate</p>
+                      <p className="text-2xl font-bold">{studentStats.win_rate.toFixed(1)}%</p>
+                      <p className="text-xs text-muted-foreground mt-1">
                         {studentStats.winning_trades}W / {studentStats.losing_trades}L
                       </p>
                     </div>
-                    <div className="text-center p-3 rounded-xl border bg-green-50 dark:bg-green-900/10 border-green-100 dark:border-green-900/20">
-                      <p className="text-xs text-muted-foreground mb-1">Best Trade</p>
-                      <p className="text-base font-bold text-green-600">
+                    <div className="text-center p-5 rounded-xl border bg-green-50 dark:bg-green-900/10 border-green-100 dark:border-green-900/20">
+                      <p className="text-sm text-muted-foreground mb-2">Best Trade</p>
+                      <p className="text-2xl font-bold text-green-600">
                         {formatCurrency(studentStats.best_trade)}
                       </p>
-                      <p className="text-xs text-muted-foreground">Highest profit</p>
+                      <p className="text-xs text-muted-foreground mt-1">Highest profit</p>
                     </div>
-                    <div className="text-center p-3 rounded-xl border bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/20">
-                      <p className="text-xs text-muted-foreground mb-1">Worst Trade</p>
-                      <p className="text-base font-bold text-red-600">
+                    <div className="text-center p-5 rounded-xl border bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/20">
+                      <p className="text-sm text-muted-foreground mb-2">Worst Trade</p>
+                      <p className="text-2xl font-bold text-red-600">
                         {formatCurrency(studentStats.worst_trade)}
                       </p>
-                      <p className="text-xs text-muted-foreground">Largest loss</p>
+                      <p className="text-xs text-muted-foreground mt-1">Largest loss</p>
                     </div>
                   </div>
 
                   {/* Win/Loss bar */}
                   {studentStats.total_trades > 0 && (
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between text-xs">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
                         <span className="text-green-600 font-medium">{studentStats.winning_trades} wins</span>
-                        <span className="text-muted-foreground">Win / Loss Split</span>
+                        <span className="text-muted-foreground text-xs">Win / Loss Split</span>
                         <span className="text-red-600 font-medium">{studentStats.losing_trades} losses</span>
                       </div>
-                      <div className="h-2 bg-red-200 dark:bg-red-900/40 rounded-full overflow-hidden">
+                      <div className="h-2.5 bg-red-200 dark:bg-red-900/40 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-green-500 rounded-full transition-all duration-500"
                           style={{ width: `${studentStats.win_rate}%` }}
@@ -524,30 +524,30 @@ export default function MentorStudentsPage() {
 
               {/* Recent Trades */}
               <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold">Recent Trades</h3>
-                  <span className="text-xs text-muted-foreground">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold">Recent Trades</h3>
+                  <span className="text-sm text-muted-foreground">
                     Last 10 of {studentStats?.total_trades || 0}
                   </span>
                 </div>
                 {studentTrades.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-8 text-muted-foreground rounded-xl border border-dashed">
-                    <Activity className="h-8 w-8 mb-2 opacity-40" />
-                    <p className="text-sm">No trades recorded yet</p>
+                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground rounded-xl border border-dashed">
+                    <Activity className="h-10 w-10 mb-3 opacity-40" />
+                    <p>No trades recorded yet</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
                     {studentTrades.slice(0, 10).map((trade) => (
                       <div
                         key={trade.id}
-                        className="flex items-center gap-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors"
+                        className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent/50 transition-colors"
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-bold text-sm">{trade.symbol}</span>
+                            <span className="font-bold">{trade.symbol}</span>
                             <Badge
                               variant="outline"
-                              className={`text-xs px-1.5 py-0 h-5 ${
+                              className={`text-xs px-2 py-0.5 ${
                                 trade.trade_type === 'long'
                                   ? 'text-green-600 border-green-300 dark:border-green-800'
                                   : 'text-red-600 border-red-300 dark:border-red-800'
@@ -556,14 +556,14 @@ export default function MentorStudentsPage() {
                               {trade.trade_type}
                             </Badge>
                             {trade.setup_name && (
-                              <span className="text-xs text-primary truncate">{trade.setup_name}</span>
+                              <span className="text-sm text-primary truncate">{trade.setup_name}</span>
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground mt-0.5">
+                          <p className="text-sm text-muted-foreground mt-0.5">
                             {formatDate(trade.entry_date)}
                           </p>
                         </div>
-                        <div className={`text-sm font-bold tabular-nums ${trade.pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <div className={`font-bold tabular-nums ${trade.pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {trade.pnl >= 0 ? '+' : ''}{formatCurrency(trade.pnl)}
                         </div>
                       </div>
@@ -573,8 +573,9 @@ export default function MentorStudentsPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 pt-1">
+              <div className="flex gap-4 pt-2">
                 <Button
+                  size="lg"
                   className="flex-1"
                   onClick={() => {
                     const studentUserId = selectedStudent?.user_id || selectedStudent?.id
@@ -585,7 +586,7 @@ export default function MentorStudentsPage() {
                   <Eye className="h-4 w-4 mr-2" />
                   View Full Journal
                 </Button>
-                <Button variant="outline" disabled>
+                <Button size="lg" variant="outline" disabled>
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Message Student
                 </Button>
