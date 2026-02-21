@@ -123,7 +123,7 @@ export function HourSessionHeatmap({ data }: HourSessionHeatmapProps) {
 
       <p className="text-xs text-neutral-500 dark:text-neutral-400" role="status">
         Heatmap shows {metric === 'winRate' ? 'Win Rate' : metric === 'expectancyR' ? 'Expectancy (R)' : 'Net R'} by
-        hour (UTC) and session. Hover for details.
+        local hour (SA/Namibia UTC+2) and session. Hover for details.
       </p>
     </div>
   )

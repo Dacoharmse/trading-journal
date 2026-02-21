@@ -9,7 +9,7 @@ interface HoldTimeVsRScatterProps {
 }
 
 export function HoldTimeVsRScatter({ data }: HoldTimeVsRScatterProps) {
-  const [hoveredPoint, setHoveredPoint] = React.useState<ScatterPoint | null>(null)
+  const [selectedPoint, setSelectedPoint] = React.useState<ScatterPoint | null>(null)
 
   if (data.length === 0) {
     return (
@@ -51,14 +51,14 @@ export function HoldTimeVsRScatter({ data }: HoldTimeVsRScatterProps) {
               <div
                 key={i}
                 className={cn(
-                  'absolute h-2 w-2 -tranneutral-x-1 -tranneutral-y-1 rounded-full transition-all hover:scale-150',
+                  'absolute h-2 w-2 -translate-x-1 -translate-y-1 rounded-full transition-all cursor-pointer hover:scale-125',
                   point.r > 0
                     ? 'bg-emerald-500 dark:bg-emerald-400'
-                    : 'bg-red-500 dark:bg-red-400'
+                    : 'bg-red-500 dark:bg-red-400',
+                  selectedPoint === point && 'ring-2 ring-white ring-offset-1 scale-150'
                 )}
                 style={{ left: `${x}%`, top: `${y}%` }}
-                onMouseEnter={() => setHoveredPoint(point)}
-                onMouseLeave={() => setHoveredPoint(null)}
+                onClick={() => setSelectedPoint(prev => prev === point ? null : point)}
                 title={`${point.date} ${point.symbol} ${point.playbookName || ''} ${point.r.toFixed(2)}R (${point.hold}m)`}
               />
             )
@@ -73,37 +73,37 @@ export function HoldTimeVsRScatter({ data }: HoldTimeVsRScatterProps) {
         </div>
       </div>
 
-      {hoveredPoint && (
+      {selectedPoint && (
         <div className="rounded border border-neutral-200 bg-neutral-100 p-3 text-xs dark:border-neutral-700 dark:bg-neutral-800">
           <div className="font-medium text-neutral-900 dark:text-neutral-50">
-            {hoveredPoint.date} - {hoveredPoint.symbol}
+            {selectedPoint.date} - {selectedPoint.symbol}
           </div>
-          {hoveredPoint.playbookName && (
+          {selectedPoint.playbookName && (
             <div className="text-neutral-600 dark:text-neutral-400">
-              Playbook: {hoveredPoint.playbookName}
+              Playbook: {selectedPoint.playbookName}
             </div>
           )}
           <div className="mt-1 flex gap-4">
             <span
               className={cn(
                 'font-semibold',
-                hoveredPoint.r > 0
+                selectedPoint.r > 0
                   ? 'text-emerald-700 dark:text-emerald-300'
                   : 'text-red-700 dark:text-red-300'
               )}
             >
-              {hoveredPoint.r > 0 ? '+' : ''}
-              {hoveredPoint.r.toFixed(2)}R
+              {selectedPoint.r > 0 ? '+' : ''}
+              {selectedPoint.r.toFixed(2)}R
             </span>
             <span className="text-neutral-600 dark:text-neutral-400">
-              {hoveredPoint.hold}min hold
+              {selectedPoint.hold}min hold
             </span>
           </div>
         </div>
       )}
 
       <p className="text-xs text-neutral-500 dark:text-neutral-400" role="status">
-        Scatter plot showing hold time vs R multiple. Hover over points for details.
+        Scatter plot showing hold time vs R multiple. Click a point for details, click again to dismiss.
       </p>
     </div>
   )

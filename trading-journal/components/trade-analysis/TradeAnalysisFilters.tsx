@@ -81,7 +81,8 @@ export function TradeAnalysisFilters({ filters, onFiltersChange, allTrades }: Tr
     const tags = new Set<string>()
     allTrades.forEach(t => {
       if (t.tags) {
-        t.tags.split(',').forEach(tag => tags.add(tag.trim()))
+        const tagList = Array.isArray(t.tags) ? t.tags : t.tags.split(',').map((s: string) => s.trim())
+        tagList.forEach((tag: string) => tags.add(tag.trim()))
       }
     })
     return Array.from(tags).sort()

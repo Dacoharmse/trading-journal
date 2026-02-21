@@ -166,7 +166,9 @@ export default function TradeAnalysisPage() {
 
       // Tags
       if (filters.tags.length > 0) {
-        const tradeTags = trade.tags ? trade.tags.split(',').map(t => t.trim()) : []
+        const tradeTags = trade.tags
+          ? Array.isArray(trade.tags) ? trade.tags : trade.tags.split(',').map((s: string) => s.trim())
+          : []
         const hasTag = filters.tags.some(tag => tradeTags.includes(tag))
         if (!hasTag) return false
       }

@@ -225,6 +225,7 @@ export interface Trade {
   mfe_pips?: number | null  // Maximum Favorable Excursion in pips (furthest price moved in your favor)
   mae_r?: number | null     // Maximum Adverse Excursion in R (derived)
   mfe_r?: number | null     // Maximum Favorable Excursion in R (derived)
+  hold_mins?: number | null // Hold duration in minutes (computed from open_time/close_time)
 
   // Categorization
   strategy?: string | null           // Legacy: string name

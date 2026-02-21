@@ -512,7 +512,9 @@ function TradesPageContent() {
 
         // Handle tags
         if (updates.addTags || updates.removeTags) {
-          const currentTags = trade.tags ? trade.tags.split(',').map(t => t.trim()) : []
+          const currentTags = trade.tags
+            ? Array.isArray(trade.tags) ? trade.tags : trade.tags.split(',').map((s: string) => s.trim())
+            : []
           let newTags = [...currentTags]
 
           if (updates.addTags) {

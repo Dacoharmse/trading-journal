@@ -15,9 +15,15 @@ export function PnLDurationScatter({ trades, currency = 'USD' }: PnLDurationScat
       .filter(trade => trade.exit_date || trade.closed_at)
       .map(trade => {
         const exitStr = (trade.exit_date || trade.closed_at)!
-        const entryDate = new Date(trade.entry_date)
-        const exitDate = new Date(exitStr)
-        const holdMinutes = (exitDate.getTime() - entryDate.getTime()) / (1000 * 60)
+        const entryDateStr = trade.entry_date.split('T')[0]
+        const exitDateStr = exitStr.split('T')[0]
+        const entryDate = trade.open_time
+          ? new Date(`${entryDateStr}T${trade.open_time}`)
+          : new Date(`${entryDateStr}T00:00:00`)
+        const exitDate = trade.close_time
+          ? new Date(`${exitDateStr}T${trade.close_time}`)
+          : new Date(`${exitDateStr}T00:00:00`)
+        const holdMinutes = Math.max(0, (exitDate.getTime() - entryDate.getTime()) / (1000 * 60))
 
         return {
           holdMinutes,
@@ -35,7 +41,7 @@ export function PnLDurationScatter({ trades, currency = 'USD' }: PnLDurationScat
   const formatHoldTime = (mins: number) => {
     if (mins < 1) return `${Math.round(mins * 60)}s`
     if (mins < 60) return `${Math.round(mins)}m`
-    if (mins < 1440) return `${Math.round(mins / 60)}m`
+    if (mins < 1440) return `${Math.round(mins / 60)}h`
     return `${(mins / 1440).toFixed(1)}d`
   }
 

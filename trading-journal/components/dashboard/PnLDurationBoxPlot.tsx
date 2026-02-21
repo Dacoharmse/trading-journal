@@ -68,9 +68,15 @@ export function PnLDurationBoxPlot({ trades, currency = 'USD' }: PnLDurationBoxP
         const exitStr = trade.exit_date || trade.closed_at
         if (!exitStr) return false
 
-        const entry = new Date(trade.entry_date)
-        const exit = new Date(exitStr)
-        const durationMinutes = (exit.getTime() - entry.getTime()) / (1000 * 60)
+        const entryDateStr = trade.entry_date.split('T')[0]
+        const exitDateStr = exitStr.split('T')[0]
+        const entry = trade.open_time
+          ? new Date(`${entryDateStr}T${trade.open_time}`)
+          : new Date(`${entryDateStr}T00:00:00`)
+        const exit = trade.close_time
+          ? new Date(`${exitDateStr}T${trade.close_time}`)
+          : new Date(`${exitDateStr}T00:00:00`)
+        const durationMinutes = Math.max(0, (exit.getTime() - entry.getTime()) / (1000 * 60))
 
         if (band.maxMinutes === null) {
           return durationMinutes > band.minMinutes

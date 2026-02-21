@@ -53,20 +53,37 @@ export default function AnalyticsPage() {
       setLoading(true)
       try {
         const { data: { session } } = await supabase.auth.getSession()
-        if (!session?.user) return
+        let user = session?.user ?? null
+        if (!user) {
+          const { data: { user: u } } = await supabase.auth.getUser()
+          user = u ?? null
+        }
+        if (!user) return
 
         const [tradesRes, playbooksRes] = await Promise.all([
           supabase
             .from('trades')
             .select('*')
-            .gte('closed_at', filters.dateFrom)
-            .lte('closed_at', filters.dateTo)
-            .order('closed_at', { ascending: false }),
+            .gte('exit_date', filters.dateFrom)
+            .order('exit_date', { ascending: false }),
           supabase.from('playbooks').select('id, name, trade_type'),
         ])
 
         if (!cancelled) {
-          setRawTrades((tradesRes.data as Trade[]) ?? [])
+          // Normalize trades: backfill r_multiple from actual_rr, compute hold_mins from open/close time
+          const trades = ((tradesRes.data as Trade[]) ?? []).map(t => {
+            const rMultiple = t.r_multiple ?? (t as any).actual_rr ?? null
+            let holdMins = t.hold_mins ?? null
+            if (holdMins == null && t.open_time && t.close_time) {
+              const entryDateStr = t.entry_date.split('T')[0]
+              const exitDateStr = (t.exit_date || t.closed_at || t.entry_date).split('T')[0]
+              const entry = new Date(`${entryDateStr}T${t.open_time}`)
+              const exit = new Date(`${exitDateStr}T${t.close_time}`)
+              holdMins = Math.max(0, (exit.getTime() - entry.getTime()) / (1000 * 60))
+            }
+            return { ...t, r_multiple: rMultiple, hold_mins: holdMins }
+          })
+          setRawTrades(trades)
           setPlaybooks((playbooksRes.data as Array<{ id: string; name: string }>) ?? [])
         }
       } catch (error) {

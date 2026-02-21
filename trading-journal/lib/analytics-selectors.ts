@@ -75,10 +75,13 @@ export function selectTradesInScope(
   filters: TradeFilters
 ): Trade[] {
   return trades.filter((trade) => {
-    if (!trade.closed_at) return false
+    // Accept either exit_date or closed_at as the closing timestamp
+    const closedAt = trade.exit_date || trade.closed_at
+    if (!closedAt) return false
 
-    if (filters.dateFrom && trade.closed_at < filters.dateFrom) return false
-    if (filters.dateTo && trade.closed_at > filters.dateTo) return false
+    const closedDate = closedAt.split('T')[0]
+    if (filters.dateFrom && closedDate < filters.dateFrom) return false
+    if (filters.dateTo && closedDate > filters.dateTo) return false
 
     if (
       filters.accountId &&
@@ -219,8 +222,9 @@ export function groupByDOW(trades: Trade[]): DOWMetrics[] {
   }
 
   for (const trade of trades) {
-    if (!trade.closed_at || trade.r_multiple == null) continue
-    const date = new Date(trade.closed_at)
+    const closedAt = trade.exit_date || trade.closed_at
+    if (!closedAt || trade.r_multiple == null) continue
+    const date = new Date(closedAt)
     const dow = days[date.getUTCDay()]
     groups[dow].push(trade)
   }
@@ -238,6 +242,36 @@ export function groupByDOW(trades: Trade[]): DOWMetrics[] {
   })
 }
 
+/**
+ * Derive session row from trade.session OR trade.session_hour prefix.
+ * session_hour: A1-A4 → Asia, L1-L3 → London, NY1-NY3 → NY
+ */
+function getTradeSession(trade: Trade): string | null {
+  if (trade.session) return trade.session
+  const sh = (trade as any).session_hour as string | undefined | null
+  if (sh) {
+    if (sh.startsWith('NY')) return 'NY'
+    if (sh.startsWith('L')) return 'London'
+    if (sh.startsWith('A')) return 'Asia'
+  }
+  return null
+}
+
+/**
+ * Get SA/Namibia local hour (UTC+2) from open_time (stored as local HH:MM:SS).
+ * Falls back to exit_date UTC hour + 2.
+ */
+function getLocalHour(trade: Trade): number | null {
+  if (trade.open_time) {
+    return parseInt(trade.open_time.split(':')[0], 10)
+  }
+  const closedAt = trade.exit_date || trade.closed_at
+  if (closedAt) {
+    return (new Date(closedAt).getUTCHours() + 2) % 24
+  }
+  return null
+}
+
 export function hourSessionMatrix(
   trades: Trade[]
 ): Record<string, HourMetrics[]> {
@@ -251,11 +285,12 @@ export function hourSessionMatrix(
     }
 
     for (const trade of trades) {
-      if (!trade.closed_at || trade.r_multiple == null) continue
-      if (trade.session !== session) continue
+      if (trade.r_multiple == null) continue
+      if (getTradeSession(trade) !== session) continue
 
-      const hour = new Date(trade.closed_at).getUTCHours()
-      hours[hour].push(trade)
+      const h = getLocalHour(trade)
+      if (h == null) continue
+      hours[h].push(trade)
     }
 
     matrix[session] = Array.from({ length: 24 }, (_, hour) => {
@@ -348,7 +383,8 @@ export function histR(trades: Trade[], bins = 31): HistogramBucket[] {
   for (let i = 0; i < bins; i++) {
     const min = -range + i * step
     const max = min + step
-    const count = rValues.filter((r) => r >= min && r < max).length
+    const isLast = i === bins - 1
+    const count = rValues.filter((r) => r >= min && (isLast ? r <= max : r < max)).length
 
     buckets.push({
       bin: `${min.toFixed(1)} to ${max.toFixed(1)}`,
@@ -373,7 +409,8 @@ export function histMae(trades: Trade[], bins = 20): HistogramBucket[] {
   for (let i = 0; i < bins; i++) {
     const min = i * step
     const max = min + step
-    const count = values.filter((v) => v >= min && v < max).length
+    const isLast = i === bins - 1
+    const count = values.filter((v) => v >= min && (isLast ? v <= max : v < max)).length
 
     buckets.push({
       bin: `${min.toFixed(2)} to ${max.toFixed(2)}`,
@@ -398,7 +435,8 @@ export function histMfe(trades: Trade[], bins = 20): HistogramBucket[] {
   for (let i = 0; i < bins; i++) {
     const min = i * step
     const max = min + step
-    const count = values.filter((v) => v >= min && v < max).length
+    const isLast = i === bins - 1
+    const count = values.filter((v) => v >= min && (isLast ? v <= max : v < max)).length
 
     buckets.push({
       bin: `${min.toFixed(2)} to ${max.toFixed(2)}`,
@@ -440,13 +478,14 @@ export function holdVsR(
   playbooks: Array<{ id: string; name: string }>
 ): ScatterPoint[] {
   return trades
-    .filter((t) => t.r_multiple != null && t.hold_mins != null && t.closed_at)
+    .filter((t) => t.r_multiple != null && t.hold_mins != null && (t.exit_date || t.closed_at))
     .map((t) => {
+      const closedAt = t.exit_date || t.closed_at
       const playbook = playbooks.find((p) => p.id === t.playbook_id)
       return {
         r: t.r_multiple ?? 0,
         hold: t.hold_mins ?? 0,
-        date: t.closed_at?.split('T')[0] ?? '',
+        date: closedAt?.split('T')[0] ?? '',
         symbol: t.symbol,
         playbookName: playbook?.name,
       }
