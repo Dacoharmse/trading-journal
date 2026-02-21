@@ -579,7 +579,7 @@ export default function MentorStudentsPage() {
                   className="flex-1"
                   onClick={() => {
                     const studentUserId = selectedStudent?.user_id || selectedStudent?.id
-                    router.push(`/trades?student=${studentUserId}`)
+                    router.push(`/mentor/journal/${studentUserId}`)
                     setShowStudentDialog(false)
                   }}
                 >
