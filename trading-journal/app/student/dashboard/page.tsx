@@ -16,7 +16,6 @@ import {
   ArrowRight,
   MessageSquare,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -88,7 +87,6 @@ interface ReviewRequest {
 
 export default function StudentDashboardPage() {
   const router = useRouter()
-  const supabase = React.useMemo(() => createClient(), [])
 
   const [loading, setLoading] = React.useState(true)
   const [stats, setStats] = React.useState<DashboardStats>({
@@ -109,147 +107,32 @@ export default function StudentDashboardPage() {
   const loadDashboardData = async () => {
     try {
       setLoading(true)
-      const { data: { session } } = await supabase.auth.getSession()
-      const user = session?.user ?? null
-      if (!user) {
+      const res = await fetch('/api/student/dashboard')
+      if (res.status === 401) {
         router.push('/login')
         return
       }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || 'Failed to load dashboard')
+      }
 
-      // Load connected mentors
-      const { data: mentorConnections, error: mentorsError } = await supabase
-        .from('mentorship_connections')
-        .select(`
-          mentor_id,
-          created_at,
-          mentor:mentor_id (
-            id,
-            full_name,
-            email,
-            bio
-          )
-        `)
-        .eq('student_id', user.id)
-        .eq('status', 'active')
-
-      if (mentorsError) throw mentorsError
-
-      const mentorsData = mentorConnections?.map((conn: any) => ({
-        id: conn.mentor.id,
-        full_name: conn.mentor.full_name,
-        email: conn.mentor.email,
-        bio: conn.mentor.bio,
-        connected_at: conn.created_at,
-      })) || []
+      const data = await res.json()
+      const mentorsData: Mentor[] = data.mentors || []
+      const playbooksData: SharedPlaybook[] = data.sharedPlaybooks || []
+      const tradesData: PublishedTrade[] = data.publishedTrades || []
+      const reviewsData: ReviewRequest[] = data.reviews || []
 
       setMentors(mentorsData)
+      setRecentPlaybooks(playbooksData.slice(0, 3))
+      setRecentTrades(tradesData.slice(0, 3))
+      setRecentReviews(reviewsData.slice(0, 3))
 
-      // Get mentor IDs for filtering
-      const mentorIds = mentorsData.map((m: Mentor) => m.id)
-
-      // Load shared playbooks count and recent
-      const { data: playbooksData, error: playbooksError } = await supabase
-        .from('shared_playbooks')
-        .select(`
-          id,
-          playbook_id,
-          shared_note,
-          created_at,
-          mentor_id,
-          shared_with,
-          student_ids,
-          playbook:playbook_id (
-            name,
-            description,
-            category
-          ),
-          mentor:mentor_id (
-            full_name
-          )
-        `)
-        .in('mentor_id', mentorIds.length > 0 ? mentorIds : ['00000000-0000-0000-0000-000000000000'])
-        .order('created_at', { ascending: false })
-
-      if (playbooksError) throw playbooksError
-
-      // Filter playbooks based on sharing rules
-      const accessiblePlaybooks = playbooksData?.filter((pb: any) => {
-        if (pb.shared_with === 'all_students') return true
-        if (pb.shared_with === 'specific_students' && pb.student_ids?.includes(user.id)) return true
-        return false
-      }) || []
-
-      setRecentPlaybooks(accessiblePlaybooks.slice(0, 3))
-
-      // Load published trades count and recent
-      const { data: tradesData, error: tradesError } = await supabase
-        .from('published_trades')
-        .select(`
-          id,
-          trade_id,
-          title,
-          description,
-          view_count,
-          published_at,
-          mentor_id,
-          visibility,
-          student_ids,
-          trade:trade_id (
-            symbol,
-            trade_type,
-            pnl,
-            chart_image_url
-          ),
-          mentor:mentor_id (
-            full_name
-          )
-        `)
-        .order('published_at', { ascending: false })
-
-      if (tradesError) throw tradesError
-
-      // Filter trades based on visibility rules
-      const accessibleTrades = tradesData?.filter((trade: any) => {
-        if (trade.visibility === 'public') return true
-        if (trade.visibility === 'all_students' && mentorIds.includes(trade.mentor_id)) return true
-        if (trade.visibility === 'specific_students' && trade.student_ids?.includes(user.id)) return true
-        return false
-      }) || []
-
-      setRecentTrades(accessibleTrades.slice(0, 3))
-
-      // Load review requests
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from('trade_review_requests')
-        .select(`
-          id,
-          trade_id,
-          status,
-          created_at,
-          mentor_id,
-          trade:trade_id (
-            symbol,
-            trade_type,
-            entry_date
-          ),
-          mentor:mentor_id (
-            full_name
-          )
-        `)
-        .eq('student_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(3)
-
-      if (reviewsError) throw reviewsError
-
-      setRecentReviews(reviewsData || [])
-
-      // Update stats
       setStats({
         connectedMentors: mentorsData.length,
-        sharedPlaybooks: accessiblePlaybooks.length,
-        publishedTrades: accessibleTrades.length,
-        pendingReviews: reviewsData?.filter((r: any) => r.status === 'pending').length || 0,
+        sharedPlaybooks: playbooksData.length,
+        publishedTrades: tradesData.length,
+        pendingReviews: reviewsData.filter((r) => r.status === 'pending').length,
       })
     } catch (error) {
       console.error('Error loading dashboard:', error)
