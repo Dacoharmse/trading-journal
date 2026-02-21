@@ -191,7 +191,7 @@ export default function StudentDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.connectedMentors}</div>
-            <p className="text-xs text-muted-foreground">Active connections</p>
+            <p className="text-xs text-muted-foreground">Active mentor relationships</p>
           </CardContent>
         </Card>
 

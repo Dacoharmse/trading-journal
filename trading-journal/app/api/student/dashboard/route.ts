@@ -13,58 +13,30 @@ export async function GET() {
 
     const admin = createAdminClient()
 
-    // 1. Load connected mentors via mentorship_connections
-    const { data: connections, error: connError } = await admin
-      .from('mentorship_connections')
-      .select('mentor_id, created_at')
-      .eq('student_id', user.id)
-      .eq('status', 'active')
+    // 1. Load all approved mentors (same logic as /student/mentors page)
+    const { data: mentorProfiles, error: mentorsError } = await admin
+      .from('user_profiles')
+      .select('id, user_id, full_name, email, bio')
+      .eq('is_mentor', true)
+      .eq('mentor_approved', true)
+      .neq('role', 'admin')
 
-    if (connError) {
-      console.error('mentorship_connections error:', connError)
-      return NextResponse.json({ error: connError.message }, { status: 400 })
+    if (mentorsError) {
+      console.error('user_profiles mentors error:', mentorsError)
+      return NextResponse.json({ error: mentorsError.message }, { status: 400 })
     }
 
-    const mentorIds = (connections || []).map((c: any) => c.mentor_id)
+    const mentors = (mentorProfiles || []).map((p: any) => ({
+      id: p.id,
+      full_name: p.full_name ?? null,
+      email: p.email ?? '',
+      bio: p.bio ?? null,
+      connected_at: null,
+    }))
 
-    // 2. Fetch mentor profiles
-    let mentors: any[] = []
-    if (mentorIds.length > 0) {
-      const { data: profiles } = await admin
-        .from('user_profiles')
-        .select('id, user_id, full_name, email, bio')
-        .in('id', mentorIds)
+    const mentorIds = mentors.map((m: any) => m.id)
 
-      // Also try user_id match in case profile uses user_id as pk
-      const { data: profilesByUserId } = await admin
-        .from('user_profiles')
-        .select('id, user_id, full_name, email, bio')
-        .in('user_id', mentorIds)
-
-      const allProfiles = [...(profiles || []), ...(profilesByUserId || [])]
-      const seen = new Set<string>()
-      const uniqueProfiles = allProfiles.filter((p) => {
-        const key = p.id || p.user_id
-        if (seen.has(key)) return false
-        seen.add(key)
-        return true
-      })
-
-      mentors = (connections || []).map((conn: any) => {
-        const profile = uniqueProfiles.find(
-          (p) => p.id === conn.mentor_id || p.user_id === conn.mentor_id
-        )
-        return {
-          id: conn.mentor_id,
-          full_name: profile?.full_name ?? null,
-          email: profile?.email ?? '',
-          bio: profile?.bio ?? null,
-          connected_at: conn.created_at,
-        }
-      })
-    }
-
-    // 3. Shared playbooks from those mentors
+    // 2. Shared playbooks from those mentors
     let sharedPlaybooks: any[] = []
     if (mentorIds.length > 0) {
       const { data: pbData } = await admin
@@ -90,7 +62,7 @@ export async function GET() {
         playbookDetails = pbs || []
       }
 
-      const mentorMap = Object.fromEntries(mentors.map((m) => [m.id, m]))
+      const mentorMap = Object.fromEntries(mentors.map((m: any) => [m.id, m]))
 
       sharedPlaybooks = accessible.map((pb: any) => ({
         id: pb.id,
@@ -102,7 +74,7 @@ export async function GET() {
       }))
     }
 
-    // 4. Published trades (visible to this student)
+    // 3. Published trades (visible to this student)
     const { data: tradesData } = await admin
       .from('published_trades')
       .select('id, trade_id, title, description, view_count, published_at, mentor_id, visibility, student_ids')
@@ -126,7 +98,7 @@ export async function GET() {
       tradeDetails = tds || []
     }
 
-    const mentorMap = Object.fromEntries(mentors.map((m) => [m.id, m]))
+    const mentorMap = Object.fromEntries(mentors.map((m: any) => [m.id, m]))
 
     const publishedTrades = accessibleTrades.map((t: any) => ({
       id: t.id,
@@ -139,7 +111,7 @@ export async function GET() {
       mentor: { full_name: mentorMap[t.mentor_id]?.full_name ?? null },
     }))
 
-    // 5. Review requests
+    // 4. Review requests
     const { data: reviewsData } = await admin
       .from('trade_review_requests')
       .select('id, trade_id, status, created_at, mentor_id')
