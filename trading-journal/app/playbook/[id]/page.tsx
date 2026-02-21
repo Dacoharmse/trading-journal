@@ -23,6 +23,8 @@ interface TradeRecord {
   r_multiple: number | null
   closed_at: string | null
   opened_at: string | null
+  exit_date?: string | null
+  actual_rr?: number | null
 }
 
 export default function EditPlaybookPage() {
@@ -100,7 +102,7 @@ export default function EditPlaybookPage() {
           supabase.from('symbols').select('id, code, display_name').order('code'),
           supabase
             .from('trades')
-            .select('id, playbook_id, pnl, r_multiple, closed_at, opened_at')
+            .select('id, playbook_id, pnl, r_multiple, actual_rr, exit_date')
             .eq('playbook_id', playbookId),
         ])
 
@@ -120,8 +122,14 @@ export default function EditPlaybookPage() {
           setRubric((rubricRes.data as PlaybookRubric | null) ?? null)
           setSymbols((symbolsRes.data as Symbol[] | null) ?? [])
 
-          // Calculate playbook stats
-          const trades = (tradesRes.data as TradeRecord[] | null) ?? []
+          // Calculate playbook stats — normalize field names from DB
+          const rawTrades = (tradesRes.data as TradeRecord[] | null) ?? []
+          if (tradesRes.error) console.error('Trades query error:', tradesRes.error)
+          const trades = rawTrades.map((t) => ({
+            ...t,
+            r_multiple: t.r_multiple ?? t.actual_rr ?? null,
+            closed_at: t.exit_date ?? null,
+          }))
           const calculatedStats = calculatePlaybookStats(playbookId, trades)
           setStats(calculatedStats.total_trades > 0 ? calculatedStats : null)
         }
