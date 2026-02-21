@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { Card, CardContent } from "@/components/ui/card"
 import { Calendar, TrendingUp, TrendingDown, BarChart3, Package } from "lucide-react"
 import { formatCurrency } from "@/lib/fx-converter"
 import { type DailyStats } from "@/lib/calendar-utils"
@@ -68,35 +67,45 @@ export function CalendarStatistics({
       label: "Number of days",
       value: statistics.tradingDays.toString(),
       color: "text-blue-600 dark:text-blue-400",
-      bgColor: "bg-blue-100 dark:bg-blue-900/30",
+      iconBg: "bg-blue-100 dark:bg-blue-900/40",
+      cardBg: "bg-gradient-to-br from-blue-50/80 to-blue-100/40 dark:from-blue-950/20 dark:to-blue-900/10",
+      border: "border-blue-200/60 dark:border-blue-800/40",
     },
     {
       icon: BarChart3,
       label: "Total Trades",
       value: statistics.totalTrades.toString(),
       color: "text-purple-600 dark:text-purple-400",
-      bgColor: "bg-purple-100 dark:bg-purple-900/30",
+      iconBg: "bg-purple-100 dark:bg-purple-900/40",
+      cardBg: "bg-gradient-to-br from-purple-50/80 to-purple-100/40 dark:from-purple-950/20 dark:to-purple-900/10",
+      border: "border-purple-200/60 dark:border-purple-800/40",
     },
     {
       icon: Package,
       label: "Total Lots Used",
       value: statistics.totalLots,
       color: "text-orange-600 dark:text-orange-400",
-      bgColor: "bg-orange-100 dark:bg-orange-900/30",
+      iconBg: "bg-orange-100 dark:bg-orange-900/40",
+      cardBg: "bg-gradient-to-br from-orange-50/80 to-orange-100/40 dark:from-orange-950/20 dark:to-orange-900/10",
+      border: "border-orange-200/60 dark:border-orange-800/40",
     },
     {
       icon: TrendingUp,
       label: "Biggest Win",
       value: formatValue(statistics.biggestWin),
       color: "text-green-600 dark:text-green-400",
-      bgColor: "bg-green-100 dark:bg-green-900/30",
+      iconBg: "bg-green-100 dark:bg-green-900/40",
+      cardBg: "bg-gradient-to-br from-green-50/80 to-green-100/40 dark:from-green-950/20 dark:to-green-900/10",
+      border: "border-green-200/60 dark:border-green-800/40",
     },
     {
       icon: TrendingDown,
       label: "Biggest Loss",
       value: formatValue(statistics.biggestLoss),
       color: "text-red-600 dark:text-red-400",
-      bgColor: "bg-red-100 dark:bg-red-900/30",
+      iconBg: "bg-red-100 dark:bg-red-900/40",
+      cardBg: "bg-gradient-to-br from-red-50/80 to-red-100/40 dark:from-red-950/20 dark:to-red-900/10",
+      border: "border-red-200/60 dark:border-red-800/40",
     },
   ]
 
@@ -105,23 +114,24 @@ export function CalendarStatistics({
       {stats.map((stat) => {
         const Icon = stat.icon
         return (
-          <Card key={stat.label} className="overflow-hidden">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                  <Icon className={`h-4 w-4 ${stat.color}`} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted-foreground mb-1">
-                    {stat.label}
-                  </p>
-                  <p className={`text-lg font-bold ${stat.color} truncate`}>
-                    {stat.value}
-                  </p>
-                </div>
+          <div
+            key={stat.label}
+            className={`rounded-xl border backdrop-blur-sm p-4 ${stat.cardBg} ${stat.border}`}
+          >
+            <div className="flex items-start gap-3">
+              <div className={`p-2 rounded-lg ${stat.iconBg} shrink-0`}>
+                <Icon className={`h-4 w-4 ${stat.color}`} />
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground mb-1">
+                  {stat.label}
+                </p>
+                <p className={`text-lg font-bold ${stat.color} truncate`}>
+                  {stat.value}
+                </p>
+              </div>
+            </div>
+          </div>
         )
       })}
     </div>
