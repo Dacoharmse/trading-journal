@@ -3,7 +3,6 @@
 import * as React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { createClient } from '@/lib/supabase/client'
 import { getCurrentUserProfile } from '@/lib/auth-utils'
 import type { UserProfile } from '@/types/mentorship'
 import {
@@ -34,7 +33,6 @@ interface RecentActivity {
 }
 
 export default function StudentDashboard() {
-  const supabase = React.useMemo(() => createClient(), [])
   const [loading, setLoading] = React.useState(true)
   const [userProfile, setUserProfile] = React.useState<UserProfile | null>(null)
   const [stats, setStats] = React.useState<DashboardStats>({
@@ -47,61 +45,35 @@ export default function StudentDashboard() {
   React.useEffect(() => {
     const loadDashboard = async () => {
       try {
-        const profile = await getCurrentUserProfile()
+        const [profile, dashRes] = await Promise.all([
+          getCurrentUserProfile(),
+          fetch('/api/student/dashboard'),
+        ])
         setUserProfile(profile)
 
-        if (!profile) {
+        if (!dashRes.ok) {
+          console.error('Dashboard API error:', dashRes.status)
           return
         }
 
-        // Get mentor count
-        const { count: mentorCount } = await supabase
-          .from('mentor_relationships')
-          .select('*', { count: 'exact', head: true })
-          .eq('student_id', profile.id)
-          .eq('status', 'accepted')
+        const data = await dashRes.json()
+        const mentors: any[] = data.mentors || []
+        const publishedTrades: any[] = data.publishedTrades || []
+        const sharedPlaybooks: any[] = data.sharedPlaybooks || []
 
-        // Get published trades count
-        const { count: publishedTradesCount } = await supabase
-          .from('published_trades')
-          .select('*', { count: 'exact', head: true })
-          .in('visibility', ['public', 'students'])
-
-        // Get shared playbooks count
-        const { count: sharedPlaybooksCount } = await supabase
-          .from('shared_playbooks')
-          .select('*', { count: 'exact', head: true })
-          .eq('student_id', profile.id)
-
-        // Get recent activity
-        const { data: recentTrades } = await supabase
-          .from('published_trades')
-          .select(`
-            id,
-            title,
-            description,
-            published_at,
-            mentor:mentor_id (
-              full_name
-            )
-          `)
-          .in('visibility', ['public', 'students'])
-          .order('published_at', { ascending: false })
-          .limit(5)
-
-        const recentActivity: RecentActivity[] = (recentTrades || []).map((trade: any) => ({
-          id: trade.id,
+        const recentActivity: RecentActivity[] = publishedTrades.slice(0, 5).map((t: any) => ({
+          id: t.id,
           type: 'trade' as const,
-          title: trade.title || 'Untitled Trade',
-          description: trade.description || '',
-          timestamp: trade.published_at,
-          mentorName: trade.mentor?.full_name || 'Unknown Mentor',
+          title: t.title || 'Untitled Trade',
+          description: t.description || '',
+          timestamp: t.published_at,
+          mentorName: t.mentor?.full_name || 'Unknown Mentor',
         }))
 
         setStats({
-          mentorCount: mentorCount || 0,
-          publishedTradesCount: publishedTradesCount || 0,
-          sharedPlaybooksCount: sharedPlaybooksCount || 0,
+          mentorCount: mentors.length,
+          publishedTradesCount: publishedTrades.length,
+          sharedPlaybooksCount: sharedPlaybooks.length,
           recentActivity,
         })
       } catch (error) {
@@ -112,7 +84,7 @@ export default function StudentDashboard() {
     }
 
     loadDashboard()
-  }, [supabase])
+  }, [])
 
   if (loading) {
     return (
