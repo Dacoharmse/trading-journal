@@ -7,6 +7,107 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Trade, TradeFilter } from '@/types/trade';
 import { useAccountStore } from './account-store';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+// ─── Notification trigger helper ──────────────────────────────────────────────
+// Runs server-side checks after a trade is added or closed.
+// Sends winning streak, personal best, and milestone emails when relevant.
+async function checkNotificationsAfterTrade(
+  supabase: SupabaseClient,
+  userId: string,
+  trades: Trade[],
+  event: 'add' | 'close',
+) {
+  try {
+    const session = (await supabase.auth.getSession()).data.session
+    if (!session?.access_token) return
+
+    const headers = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.access_token}`,
+    }
+
+    const closedTrades = trades.filter(t => t.status === 'closed' && t.pnl != null)
+    const totalTrades = closedTrades.length
+
+    // ── Milestone check (on add) ──────────────────────────────────────────────
+    if (event === 'add') {
+      const milestones = [10, 25, 50, 100, 250, 500, 1000]
+      if (milestones.includes(totalTrades)) {
+        const wins = closedTrades.filter(t => (t.pnl ?? 0) > 0).length
+        const netPnL = closedTrades.reduce((s, t) => s + (t.pnl ?? 0), 0)
+        void fetch('/api/notifications/send', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            type: 'milestone',
+            milestone: totalTrades,
+            totalTrades,
+            winRate: totalTrades > 0 ? (wins / totalTrades) * 100 : 0,
+            netPnL,
+            currency: '$',
+          }),
+        })
+      }
+      return
+    }
+
+    // ── Winning streak check (on close) ──────────────────────────────────────
+    // Group by date and find consecutive profitable days
+    const byDate = new Map<string, number>()
+    for (const t of closedTrades) {
+      const key = (t.entry_date ?? '').slice(0, 10)
+      byDate.set(key, (byDate.get(key) ?? 0) + (t.pnl ?? 0))
+    }
+    const sortedDays = Array.from(byDate.entries()).sort(([a], [b]) => a.localeCompare(b))
+    let streak = 0
+    let streakPnL = 0
+    for (let i = sortedDays.length - 1; i >= 0; i--) {
+      if (sortedDays[i][1] > 0) {
+        streak++
+        streakPnL += sortedDays[i][1]
+      } else break
+    }
+    if (streak > 0 && streak % 3 === 0) {
+      // Notify at 3, 6, 9 … day streaks
+      void fetch('/api/notifications/send', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          type: 'winning_streak',
+          streakDays: streak,
+          totalPnL: streakPnL,
+          currency: '$',
+        }),
+      })
+    }
+
+    // ── Personal best check (on close) ───────────────────────────────────────
+    if (sortedDays.length >= 2) {
+      const today = sortedDays[sortedDays.length - 1]
+      const todayPnL = today[1]
+      const previousBest = Math.max(...sortedDays.slice(0, -1).map(([, v]) => v))
+      if (todayPnL > 0 && todayPnL > previousBest) {
+        const d = new Date(today[0] + 'T00:00')
+        const dateLabel = d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+        void fetch('/api/notifications/send', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            type: 'personal_best',
+            date: dateLabel,
+            newBest: todayPnL,
+            previousBest,
+            currency: '$',
+            totalTrades: closedTrades.filter(t => (t.entry_date ?? '').startsWith(today[0])).length,
+          }),
+        })
+      }
+    }
+  } catch {
+    // Notification failures must never break trade operations
+  }
+}
 
 interface TradeState {
   // State
@@ -81,6 +182,9 @@ export const useTradeStore = create<TradeState>()(
             return { trades: updatedTrades, isLoading: false };
           });
           useAccountStore.getState().recalculateMetrics(updatedTrades);
+
+          // Fire notification checks (fire-and-forget)
+          void checkNotificationsAfterTrade(supabase, user.id, updatedTrades, 'add')
         } catch (error: any) {
           const errorMsg = error.message || 'Unknown error adding trade';
           set({ error: errorMsg, isLoading: false });
@@ -140,6 +244,11 @@ export const useTradeStore = create<TradeState>()(
             };
           });
           useAccountStore.getState().recalculateMetrics(updatedTrades);
+
+          // Fire notification checks when a trade is closed (fire-and-forget)
+          if (updates.status === 'closed' || updates.pnl !== undefined) {
+            void checkNotificationsAfterTrade(supabase, user.id, updatedTrades, 'close')
+          }
         } catch (error: any) {
           set({ error: error.message, isLoading: false });
                   }
