@@ -101,8 +101,12 @@ export async function GET() {
       const lastTradeDate = studentTrades[0]?.entry_date || null
       const daysSinceLastTrade = lastTradeDate
         ? Math.floor((Date.now() - new Date(lastTradeDate + 'T00:00').getTime()) / (1000 * 60 * 60 * 24))
-        : 999
-      const needsAttention = daysSinceLastTrade > 7 || (winRate < 40 && closedTrades.length >= 5)
+        : null
+      // Only flag inactivity if student has traded before and gone quiet (7+ days)
+      // Never flag new traders with 0 trades — they just haven't started yet
+      const needsAttention =
+        (studentTrades.length > 0 && daysSinceLastTrade !== null && daysSinceLastTrade > 7) ||
+        (winRate < 40 && closedTrades.length >= 5)
 
       return {
         id: student.id,
