@@ -12,8 +12,8 @@ import {
   MessageSquare,
   Calendar,
   Activity,
-  DollarSign,
-  BarChart3,
+  GraduationCap,
+  Zap,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUserProfile } from '@/lib/auth-utils'
@@ -399,25 +399,27 @@ export default function MentorStudentsPage() {
 
       {/* Student Detail Dialog */}
       <Dialog open={showStudentDialog} onOpenChange={setShowStudentDialog}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          {/* Header */}
           <DialogHeader>
-            <div className="flex items-center gap-3">
-              <Avatar className="h-12 w-12">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-14 w-14 ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
                 <AvatarImage src={selectedStudent?.avatar_url || undefined} />
-                <AvatarFallback>
-                  {selectedStudent && getInitials(
-                    selectedStudent.full_name,
-                    selectedStudent.email || ''
-                  )}
+                <AvatarFallback className="text-lg font-bold bg-primary/10 text-primary">
+                  {selectedStudent && getInitials(selectedStudent.full_name, selectedStudent.email || '')}
                 </AvatarFallback>
               </Avatar>
-              <div>
-                <DialogTitle>
-                  {selectedStudent?.full_name || 'Student'}'s Trading Journal
-                </DialogTitle>
-                <DialogDescription>
-                  {selectedStudent?.email}
-                </DialogDescription>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <DialogTitle className="text-xl">
+                    {selectedStudent?.full_name || 'Student'}
+                  </DialogTitle>
+                  <Badge variant="secondary">Trader</Badge>
+                </div>
+                <DialogDescription className="mt-0.5">{selectedStudent?.email}</DialogDescription>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Joined {selectedStudent?.created_at ? formatDate(selectedStudent.created_at) : '—'}
+                </p>
               </div>
             </div>
           </DialogHeader>
@@ -426,150 +428,152 @@ export default function MentorStudentsPage() {
             <div className="flex items-center justify-center py-12">
               <div className="text-muted-foreground">Loading trading data...</div>
             </div>
-          ) : studentStats ? (
-            <div className="space-y-6 mt-6">
-              {/* Student Profile Info */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Profile Information</CardTitle>
-                  <CardDescription>Student's trading background and experience</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">Experience Level</p>
-                      <p className="text-lg font-semibold">
-                        {formatExperienceLevel(selectedStudent?.experience_level || null)}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">Years of Experience</p>
-                      <p className="text-lg font-semibold">
-                        {selectedStudent?.years_of_experience
-                          ? `${selectedStudent.years_of_experience} years`
-                          : 'Not specified'}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">Primary Trading Style</p>
-                      <p className="text-lg font-semibold">
-                        {formatTradingStyle(selectedStudent?.trading_style || null)}
-                      </p>
-                    </div>
+          ) : (
+            <div className="space-y-5 mt-2">
+              {/* Profile strip */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg shrink-0">
+                    <GraduationCap className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Performance Stats */}
-              <div className="grid gap-4 md:grid-cols-4">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total P&L</CardTitle>
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className={`text-2xl font-bold ${studentStats.total_pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatCurrency(studentStats.total_pnl)}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {studentStats.total_trades} total trades
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">Experience</p>
+                    <p className="text-sm font-semibold truncate">
+                      {formatExperienceLevel(selectedStudent?.experience_level || null)}
                     </p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Win Rate</CardTitle>
-                    <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{studentStats.win_rate.toFixed(1)}%</div>
-                    <p className="text-xs text-muted-foreground">
-                      {studentStats.winning_trades}W / {studentStats.losing_trades}L
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-900/20">
+                  <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg shrink-0">
+                    <Calendar className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">Years Trading</p>
+                    <p className="text-sm font-semibold">
+                      {selectedStudent?.years_of_experience
+                        ? `${selectedStudent.years_of_experience} yrs`
+                        : 'Not set'}
                     </p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Best Trade</CardTitle>
-                    <TrendingUp className="h-4 w-4 text-green-600" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-green-600">
-                      {formatCurrency(studentStats.best_trade)}
-                    </div>
-                    <p className="text-xs text-muted-foreground">Highest profit</p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Worst Trade</CardTitle>
-                    <TrendingDown className="h-4 w-4 text-red-600" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-red-600">
-                      {formatCurrency(studentStats.worst_trade)}
-                    </div>
-                    <p className="text-xs text-muted-foreground">Largest loss</p>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20">
+                  <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg shrink-0">
+                    <Zap className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">Style</p>
+                    <p className="text-sm font-semibold truncate">
+                      {formatTradingStyle(selectedStudent?.trading_style || null)}
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              {/* Recent Trades */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Trades</CardTitle>
-                  <CardDescription>Last 50 trades from this student</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {studentTrades.length === 0 ? (
-                    <div className="text-center py-8">
-                      <p className="text-muted-foreground">No trades yet</p>
+              {/* Stats grid */}
+              {studentStats && (
+                <>
+                  <div className="grid grid-cols-4 gap-3">
+                    <div className="text-center p-3 rounded-xl border bg-muted/30">
+                      <p className="text-xs text-muted-foreground mb-1">Total P&L</p>
+                      <p className={`text-base font-bold ${studentStats.total_pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatCurrency(studentStats.total_pnl)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{studentStats.total_trades} trades</p>
                     </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {studentTrades.slice(0, 10).map((trade) => (
+                    <div className="text-center p-3 rounded-xl border bg-muted/30">
+                      <p className="text-xs text-muted-foreground mb-1">Win Rate</p>
+                      <p className="text-base font-bold">{studentStats.win_rate.toFixed(1)}%</p>
+                      <p className="text-xs text-muted-foreground">
+                        {studentStats.winning_trades}W / {studentStats.losing_trades}L
+                      </p>
+                    </div>
+                    <div className="text-center p-3 rounded-xl border bg-green-50 dark:bg-green-900/10 border-green-100 dark:border-green-900/20">
+                      <p className="text-xs text-muted-foreground mb-1">Best Trade</p>
+                      <p className="text-base font-bold text-green-600">
+                        {formatCurrency(studentStats.best_trade)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Highest profit</p>
+                    </div>
+                    <div className="text-center p-3 rounded-xl border bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/20">
+                      <p className="text-xs text-muted-foreground mb-1">Worst Trade</p>
+                      <p className="text-base font-bold text-red-600">
+                        {formatCurrency(studentStats.worst_trade)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Largest loss</p>
+                    </div>
+                  </div>
+
+                  {/* Win/Loss bar */}
+                  {studentStats.total_trades > 0 && (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-green-600 font-medium">{studentStats.winning_trades} wins</span>
+                        <span className="text-muted-foreground">Win / Loss Split</span>
+                        <span className="text-red-600 font-medium">{studentStats.losing_trades} losses</span>
+                      </div>
+                      <div className="h-2 bg-red-200 dark:bg-red-900/40 rounded-full overflow-hidden">
                         <div
-                          key={trade.id}
-                          className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors"
-                        >
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3">
-                              <h4 className="font-semibold">{trade.symbol}</h4>
-                              <Badge variant={trade.status === 'open' ? 'default' : 'secondary'}>
-                                {trade.status}
-                              </Badge>
-                              <Badge variant={trade.trade_type === 'long' ? 'default' : 'secondary'}>
-                                {trade.trade_type}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                              <span>Entry: {formatCurrency(trade.entry_price)}</span>
-                              {trade.exit_price && (
-                                <span>Exit: {formatCurrency(trade.exit_price)}</span>
-                              )}
-                              <span>{formatDate(trade.entry_date)}</span>
-                              {trade.setup_name && (
-                                <span className="text-primary">{trade.setup_name}</span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className={`text-lg font-bold ${trade.pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                              {trade.pnl >= 0 ? '+' : ''}{formatCurrency(trade.pnl)}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                          className="h-full bg-green-500 rounded-full transition-all duration-500"
+                          style={{ width: `${studentStats.win_rate}%` }}
+                        />
+                      </div>
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </>
+              )}
+
+              {/* Recent Trades */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold">Recent Trades</h3>
+                  <span className="text-xs text-muted-foreground">
+                    Last 10 of {studentStats?.total_trades || 0}
+                  </span>
+                </div>
+                {studentTrades.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-muted-foreground rounded-xl border border-dashed">
+                    <Activity className="h-8 w-8 mb-2 opacity-40" />
+                    <p className="text-sm">No trades recorded yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {studentTrades.slice(0, 10).map((trade) => (
+                      <div
+                        key={trade.id}
+                        className="flex items-center gap-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-sm">{trade.symbol}</span>
+                            <Badge
+                              variant="outline"
+                              className={`text-xs px-1.5 py-0 h-5 ${
+                                trade.trade_type === 'long'
+                                  ? 'text-green-600 border-green-300 dark:border-green-800'
+                                  : 'text-red-600 border-red-300 dark:border-red-800'
+                              }`}
+                            >
+                              {trade.trade_type}
+                            </Badge>
+                            {trade.setup_name && (
+                              <span className="text-xs text-primary truncate">{trade.setup_name}</span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {formatDate(trade.entry_date)}
+                          </p>
+                        </div>
+                        <div className={`text-sm font-bold tabular-nums ${trade.pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {trade.pnl >= 0 ? '+' : ''}{formatCurrency(trade.pnl)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3">
+              <div className="flex gap-3 pt-1">
                 <Button
                   className="flex-1"
                   onClick={() => {
@@ -587,7 +591,7 @@ export default function MentorStudentsPage() {
                 </Button>
               </div>
             </div>
-          ) : null}
+          )}
         </DialogContent>
       </Dialog>
     </div>
