@@ -68,18 +68,9 @@ type AccountFormState = {
 }
 
 const brokerOptions = [
-  Broker.TD_AMERITRADE,
-  Broker.INTERACTIVE_BROKERS,
-  Broker.CHARLES_SCHWAB,
-  Broker.E_TRADE,
-  Broker.FIDELITY,
-  Broker.ROBINHOOD,
-  Broker.WEBULL,
-  Broker.TASTYTRADE,
-  Broker.TRADESTATION,
-  Broker.THINKORSWIM,
   Broker.XM,
   Broker.EXNESS,
+  Broker.HFM,
 ]
 
 const currencyOptions = [
@@ -546,11 +537,9 @@ export default function AccountsPage() {
                     <SelectValue placeholder="Select broker" />
                   </SelectTrigger>
                   <SelectContent>
-                    {brokerOptions.map((broker) => (
-                      <SelectItem key={broker} value={broker}>
-                        {broker}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value={Broker.XM}>XM (Recommended Broker)</SelectItem>
+                    <SelectItem value={Broker.EXNESS}>Exness</SelectItem>
+                    <SelectItem value={Broker.HFM}>HFM</SelectItem>
                     <SelectItem value={Broker.OTHER}>Other / Prop Firm</SelectItem>
                   </SelectContent>
                 </Select>
