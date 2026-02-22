@@ -34,18 +34,9 @@ import { useUserStore } from "@/stores"
 import { useToast } from "@/hooks/use-toast"
 
 const brokerOptions = [
-  Broker.TD_AMERITRADE,
-  Broker.INTERACTIVE_BROKERS,
-  Broker.CHARLES_SCHWAB,
-  Broker.E_TRADE,
-  Broker.FIDELITY,
-  Broker.ROBINHOOD,
-  Broker.WEBULL,
-  Broker.TASTYTRADE,
-  Broker.TRADESTATION,
-  Broker.THINKORSWIM,
   Broker.XM,
   Broker.EXNESS,
+  Broker.HFM,
 ]
 
 export default function SettingsPage() {

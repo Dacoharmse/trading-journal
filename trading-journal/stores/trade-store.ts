@@ -332,10 +332,17 @@ export const useTradeStore = create<TradeState>()(
           const supabase = createClient();
 
           const { data: { session } } = await supabase.auth.getSession();
-          const user = session?.user ?? null;
+          let user = session?.user ?? null;
+
+          // Fallback: getSession() can return null briefly on first load before cookies are parsed.
+          // getUser() makes an authoritative server call and is always reliable.
+          if (!user) {
+            const { data: { user: u } } = await supabase.auth.getUser();
+            user = u ?? null;
+          }
 
           if (!user) {
-            set({ trades: [], isLoading: false, hasFetched: true });
+            set({ isLoading: false, hasFetched: true });
             return;
           }
 

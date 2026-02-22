@@ -52,10 +52,15 @@ export const useAccountStore = create<AccountState>()(
         try {
           const supabase = createClient();
           const { data: { session } } = await supabase.auth.getSession();
-          const user = session?.user ?? null;
+          let user = session?.user ?? null;
 
           if (!user) {
-            set({ accounts: [], isLoading: false });
+            const { data: { user: u } } = await supabase.auth.getUser();
+            user = u ?? null;
+          }
+
+          if (!user) {
+            set({ isLoading: false });
             return;
           }
 

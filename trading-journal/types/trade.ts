@@ -16,18 +16,9 @@ export type { Trade } from './supabase'
  * Enum for common trading brokers
  */
 export enum Broker {
-  TD_AMERITRADE = 'TD Ameritrade',
-  INTERACTIVE_BROKERS = 'Interactive Brokers',
-  CHARLES_SCHWAB = 'Charles Schwab',
-  E_TRADE = 'E*TRADE',
-  FIDELITY = 'Fidelity',
-  ROBINHOOD = 'Robinhood',
-  WEBULL = 'Webull',
-  TASTYTRADE = 'tastytrade',
-  TRADESTATION = 'TradeStation',
-  THINKORSWIM = 'thinkorswim',
   XM = 'XM',
   EXNESS = 'Exness',
+  HFM = 'HFM',
   OTHER = 'Other',
 }
 

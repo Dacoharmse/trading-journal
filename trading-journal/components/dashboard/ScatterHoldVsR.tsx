@@ -16,9 +16,16 @@ export function ScatterHoldVsR({ trades }: ScatterHoldVsRProps) {
         const r = calculateR(trade)
         if (!r || !trade.exit_date) return null
 
-        const entryDate = new Date(trade.entry_date)
-        const exitDate = new Date(trade.exit_date)
-        const holdMinutes = (exitDate.getTime() - entryDate.getTime()) / (1000 * 60)
+        // Use open_time/close_time (HH:MM:SS) if available — entry/exit_date are date-only
+        const entryDateStr = trade.entry_date.split('T')[0]
+        const exitDateStr = trade.exit_date.split('T')[0]
+        const entryDate = trade.open_time
+          ? new Date(`${entryDateStr}T${trade.open_time}`)
+          : new Date(`${entryDateStr}T00:00:00`)
+        const exitDate = trade.close_time
+          ? new Date(`${exitDateStr}T${trade.close_time}`)
+          : new Date(`${exitDateStr}T00:00:00`)
+        const holdMinutes = Math.max(0, (exitDate.getTime() - entryDate.getTime()) / (1000 * 60))
 
         return {
           holdMinutes,
@@ -106,25 +113,29 @@ export function ScatterHoldVsR({ trades }: ScatterHoldVsRProps) {
 
                 {/* Scatter points */}
                 {scatterData.map((point, idx) => {
-                  const x = (point.holdMinutes / maxHold) * 1000
-                  const y = 150 - (point.r / maxR) * 150
+                  const r = 5 // dot radius
+                  const rawX = (point.holdMinutes / maxHold) * 1000
+                  const rawY = 150 - (point.r / maxR) * 150
+                  // Clamp so dot stays fully inside the SVG viewBox
+                  const x = Math.max(r, Math.min(1000 - r, rawX))
+                  const y = Math.max(r, Math.min(300 - r, rawY))
 
                   return (
                     <g key={idx} className="group">
                       <circle
                         cx={x}
                         cy={y}
-                        r="4"
+                        r={r}
                         fill={point.r >= 0 ? '#22c55e' : '#ef4444'}
                         opacity="0.7"
                         className="hover:opacity-100 hover:scale-150 transition-all cursor-pointer"
                       />
-                      {/* Tooltip */}
+                      {/* Tooltip — clamped so it always stays inside the SVG */}
                       <foreignObject
-                        x={x - 75}
-                        y={y - 60}
-                        width="150"
-                        height="50"
+                        x={Math.max(0, Math.min(830, x - 75))}
+                        y={y < 100 ? y + r + 4 : y - 90}
+                        width="170"
+                        height="85"
                         className="pointer-events-none"
                       >
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity">
@@ -146,7 +157,7 @@ export function ScatterHoldVsR({ trades }: ScatterHoldVsRProps) {
             {/* X-axis (Hold Time) labels */}
             <div className="absolute left-12 right-0 bottom-0 h-8 flex items-center justify-between text-xs text-muted-foreground">
               <span>0m</span>
-              <span>{formatHoldTime(maxHold / 2)}</span>
+              {maxHold > 1 && <span>{formatHoldTime(maxHold / 2)}</span>}
               <span>{formatHoldTime(maxHold)}</span>
             </div>
           </div>

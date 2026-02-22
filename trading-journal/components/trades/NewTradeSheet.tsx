@@ -1282,23 +1282,6 @@ export function NewTradeSheet({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Actual Result ({pipsLabel})
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={pips}
-                  onChange={(e) => setPips(e.target.value)}
-                  placeholder="e.g. +45.2 or -12.5"
-                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-700 ${errors.pips ? 'border-red-500' : 'border-gray-300 dark:border-neutral-600'}`}
-                />
-                {errors.pips && (
-                  <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.pips}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Actual Stop Loss ({pipsLabel})
                 </label>
                 <input
