@@ -40,6 +40,20 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Helper: strip unknown columns and retry when PostgREST schema cache is missing them
+function isMissingColumnError(msg: string) {
+  return msg.includes('Could not find the') && msg.includes('in the schema cache')
+}
+function stripUnknownColumn(data: Record<string, unknown>, errorMsg: string) {
+  const match = errorMsg.match(/Could not find the '(\w+)' column/)
+  if (match) {
+    const col = match[1]
+    const { [col]: _removed, ...rest } = data
+    return rest
+  }
+  return null
+}
+
 // POST /api/trades — insert a new trade (bypasses RLS using service role)
 export async function POST(request: NextRequest) {
   try {
@@ -51,14 +65,20 @@ export async function POST(request: NextRequest) {
     }
 
     const tradeData = await request.json()
-
-    // Always enforce the user_id to the authenticated user
     const admin = createAdminClient()
-    const { data, error } = await admin
-      .from('trades')
-      .insert([{ ...tradeData, user_id: session.user.id }])
-      .select()
-      .single()
+
+    let payload: Record<string, unknown> = { ...tradeData, user_id: session.user.id }
+    let { data, error } = await admin.from('trades').insert([payload]).select().single()
+
+    // If a column doesn't exist yet (migration pending), strip it and retry once
+    if (error && isMissingColumnError(error.message)) {
+      console.warn('Missing column on insert, stripping and retrying:', error.message)
+      const stripped = stripUnknownColumn(payload, error.message)
+      if (stripped) {
+        payload = stripped
+        ;({ data, error } = await admin.from('trades').insert([payload]).select().single())
+      }
+    }
 
     if (error) {
       console.error('Trade insert error:', error)
@@ -107,12 +127,18 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { data, error } = await admin
-      .from('trades')
-      .update(updateData)
-      .eq('id', id)
-      .select()
-      .single()
+    let updatePayload: Record<string, unknown> = { ...updateData }
+    let { data, error } = await admin.from('trades').update(updatePayload).eq('id', id).select().single()
+
+    // If a column doesn't exist yet (migration pending), strip it and retry once
+    if (error && isMissingColumnError(error.message)) {
+      console.warn('Missing column on update, stripping and retrying:', error.message)
+      const stripped = stripUnknownColumn(updatePayload, error.message)
+      if (stripped) {
+        updatePayload = stripped
+        ;({ data, error } = await admin.from('trades').update(updatePayload).eq('id', id).select().single())
+      }
+    }
 
     if (error) {
       console.error('Trade update error:', error)
