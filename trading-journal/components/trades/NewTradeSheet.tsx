@@ -358,27 +358,14 @@ export function NewTradeSheet({
 
       setPlaybookLoading(true)
       try {
-        const [rulesResponse, confResponse, rubricResponse] = await Promise.all([
-          supabase
-            .from('playbook_rules')
-            .select('*')
-            .eq('playbook_id', id)
-            .order('sort'),
-          supabase
-            .from('playbook_confluences')
-            .select('*')
-            .eq('playbook_id', id)
-            .order('sort'),
-          supabase
-            .from('playbook_rubric')
-            .select('*')
-            .eq('playbook_id', id)
-            .maybeSingle(),
-        ])
+        // Use API route to bypass RLS (browser client hangs on playbook_rules/confluences/rubric)
+        const res = await fetch(`/api/playbook/details?playbook_id=${encodeURIComponent(id)}`)
+        if (!res.ok) throw new Error(`Failed to load playbook details (${res.status})`)
+        const { rules, confluences, rubric } = await res.json()
 
-        const rulesList = (rulesResponse.data as PlaybookRule[] | null) ?? []
-        const confList = (confResponse.data as PlaybookConfluence[] | null) ?? []
-        const rubricData = (rubricResponse.data as PlaybookRubric | null) ?? null
+        const rulesList = (rules as PlaybookRule[]) ?? []
+        const confList = (confluences as PlaybookConfluence[]) ?? []
+        const rubricData = (rubric as PlaybookRubric | null) ?? null
 
         setPlaybookRules(rulesList)
         setPlaybookConfluences(confList)
@@ -399,7 +386,7 @@ export function NewTradeSheet({
         setPlaybookLoading(false)
       }
     },
-    [supabase, clearPlaybookState]
+    [clearPlaybookState]
   )
 
   const handlePlaybookChange = React.useCallback(

@@ -323,40 +323,28 @@ export const useTradeStore = create<TradeState>()(
         useAccountStore.getState().recalculateMetrics(trades);
       },
 
-      // Fetch trades from Supabase
+      // Fetch trades from API route (bypasses RLS which hangs on browser client)
       fetchTrades: async () => {
         set({ isLoading: true, error: null });
 
         try {
-          const { createClient } = await import('@/lib/supabase/client');
-          const supabase = createClient();
+          // Fetch all trades via server API — large limit to get everything in one shot
+          const res = await fetch('/api/trades?limit=10000&offset=0');
 
-          const { data: { session } } = await supabase.auth.getSession();
-          let user = session?.user ?? null;
-
-          // Fallback: getSession() can return null briefly on first load before cookies are parsed.
-          // getUser() makes an authoritative server call and is always reliable.
-          if (!user) {
-            const { data: { user: u } } = await supabase.auth.getUser();
-            user = u ?? null;
-          }
-
-          if (!user) {
+          if (res.status === 401) {
+            // Not authenticated
             set({ isLoading: false, hasFetched: true });
             return;
           }
 
-          const { data, error } = await supabase
-            .from('trades')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('entry_date', { ascending: false });
-
-          if (error) {
-            set({ error: error.message, isLoading: false, hasFetched: true });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            const message = body.error || `Failed to fetch trades (${res.status})`;
+            set({ error: message, isLoading: false, hasFetched: true });
             return;
           }
 
+          const { trades: data } = await res.json();
           const trades = (data ?? []) as Trade[];
 
           set({ trades, isLoading: false, hasFetched: true });
