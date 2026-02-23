@@ -660,7 +660,6 @@ export function NewTradeSheet({
       setup_grade: playbookId ? setupGrade : null,
       exit_date: exitDate || null,
       size: size ? parseFloat(size) : null,  // NUMERIC(12,4) column — supports decimals like 0.01
-      quantity: null,                         // Clear legacy integer column so display always uses `size`
       strategy: strategy || null,
       confluences: confluences || null,
       actual_stop_pips: actualStopPips ? parseFloat(actualStopPips) : null,
