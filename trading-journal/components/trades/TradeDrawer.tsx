@@ -468,11 +468,11 @@ export function TradeDrawer({
                 </div>
               )}
               {/* Size */}
-              {(trade.quantity ?? trade.size) != null && (
+              {(trade.size ?? trade.quantity) != null && (
                 <div className="flex justify-between text-sm">
                   <span className="text-neutral-600 dark:text-neutral-400">Size (lots)</span>
                   <span className="font-medium text-neutral-900 dark:text-white">
-                    {(trade.quantity ?? trade.size)?.toFixed(2)}
+                    {(trade.size ?? trade.quantity)?.toFixed(2)}
                   </span>
                 </div>
               )}

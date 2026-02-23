@@ -660,6 +660,7 @@ export function NewTradeSheet({
       setup_grade: playbookId ? setupGrade : null,
       exit_date: exitDate || null,
       size: size ? parseFloat(size) : null,  // NUMERIC(12,4) column — supports decimals like 0.01
+      quantity: null,                         // Clear legacy integer column so display always uses `size`
       strategy: strategy || null,
       confluences: confluences || null,
       actual_stop_pips: actualStopPips ? parseFloat(actualStopPips) : null,
@@ -1448,11 +1449,11 @@ export function NewTradeSheet({
                 </label>
                 <input
                   type="number"
-                  step="0.01"
+                  step="any"
                   min="0"
                   value={size}
                   onChange={(e) => setSize(e.target.value)}
-                  placeholder="e.g. 0.10"
+                  placeholder="e.g. 0.01"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
                 />
               </div>

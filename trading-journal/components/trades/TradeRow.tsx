@@ -139,7 +139,7 @@ export function TradeRow({
       {/* Lots */}
       {visibleColumns.has('size') && (
         <td className="px-4 py-3 text-sm text-neutral-900 dark:text-white">
-          {(trade.quantity ?? trade.size)?.toFixed(2) || '—'}
+          {(trade.size ?? trade.quantity)?.toFixed(2) || '—'}
         </td>
       )}
 

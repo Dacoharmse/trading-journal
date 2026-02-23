@@ -119,8 +119,8 @@ export function DailyDrawer({ open, onClose, date, stats, currency }: DailyDrawe
                       <p className="font-medium">{trade.exit_price?.toFixed(2) || '—'}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Qty</p>
-                      <p className="font-medium">{trade.quantity}</p>
+                      <p className="text-muted-foreground">Lots</p>
+                      <p className="font-medium">{(trade.size ?? trade.quantity)?.toFixed(2) || '—'}</p>
                     </div>
                   </div>
 
