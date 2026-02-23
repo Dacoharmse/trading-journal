@@ -345,6 +345,14 @@ function TradesPageContent() {
     }
 
     // Sort
+    // Map display column IDs → actual Trade field names
+    const COLUMN_TO_FIELD: Record<string, keyof Trade> = {
+      date:         'entry_date',
+      entry_time:   'open_time',
+      exit_time:    'close_time',
+      pnl_currency: 'pnl',
+      hold_time:    'hold_mins',
+    }
     if (sortColumn) {
       filtered = [...filtered].sort((a, b) => {
         if (sortColumn === 'playbook') {
@@ -354,8 +362,9 @@ function TradesPageContent() {
           return sortDirection === 'asc' ? comparison : -comparison
         }
 
-        const aValue = a[sortColumn as keyof Trade]
-        const bValue = b[sortColumn as keyof Trade]
+        const field = COLUMN_TO_FIELD[sortColumn] ?? (sortColumn as keyof Trade)
+        const aValue = a[field]
+        const bValue = b[field]
 
         if (aValue === null || aValue === undefined) return 1
         if (bValue === null || bValue === undefined) return -1
