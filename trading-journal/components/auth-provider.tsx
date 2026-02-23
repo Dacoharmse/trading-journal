@@ -24,6 +24,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const publicRoutes = ['/auth/login', '/auth/register']
     let mounted = true
 
+    // Resolve initial loading state immediately using getSession() so that
+    // a second tab doesn't spin forever waiting for onAuthStateChange (which
+    // can be blocked by another tab holding the Supabase token-refresh lock).
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!mounted) return
+        if (session) {
+          setIsAuthenticated(true)
+          setIsLoading(false)
+        } else {
+          setIsAuthenticated(false)
+          setIsLoading(false)
+          if (!publicRoutes.includes(pathname)) {
+            router.push('/auth/login')
+          }
+        }
+      } catch {
+        if (mounted) setIsLoading(false)
+      }
+    }
+    void initAuth()
+
     const checkWhopMembership = async (): Promise<boolean> => {
       // Check if we recently verified (within 30 min)
       try {
