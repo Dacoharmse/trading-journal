@@ -423,7 +423,7 @@ export function NewTradeSheet({
       }
       setStrategy(trade.strategy || '')
       setExitDate((trade.exit_date || '').split('T')[0] || '')
-      setSize((trade.quantity ?? trade.size)?.toString() || '')
+      setSize((trade.size ?? trade.quantity)?.toString() || '')  // prefer size (NUMERIC), fall back to quantity (old integer)
       setPnlAmount(trade.pnl_amount?.toString() || '')
       setActualRr(trade.actual_rr?.toString() || '')
       setOutcome(trade.outcome || '')
@@ -659,7 +659,7 @@ export function NewTradeSheet({
       setup_score: playbookId ? setupScore : null,
       setup_grade: playbookId ? setupGrade : null,
       exit_date: exitDate || null,
-      quantity: size ? parseFloat(size) : null,  // 'size' column not yet in DB; quantity is the existing column
+      size: size ? parseFloat(size) : null,  // NUMERIC(12,4) column — supports decimals like 0.01
       strategy: strategy || null,
       confluences: confluences || null,
       actual_stop_pips: actualStopPips ? parseFloat(actualStopPips) : null,
