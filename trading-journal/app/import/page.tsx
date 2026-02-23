@@ -141,13 +141,33 @@ function mapGenericRow(
 
 async function extractCSVFromZip(file: File): Promise<{ csvText: string; csvName: string } | null> {
   const zip = await JSZip.loadAsync(file)
-  // Find the first .csv file in the zip
+
+  // First pass: look for a .csv file at any depth
   for (const [name, entry] of Object.entries(zip.files)) {
     if (!entry.dir && name.toLowerCase().endsWith(".csv")) {
       const text = await entry.async("text")
       return { csvText: text, csvName: name.split("/").pop() || name }
     }
   }
+
+  // Second pass: Notion sometimes wraps everything in a nested ZIP — unpack and retry
+  for (const [name, entry] of Object.entries(zip.files)) {
+    if (!entry.dir && name.toLowerCase().endsWith(".zip")) {
+      try {
+        const innerData = await entry.async("arraybuffer")
+        const innerZip = await JSZip.loadAsync(innerData)
+        for (const [innerName, innerEntry] of Object.entries(innerZip.files)) {
+          if (!innerEntry.dir && innerName.toLowerCase().endsWith(".csv")) {
+            const text = await innerEntry.async("text")
+            return { csvText: text, csvName: innerName.split("/").pop() || innerName }
+          }
+        }
+      } catch {
+        // Not a valid zip — skip
+      }
+    }
+  }
+
   return null
 }
 
@@ -223,7 +243,7 @@ export default function ImportPage() {
       try {
         const result = await extractCSVFromZip(file)
         if (!result) {
-          setParseError("No CSV file found inside the ZIP. Make sure the Notion export contains a CSV.")
+          setParseError("No CSV file found inside the ZIP. Make sure you exported with 'Markdown & CSV' format and that the ZIP contains a .csv file. If Notion exported a nested ZIP, the importer will unpack it automatically — try re-downloading the export from Notion and uploading again.")
           setExtracting(false)
           return
         }
