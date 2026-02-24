@@ -147,6 +147,7 @@ export default function AccountsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
   const [accountToDelete, setAccountToDelete] = React.useState<TradingAccount | null>(null)
   const [isDeleting, setIsDeleting] = React.useState(false)
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
   const formRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
@@ -253,6 +254,8 @@ export default function AccountsPage() {
           : undefined,
     }
 
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       if (editingAccountId) {
         await updateAccount(editingAccountId, input)
@@ -278,6 +281,8 @@ export default function AccountsPage() {
     } catch (error: any) {
       addToast(`Error: ${error.message}`, "error")
       console.error("Account operation error:", error)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -824,8 +829,8 @@ export default function AccountsPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Button type="submit" className="flex-1">
-                {editingAccountId ? "Update Account" : "Add Account"}
+              <Button type="submit" className="flex-1" disabled={isSubmitting}>
+                {isSubmitting ? "Saving..." : editingAccountId ? "Update Account" : "Add Account"}
               </Button>
               {editingAccountId && (
                 <Button type="button" variant="outline" onClick={resetForm}>

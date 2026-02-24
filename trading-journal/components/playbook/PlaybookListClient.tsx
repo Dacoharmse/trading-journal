@@ -130,42 +130,22 @@ export function PlaybookListClient({
     setLoadingView(true)
 
     try {
-      const [rulesRes, confRes, examplesRes, rubricRes, detailsRes, indicatorsRes] = await Promise.all([
-        supabase
-          .from('playbook_rules')
-          .select('*')
-          .eq('playbook_id', playbook.id)
-          .order('sort'),
-        supabase
-          .from('playbook_confluences')
-          .select('*')
-          .eq('playbook_id', playbook.id)
-          .order('sort'),
-        supabase
-          .from('playbook_examples')
-          .select('*')
-          .eq('playbook_id', playbook.id)
-          .order('sort'),
-        supabase.from('playbook_rubric').select('*').eq('playbook_id', playbook.id).maybeSingle(),
-        supabase
-          .from('playbook_trade_details')
-          .select('*')
-          .eq('playbook_id', playbook.id)
-          .order('sort'),
-        supabase
-          .from('playbook_indicators')
-          .select('*')
-          .eq('playbook_id', playbook.id)
-          .order('sort'),
-      ])
+      // Use server-side API to bypass RLS which hangs on browser client
+      const res = await fetch(`/api/playbook/details?playbook_id=${encodeURIComponent(playbook.id)}`)
+      if (!res.ok) throw new Error(`Failed to load playbook details (${res.status})`)
+      const { rules, confluences, rubric } = await res.json()
+
+      // Examples, trade details, indicators — fetch via admin route
+      const extRes = await fetch(`/api/playbook/extended?playbook_id=${encodeURIComponent(playbook.id)}`)
+      const ext = extRes.ok ? await extRes.json() : {}
 
       setViewData({
-        rules: rulesRes.data || [],
-        confluences: confRes.data || [],
-        examples: examplesRes.data || [],
-        rubric: rubricRes.data || null,
-        tradeDetails: detailsRes.data || [],
-        indicators: indicatorsRes.data || [],
+        rules: rules || [],
+        confluences: confluences || [],
+        examples: ext.examples || [],
+        rubric: rubric || null,
+        tradeDetails: ext.tradeDetails || [],
+        indicators: ext.indicators || [],
       })
     } catch (err) {
       console.error('Failed to load playbook details:', err)

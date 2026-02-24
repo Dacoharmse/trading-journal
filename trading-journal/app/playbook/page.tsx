@@ -2,7 +2,6 @@
 
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { PlaybookListClient, type PlaybookSummary } from '@/components/playbook/PlaybookListClient'
 import { calculatePlaybookStats } from '@/components/playbook/PlaybookMiniDashboard'
 import type { PlaybookTradeType } from '@/types/supabase'
@@ -33,17 +32,11 @@ interface TradeRecord {
 }
 
 export default function PlaybookPage() {
-  const supabase = React.useMemo(() => createClient(), [])
   const router = useRouter()
 
   const [playbooks, setPlaybooks] = React.useState<PlaybookSummary[]>([])
   const [error, setError] = React.useState<string | null>(null)
   const [loading, setLoading] = React.useState(true)
-  const [hasMounted, setHasMounted] = React.useState(false)
-
-  React.useEffect(() => {
-    setHasMounted(true)
-  }, [])
 
   React.useEffect(() => {
     let cancelled = false
@@ -53,101 +46,56 @@ export default function PlaybookPage() {
       setError(null)
 
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session?.user) {
+        const res = await fetch('/api/playbook/list')
+        if (res.status === 401) {
           router.replace('/auth/login')
           return
         }
+        if (!res.ok) throw new Error(`Failed to load playbooks (${res.status})`)
 
-        const [playbooksRes, examplesRes, tradesRes] = await Promise.all([
-          supabase
-            .from('playbooks')
-            .select('*, playbook_rules(count), playbook_confluences(count)')
-            .order('updated_at', { ascending: false }),
-          supabase
-            .from('playbook_examples')
-            .select('playbook_id, media_urls, sort')
-            .order('sort', { ascending: true }),
-          supabase
-            .from('trades')
-            .select('*')
-            .not('playbook_id', 'is', 'null'),
-        ])
-
-        if (playbooksRes.error) {
-          throw playbooksRes.error
-        }
-
-        if (examplesRes.error) throw examplesRes.error
-        if (tradesRes.error) throw tradesRes.error
+        const { playbooks: raw, examples, trades } = await res.json()
 
         if (!cancelled) {
-          const trades = (tradesRes.data as TradeRecord[] | null) ?? []
-          const examples = (examplesRes.data as { playbook_id: string; media_urls: string[]; sort: number }[] | null) ?? []
+          const mapped = (raw as PlaybookRecord[]).map((playbook) => {
+            const stats = calculatePlaybookStats(playbook.id, trades as TradeRecord[])
+            const playbookExamples = (examples as { playbook_id: string; media_urls: string[]; sort: number }[]).filter(ex => ex.playbook_id === playbook.id)
+            const firstImageUrl = playbookExamples[0]?.media_urls?.[0] ?? null
 
-          const mapped =
-            (playbooksRes.data as PlaybookRecord[] | null)?.map((playbook) => {
-              // Calculate stats for this playbook
-              const stats = calculatePlaybookStats(playbook.id, trades)
-
-              // Get first example image for this playbook
-              const playbookExamples = examples.filter(ex => ex.playbook_id === playbook.id)
-              const firstExample = playbookExamples.length > 0 ? playbookExamples[0] : null
-              const firstImageUrl = firstExample && firstExample.media_urls.length > 0 ? firstExample.media_urls[0] : null
-
-              return {
-                id: playbook.id,
-                user_id: playbook.user_id,
-                name: playbook.name,
-                description: playbook.description,
-                trade_type: playbook.trade_type,
-                sessions: playbook.sessions ?? [],
-                symbols: playbook.symbols ?? [],
-                rr_min: playbook.rr_min ?? null,
-                active: playbook.active,
-                created_at: playbook.created_at,
-                updated_at: playbook.updated_at,
-                rules_count: playbook.playbook_rules?.[0]?.count ?? 0,
-                confluences_count: playbook.playbook_confluences?.[0]?.count ?? 0,
-                stats: stats.total_trades > 0 ? stats : null,
-                example_image_url: firstImageUrl,
-              }
-            }) ?? []
+            return {
+              id: playbook.id,
+              user_id: playbook.user_id,
+              name: playbook.name,
+              description: playbook.description,
+              trade_type: playbook.trade_type,
+              sessions: playbook.sessions ?? [],
+              symbols: playbook.symbols ?? [],
+              rr_min: playbook.rr_min ?? null,
+              active: playbook.active,
+              created_at: playbook.created_at,
+              updated_at: playbook.updated_at,
+              rules_count: playbook.playbook_rules?.[0]?.count ?? 0,
+              confluences_count: playbook.playbook_confluences?.[0]?.count ?? 0,
+              stats: stats.total_trades > 0 ? stats : null,
+              example_image_url: firstImageUrl,
+            }
+          })
           setPlaybooks(mapped)
           setError(null)
         }
       } catch (err) {
         if (!cancelled) {
-          console.error('=== PLAYBOOK PAGE ERROR ===')
-          console.error('Error:', err)
-          console.error('Error type:', typeof err)
-          if (err && typeof err === 'object') {
-            console.error('Error details:', {
-              message: (err as any).message,
-              code: (err as any).code,
-              details: (err as any).details,
-              hint: (err as any).hint,
-            })
-          }
-          console.error('=== END ERROR ===')
+          console.error('Playbook page error:', err)
           setError('Unable to load playbooks.')
         }
       } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
+        if (!cancelled) setLoading(false)
       }
     }
 
-    // Only load after component has mounted to avoid hydration issues
-    if (hasMounted) {
-      void load()
-    }
+    void load()
 
-    return () => {
-      cancelled = true
-    }
-  }, [supabase, router, hasMounted])
+    return () => { cancelled = true }
+  }, [router])
 
   if (loading) {
     return (
