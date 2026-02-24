@@ -24,10 +24,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const publicRoutes = ['/auth/login', '/auth/register']
     let mounted = true
 
-    // Resolve initial loading state immediately using getSession() so that
-    // a second tab doesn't spin forever waiting for onAuthStateChange (which
-    // can be blocked by another tab holding the Supabase token-refresh lock).
+    // Resolve initial loading state without blocking on getSession().
+    // When multiple tabs are open, getSession() can block indefinitely because
+    // another tab holds the Supabase token-refresh lock, causing infinite loading.
+    // Fix: check for the Supabase session cookie synchronously (instant, no lock),
+    // show the app immediately, and let onAuthStateChange handle real validation.
     const initAuth = async () => {
+      // Fast path: synchronous cookie check to avoid multi-tab lock contention.
+      try {
+        const hasCookie = document.cookie.split(';').some(c => c.trim().startsWith('sb-'))
+        if (hasCookie && !publicRoutes.includes(pathname)) {
+          setIsAuthenticated(true)
+          setIsLoading(false)
+          return // onAuthStateChange will validate the real session
+        }
+      } catch {
+        // document.cookie not available — fall through to full async check
+      }
+
+      // No cookie (fresh visit / login page) — do the normal async check.
       try {
         const { data: { session } } = await supabase.auth.getSession()
         if (!mounted) return
