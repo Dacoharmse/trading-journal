@@ -21,22 +21,34 @@ function isNotionFormat(headers: string[]): boolean {
 
 function parseNotionDate(raw: string): string | null {
   if (!raw || !raw.trim()) return null
-  const trimmed = raw.trim()
 
-  // Notion exports dates in various formats, try parsing
-  const d = new Date(trimmed)
-  if (!isNaN(d.getTime())) {
-    return d.toISOString()
+  // Strip time and timezone suffix — Notion exports dates like:
+  // "18/11/2025", "18/11/2025 10:52 (GMT+2)", "2025-11-18", "November 18, 2025"
+  // Keep only the date portion before any space
+  const datePart = raw.trim().split(" ")[0]
+
+  // Try ISO format YYYY-MM-DD first
+  const iso = new Date(`${datePart}T00:00:00`)
+  if (!isNaN(iso.getTime()) && datePart.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return iso.toISOString()
   }
 
   // Try DD/MM/YYYY or DD-MM-YYYY
-  const parts = trimmed.split(/[\/\-]/)
+  const parts = datePart.split(/[\/\-]/)
   if (parts.length === 3) {
     const [day, month, year] = parts
-    const parsed = new Date(`${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`)
-    if (!isNaN(parsed.getTime())) {
-      return parsed.toISOString()
+    if (year.length === 4) {
+      const parsed = new Date(`${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}T00:00:00`)
+      if (!isNaN(parsed.getTime())) {
+        return parsed.toISOString()
+      }
     }
+  }
+
+  // Last resort: let the JS engine try the full string
+  const fallback = new Date(raw.trim())
+  if (!isNaN(fallback.getTime())) {
+    return fallback.toISOString()
   }
 
   return null
@@ -85,23 +97,21 @@ function mapNotionRow(
   }
 
   return {
-    id: crypto.randomUUID(),
     user_id: userId,
     account_id: accountId,
     symbol,
     direction,
+    trade_type: direction,   // legacy column kept in sync
     entry_date: entryDate,
-    exit_date: entryDate, // Same day - trade is closed
-    entry_price: null,
-    stop_price: null,
-    exit_price: null,
-    size: null,
+    exit_date: entryDate,    // same day — trade is closed
     pnl,
+    pnl_amount: pnl,
     currency,
+    pnl_currency: currency,
     strategy,
     session,
     notes,
-    status: "closed" as const,
+    outcome: outcome.toLowerCase() === "win" ? "win" : outcome.toLowerCase() === "loss" ? "loss" : outcome.toLowerCase() === "breakeven" ? "breakeven" : null,
   }
 }
 
@@ -339,12 +349,11 @@ export default function ImportPage() {
             body: JSON.stringify({ trades: tradesToInsert }),
           })
 
+          const body = await res.json().catch(() => ({}))
           if (!res.ok) {
-            const body = await res.json().catch(() => ({}))
             failedCount += tradesToInsert.length
-            errors.push(`Database error: ${body.error || `HTTP ${res.status}`}`)
+            errors.push(`Import error (${res.status}): ${body.error || JSON.stringify(body) || 'Unknown error'}`)
           } else {
-            const body = await res.json()
             successCount = body.inserted ?? 0
             failedCount += body.failed ?? 0
             if (body.errors?.length) {
