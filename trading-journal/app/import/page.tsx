@@ -331,15 +331,25 @@ export default function ImportPage() {
           }
         }
 
-        // Batch insert all valid trades
+        // Batch insert all valid trades via server-side API (bypasses RLS)
         if (tradesToInsert.length > 0) {
-          const { error } = await supabase.from("trades").insert(tradesToInsert)
+          const res = await fetch('/api/trades/bulk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ trades: tradesToInsert }),
+          })
 
-          if (error) {
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}))
             failedCount += tradesToInsert.length
-            errors.push(`Database error: ${error.message}`)
+            errors.push(`Database error: ${body.error || `HTTP ${res.status}`}`)
           } else {
-            successCount = tradesToInsert.length
+            const body = await res.json()
+            successCount = body.inserted ?? 0
+            failedCount += body.failed ?? 0
+            if (body.errors?.length) {
+              errors.push(...body.errors)
+            }
           }
         }
 
