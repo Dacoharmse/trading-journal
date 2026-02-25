@@ -54,9 +54,14 @@ function parseNotionDate(raw: string): string | null {
   return null
 }
 
-function mapNotionDirection(bias: string): "long" | "short" {
+function mapNotionDirection(tradeType: string, bias: string): "long" | "short" {
+  // Prefer the explicit "Trade Type" column (e.g. "Long Position", "Short Position")
+  const tt = (tradeType || "").trim().toLowerCase()
+  if (tt.includes("long") || tt.includes("buy")) return "long"
+  if (tt.includes("short") || tt.includes("sell")) return "short"
+  // Fall back to Bias column
   const lower = (bias || "").trim().toLowerCase()
-  if (lower === "bullish" || lower === "long" || lower === "buy") return "long"
+  if (lower.includes("bullish") || lower === "long" || lower === "buy") return "long"
   return "short"
 }
 
@@ -84,17 +89,31 @@ function mapNotionRow(
   const entryDate = parseNotionDate(row["Date of Trade"] || "")
   if (!entryDate) return null
 
-  const direction = mapNotionDirection(row["Bias"] || "")
-  const pnl = parseFloat(row["pnl"] || "0") || 0
+  const direction = mapNotionDirection(row["Trade Type"] || "", row["Bias"] || "")
+
+  // Strip currency symbols and thousands separators before parsing numbers
+  const parseMoney = (raw: string) => parseFloat((raw || "0").replace(/[$,\s]/g, "")) || 0
+  const parsePrice = (raw: string) => {
+    const n = parseFloat((raw || "").replace(/[,$\s]/g, ""))
+    return isNaN(n) ? null : n
+  }
+
+  const pnl = parseMoney(row["pnl"] || "")
   const strategy = (row["POI"] || "").trim() || null
   const session = mapNotionSession(row["Session"] || "")
   const outcome = (row["Outcome"] || "").trim()
 
-  // Build notes from outcome
+  // Combine Reason for entry + Side Notes into the notes field
+  const reason = (row["Reason for entry"] || "").trim()
+  const sideNotes = (row["Side Notes"] || "").trim()
   let notes: string | null = null
-  if (outcome) {
-    notes = `Outcome: ${outcome}`
+  const noteParts = [reason, sideNotes].filter(Boolean)
+  if (noteParts.length > 0) {
+    notes = noteParts.join("\n\n---\n\n")
   }
+
+  const entryPrice = parsePrice(row["Entry Price"] || "")
+  const exitPrice = parsePrice(row["Exit Price"] || "")
 
   return {
     user_id: userId,
@@ -104,6 +123,9 @@ function mapNotionRow(
     trade_type: direction,   // legacy column kept in sync
     entry_date: entryDate,
     exit_date: entryDate,    // same day — trade is closed
+    // Only include price fields when they have values (columns may have NOT NULL constraint)
+    ...(entryPrice !== null ? { entry_price: entryPrice } : {}),
+    ...(exitPrice !== null ? { exit_price: exitPrice } : {}),
     pnl,
     pnl_amount: pnl,
     currency,
