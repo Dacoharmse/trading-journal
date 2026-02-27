@@ -253,48 +253,62 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [unreadNotifications, setUnreadNotifications] = React.useState(0)
 
   React.useEffect(() => {
-    const loadUserProfile = async (user: any) => {
-      if (!user) {
+    // Load profile via API route — server uses getUser() (JWT verification),
+    // which does NOT need the client-side token-refresh lock.
+    // This is safe to call from multiple tabs/windows simultaneously.
+    const loadProfileFromAPI = async () => {
+      try {
+        const res = await fetch('/api/user/profile')
+        if (!res.ok) return
+        const data = await res.json()
+        const profile = data.profile as UserProfile | null
+        if (profile) {
+          setUserEmail(profile.email || null)
+          setUserProfile(profile)
+          // Notifications count (best-effort, cosmetic only)
+          try {
+            const { count } = await supabase
+              .from('notifications')
+              .select('id', { count: 'exact', head: true })
+              .eq('user_id', profile.id)
+              .eq('is_read', false)
+            setUnreadNotifications(count || 0)
+          } catch { /* ignore — count stays 0 */ }
+        } else {
+          setUserEmail(null)
+          setUserProfile(null)
+          setUnreadNotifications(0)
+        }
+      } catch {
+        // Profile loading failed — sidebar shows basic navigation
+      }
+    }
+
+    // Fast path: check for a Supabase session cookie synchronously.
+    // Avoids calling getSession() which blocks on the token-refresh lock
+    // when another tab/window is refreshing — causing "Sign In" to appear
+    // even when the user is authenticated.
+    const hasCookie = (() => {
+      try { return document.cookie.split(';').some(c => c.trim().startsWith('sb-')) }
+      catch { return false }
+    })()
+
+    if (hasCookie) {
+      void loadProfileFromAPI()
+    }
+
+    // Listen for auth state changes (sign-in / sign-out / token refresh).
+    // We rely on this for sign-out detection and post-login profile refresh,
+    // but NOT for the initial load (handled by cookie fast-path above).
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT' || !session?.user) {
         setUserEmail(null)
         setUserProfile(null)
         setUnreadNotifications(0)
-        return
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        // Re-fetch profile when user signs in or token refreshes
+        await loadProfileFromAPI()
       }
-
-      setUserEmail(user.email || null)
-
-      try {
-        // Get user profile via API route (bypasses RLS)
-        const res = await fetch('/api/user/profile')
-        const data = await res.json()
-        const profile = data.profile as UserProfile | null
-        setUserProfile(profile)
-
-        // Get unread notifications count
-        if (profile) {
-          const { count } = await supabase
-            .from('notifications')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', profile.id)
-            .eq('is_read', false)
-
-          setUnreadNotifications(count || 0)
-        }
-      } catch {
-        // Profile loading failed - sidebar will show basic navigation
-        setUserProfile(null)
-      }
-    }
-
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      await loadUserProfile(session?.user ?? null)
-    }
-    checkUser()
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      await loadUserProfile(session?.user)
     })
 
     return () => subscription.unsubscribe()
