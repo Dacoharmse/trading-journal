@@ -230,7 +230,7 @@ export default function Home() {
       case 'calendar-equity':
         return (
           <div className="grid gap-4 lg:grid-cols-2">
-            <CalendarHeatmap trades={normalizedTrades as Trade[]} />
+            <CalendarHeatmap trades={normalizedTrades as Trade[]} currency={displayCurrency} />
             <EquityChart
               trades={normalizedTrades as Trade[]}
               units={filters.units}

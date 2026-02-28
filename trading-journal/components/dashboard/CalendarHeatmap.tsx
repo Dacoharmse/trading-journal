@@ -9,6 +9,7 @@ interface CalendarHeatmapProps {
   trades: Trade[]
   startDate?: Date
   endDate?: Date
+  currency?: string
 }
 
 // Format a Date as a local YYYY-MM-DD string (avoids UTC timezone shift)
@@ -16,7 +17,7 @@ function localDateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-export function CalendarHeatmap({ trades }: CalendarHeatmapProps) {
+export function CalendarHeatmap({ trades, currency = 'USD' }: CalendarHeatmapProps) {
   const [viewDate, setViewDate] = React.useState(() => new Date())
 
   const goToPrevMonth = () =>
@@ -36,7 +37,12 @@ export function CalendarHeatmap({ trades }: CalendarHeatmapProps) {
       const date = new Date(dateStr)
       const key = localDateKey(date)
       const current = map.get(key) || { pnl: 0, trades: 0 }
-      map.set(key, { pnl: current.pnl + trade.pnl, trades: current.trades + 1 })
+      // Use pnlDisplay (currency-converted) if available, fall back to raw pnl
+      const t = trade as any
+      const pnlValue = (t.pnlDisplay !== undefined && t.displayUnit !== 'R')
+        ? (t.pnlDisplay as number)
+        : trade.pnl
+      map.set(key, { pnl: current.pnl + pnlValue, trades: current.trades + 1 })
     })
     return map
   }, [trades])
@@ -99,13 +105,23 @@ export function CalendarHeatmap({ trades }: CalendarHeatmapProps) {
     return { weeks, monthLabel }
   }, [viewDate, dailyPnL])
 
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat('en-US', {
+  const formatCurrency = (value: number) => {
+    if (currency === 'R') {
+      return `${value > 0 ? '+' : ''}${value.toFixed(2)}R`
+    }
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: currency || 'USD',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(value)
+  }
+
+  const formatZero = () => {
+    if (currency === 'R') return '0.00R'
+    const sym = new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(0)
+    return sym
+  }
 
   const getDayBg = (pnl: number, trades: number, inMonth: boolean) => {
     if (!inMonth) return 'bg-neutral-100/20 dark:bg-neutral-900/20'
@@ -227,7 +243,7 @@ export function CalendarHeatmap({ trades }: CalendarHeatmapProps) {
                   </span>
                   <div className="mt-auto flex flex-col gap-0.5">
                     <span className={`text-[11px] font-bold leading-tight ${weekPnL > 0 ? 'text-green-500' : weekPnL < 0 ? 'text-red-500' : 'text-muted-foreground'}`}>
-                      {weekTradeCount > 0 ? formatCurrency(weekPnL) : '$0.00'}
+                      {weekTradeCount > 0 ? formatCurrency(weekPnL) : formatZero()}
                     </span>
                     <span className="text-[10px] text-muted-foreground leading-none">
                       {weekTradeCount} trade{weekTradeCount !== 1 ? 's' : ''}
