@@ -1449,7 +1449,19 @@ export function NewTradeSheet({
                 </label>
                 <select
                   value={outcome}
-                  onChange={(e) => setOutcome(e.target.value as 'win' | 'loss' | 'breakeven' | '')}
+                  onChange={(e) => {
+                    const newOutcome = e.target.value as 'win' | 'loss' | 'breakeven' | ''
+                    setOutcome(newOutcome)
+                    // Auto-adjust PNL sign to match outcome
+                    if (pnlAmount) {
+                      const v = parseFloat(pnlAmount)
+                      if (!isNaN(v)) {
+                        if (newOutcome === 'loss' && v > 0) setPnlAmount(String(-v))
+                        else if (newOutcome === 'win' && v < 0) setPnlAmount(String(-v))
+                        else if (newOutcome === 'breakeven') setPnlAmount('0')
+                      }
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700"
                 >
                   <option value="">Select...</option>
