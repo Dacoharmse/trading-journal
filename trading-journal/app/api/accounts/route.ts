@@ -5,9 +5,9 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 export async function GET() {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -17,12 +17,12 @@ export async function GET() {
       admin
         .from('accounts')
         .select('id, name, currency, account_type, phase, account_status')
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .order('name'),
       admin
         .from('playbooks')
         .select('id, name, category, active')
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .order('name'),
     ])
 
@@ -53,9 +53,9 @@ export async function GET() {
 export async function PATCH(req: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -95,7 +95,7 @@ export async function PATCH(req: NextRequest) {
       .from('accounts')
       .update(dbUpdate)
       .eq('id', id)
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
 
     if (error) {
       console.error('PATCH /api/accounts error:', error)
@@ -116,9 +116,9 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -133,7 +133,7 @@ export async function DELETE(req: NextRequest) {
       .from('accounts')
       .delete()
       .eq('id', id)
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
 
     if (error) {
       console.error('DELETE /api/accounts error:', error)

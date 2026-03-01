@@ -2,7 +2,6 @@
 
 import React from 'react'
 import { X, Save, TrendingUp, TrendingDown, Info, Loader2, ChevronDown, ChevronRight, Settings2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import type {
   Trade,
   Account,
@@ -59,7 +58,6 @@ export function NewTradeSheet({
   userId,
   isMentor = false,
 }: NewTradeSheetProps) {
-  const supabase = createClient()
 
   // Form state
   const [accountId, setAccountId] = React.useState<string>('')
@@ -160,150 +158,41 @@ export function NewTradeSheet({
 
   // Load data
   const loadData = React.useCallback(
-    async (trade?: Partial<Trade>) => {
-      // Load playbooks
-      const { data: playbookRows } = await supabase
-        .from('playbooks')
-        .select('id, name, category, active')
-        .eq('active', true)
-        .order('name')
-
-      let playbookList = (playbookRows as PlaybookOption[] | null) ?? []
-
-      if (trade?.playbook_id && !playbookList.some((pb) => pb.id === trade.playbook_id)) {
-        const { data: existingPlaybook } = await supabase
-          .from('playbooks')
-          .select('id, name, category, active')
-          .eq('id', trade.playbook_id)
-          .maybeSingle()
-
-        if (existingPlaybook) {
-          playbookList = [...playbookList, existingPlaybook as PlaybookOption]
-        }
+    async (_trade?: Partial<Trade>) => {
+      // Load playbooks via API route (bypasses RLS)
+      const res = await fetch('/api/accounts')
+      if (res.ok) {
+        const { playbooks: playbookRows } = await res.json()
+        const playbookList = ((playbookRows as PlaybookOption[] | null) ?? [])
+          .filter((pb) => pb.active)
+          .sort((a, b) => a.name.localeCompare(b.name))
+        setPlaybooks(playbookList)
       }
-
-      playbookList.sort((a, b) => a.name.localeCompare(b.name))
-      setPlaybooks(playbookList)
     },
-    [supabase]
+    []
   )
 
   const loadAccountSymbols = React.useCallback(
     async (accId: string) => {
-      const allSymbolsMap = new Map<string, Symbol>()
-
-      // 1. Load symbols from account's trading_pairs field
-      const { data: accountData } = await supabase
-        .from('accounts')
-        .select('trading_pairs')
-        .eq('id', accId)
-        .single()
-
-      const pairs: string[] = accountData?.trading_pairs || []
-
-      if (pairs.length > 0) {
-        // Ensure all trading_pairs exist in symbols table
-        const { data: existingSymbols } = await supabase
-          .from('symbols')
-          .select('*')
-          .in('code', pairs)
-
-        const existingCodes = new Set((existingSymbols || []).map((s: any) => s.code))
-        const missingCodes = pairs.filter((code) => !existingCodes.has(code))
-
-        // Auto-create missing symbols with sensible defaults
-        if (missingCodes.length > 0) {
-          const newSymbols = missingCodes.map((code) => {
-            const upper = code.toUpperCase()
-            let asset_class = 'FX'
-            let pip_size = 0.0001
-            let point_value = 1.0
-
-            if (upper.includes('XAU') || upper.includes('GOLD')) {
-              asset_class = 'Metal'
-              pip_size = 0.01
-            } else if (upper.includes('NAS') || upper.includes('SPX') || upper.includes('US30') || upper.includes('US500')) {
-              asset_class = 'Index'
-              pip_size = 0.1
-            } else if (upper.includes('BTC') || upper.includes('ETH')) {
-              asset_class = 'Crypto'
-              pip_size = 0.01
-            } else if (upper.includes('XAG') || upper.includes('SILVER')) {
-              asset_class = 'Metal'
-              pip_size = 0.001
-            } else if (upper.includes('OIL') || upper.includes('WTI') || upper.includes('BRENT')) {
-              asset_class = 'Commodity'
-              pip_size = 0.01
-            } else if (upper.includes('JPY')) {
-              pip_size = 0.01
-            }
-
-            return { code, display_name: code, asset_class, pip_size, point_value }
-          })
-
-          await supabase.from('symbols').insert(newSymbols)
-        }
-
-        // Fetch the symbols matching the account's trading pairs
-        const { data: matchedSymbols } = await supabase
-          .from('symbols')
-          .select('*')
-          .in('code', pairs)
-          .order('code')
-
-        if (matchedSymbols) {
-          for (const s of matchedSymbols) {
-            allSymbolsMap.set(s.id, s as Symbol)
-          }
-        }
+      // Use API route to load symbols (bypasses RLS, handles auto-creation server-side)
+      const res = await fetch(`/api/accounts/symbols?accountId=${encodeURIComponent(accId)}`)
+      if (res.ok) {
+        const { symbols: symbolRows } = await res.json()
+        setSymbols((symbolRows as Symbol[] | null) ?? [])
       }
-
-      // 2. Also load symbols from account_symbols join table (linked via setup page)
-      const { data: linkedData } = await supabase
-        .from('account_symbols')
-        .select('symbol_id, symbols(*)')
-        .eq('account_id', accId)
-
-      if (linkedData && linkedData.length > 0) {
-        for (const as of linkedData) {
-          const s = as.symbols as unknown as Symbol
-          if (s && !allSymbolsMap.has(s.id)) {
-            allSymbolsMap.set(s.id, s)
-          }
-        }
-      }
-
-      // If we found symbols from either source, use them
-      if (allSymbolsMap.size > 0) {
-        const merged = Array.from(allSymbolsMap.values()).sort((a, b) => a.code.localeCompare(b.code))
-        setSymbols(merged)
-        return
-      }
-
-      // Final fallback - load all symbols
-      const { data: allSymbols } = await supabase
-        .from('symbols')
-        .select('*')
-        .order('code')
-      setSymbols((allSymbols as Symbol[] | null) ?? [])
     },
-    [supabase]
+    []
   )
 
   const loadMentors = React.useCallback(
     async () => {
       setLoadingMentors(true)
       try {
-        // Get all approved mentors (Keegan van Dyk and Chris Dicks)
-        const { data } = await supabase
-          .from('user_profiles')
-          .select('id, full_name, email')
-          .eq('is_mentor', true)
-          .eq('mentor_approved', true)
-          .order('full_name')
-
-        if (data) {
-          setMentors(data)
+        // Use API route to load mentors (bypasses RLS)
+        const res = await fetch('/api/mentors')
+        if (res.ok) {
+          const { mentors: mentorRows } = await res.json()
+          setMentors(mentorRows || [])
         }
       } catch (error) {
         console.error('Failed to load mentors:', error)
@@ -311,7 +200,7 @@ export function NewTradeSheet({
         setLoadingMentors(false)
       }
     },
-    [supabase]
+    []
   )
 
   React.useEffect(() => {

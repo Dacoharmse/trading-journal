@@ -5,9 +5,9 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const { data: trades, error, count } = await admin
       .from('trades')
       .select('*', { count: 'exact' })
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .order('exit_date', { ascending: false, nullsFirst: false })
       .order('entry_date', { ascending: false })
       .range(offset, offset + limit - 1)
@@ -58,16 +58,16 @@ function stripUnknownColumn(data: Record<string, unknown>, errorMsg: string) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const tradeData = await request.json()
     const admin = createAdminClient()
 
-    let payload: Record<string, unknown> = { ...tradeData, user_id: session.user.id }
+    let payload: Record<string, unknown> = { ...tradeData, user_id: user.id }
     let { data, error } = await admin.from('trades').insert([payload]).select().single()
 
     // If a column doesn't exist yet (migration pending), strip it and retry once
@@ -102,9 +102,9 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -116,19 +116,15 @@ export async function PATCH(request: NextRequest) {
 
     const admin = createAdminClient()
 
-    // Verify the trade belongs to this user before updating
-    const { data: existing } = await admin
-      .from('trades')
-      .select('user_id')
-      .eq('id', id)
-      .single()
-
-    if (!existing || existing.user_id !== session.user.id) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
+    // Update only if trade belongs to this user (ownership check combined with update)
     let updatePayload: Record<string, unknown> = { ...updateData }
-    let { data, error } = await admin.from('trades').update(updatePayload).eq('id', id).select().single()
+    let { data, error } = await admin
+      .from('trades')
+      .update(updatePayload)
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .select()
+      .single()
 
     // If a column doesn't exist yet (migration pending), strip it and retry once
     if (error && isMissingColumnError(error.message)) {
@@ -162,9 +158,9 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -176,21 +172,12 @@ export async function DELETE(request: NextRequest) {
 
     const admin = createAdminClient()
 
-    // Verify ownership before deleting
-    const { data: existing } = await admin
-      .from('trades')
-      .select('user_id')
-      .eq('id', id)
-      .single()
-
-    if (!existing || existing.user_id !== session.user.id) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
+    // Delete only if trade belongs to this user (ownership check combined with delete)
     const { error } = await admin
       .from('trades')
       .delete()
       .eq('id', id)
+      .eq('user_id', user.id)
 
     if (error) {
       console.error('Trade delete error:', error)

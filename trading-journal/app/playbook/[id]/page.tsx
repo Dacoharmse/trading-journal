@@ -2,7 +2,6 @@
 
 import * as React from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { PlaybookEditor } from '@/components/playbook/PlaybookEditor'
 import { PlaybookMiniDashboard, calculatePlaybookStats, type PlaybookStats } from '@/components/playbook/PlaybookMiniDashboard'
 import type {
@@ -28,7 +27,6 @@ interface TradeRecord {
 }
 
 export default function EditPlaybookPage() {
-  const supabase = React.useMemo(() => createClient(), [])
   const router = useRouter()
   const params = useParams<{ id: string }>()
   const searchParams = useSearchParams()
@@ -61,78 +59,49 @@ export default function EditPlaybookPage() {
       setLoading(true)
 
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session?.user) {
+        // Single API call replaces 9 browser-client queries (bypasses RLS, no token-refresh lock)
+        const res = await fetch(`/api/playbook/full?playbook_id=${encodeURIComponent(playbookId)}`)
+
+        if (res.status === 401) {
           router.replace('/auth/login')
           return
         }
 
-        if (cancelled) return
-
-        setUserId(session.user.id)
-
-        const [playbookRes, rulesRes, confRes, detailsRes, examplesRes, indicatorsRes, rubricRes, symbolsRes, tradesRes] = await Promise.all([
-          supabase.from('playbooks').select('*').eq('id', playbookId).maybeSingle(),
-          supabase
-            .from('playbook_rules')
-            .select('*')
-            .eq('playbook_id', playbookId)
-            .order('sort'),
-          supabase
-            .from('playbook_confluences')
-            .select('*')
-            .eq('playbook_id', playbookId)
-            .order('sort'),
-          supabase
-            .from('playbook_trade_details')
-            .select('*')
-            .eq('playbook_id', playbookId)
-            .order('sort'),
-          supabase
-            .from('playbook_examples')
-            .select('*')
-            .eq('playbook_id', playbookId)
-            .order('sort'),
-          supabase
-            .from('playbook_indicators')
-            .select('*')
-            .eq('playbook_id', playbookId)
-            .order('sort'),
-          supabase.from('playbook_rubric').select('*').eq('playbook_id', playbookId).maybeSingle(),
-          supabase.from('symbols').select('id, code, display_name').order('code'),
-          supabase
-            .from('trades')
-            .select('id, playbook_id, pnl, r_multiple, actual_rr, exit_date')
-            .eq('playbook_id', playbookId),
-        ])
-
-        if (playbookRes.error) throw playbookRes.error
-        if (!playbookRes.data) {
+        if (res.status === 404) {
           setMissing(true)
           return
         }
 
-        if (!cancelled) {
-          setPlaybook(playbookRes.data as Playbook)
-          setRules((rulesRes.data as PlaybookRule[] | null) ?? [])
-          setConfluences((confRes.data as PlaybookConfluence[] | null) ?? [])
-          setTradeDetails((detailsRes.data as PlaybookTradeDetail[] | null) ?? [])
-          setExamples((examplesRes.data as PlaybookExample[] | null) ?? [])
-          setIndicators((indicatorsRes.data as PlaybookIndicator[] | null) ?? [])
-          setRubric((rubricRes.data as PlaybookRubric | null) ?? null)
-          setSymbols((symbolsRes.data as Symbol[] | null) ?? [])
-
-          // Calculate playbook stats — normalize field names from DB
-          const rawTrades = (tradesRes.data as TradeRecord[] | null) ?? []
-          if (tradesRes.error) console.error('Trades query error:', tradesRes.error)
-          const trades = rawTrades.map((t) => ({
-            ...t,
-            r_multiple: t.r_multiple ?? t.actual_rr ?? null,
-            closed_at: t.exit_date ?? null,
-          }))
-          const calculatedStats = calculatePlaybookStats(playbookId, trades)
-          setStats(calculatedStats.total_trades > 0 ? calculatedStats : null)
+        if (!res.ok) {
+          throw new Error(`Failed to load playbook (${res.status})`)
         }
+
+        const data = await res.json()
+        if (cancelled) return
+
+        // Derive userId from profile fetch (non-blocking, best-effort)
+        fetch('/api/user/profile').then(r => r.json()).then(({ profile }) => {
+          if (profile?.id || profile?.user_id) setUserId(profile.user_id || profile.id)
+        }).catch(() => {})
+
+        setPlaybook(data.playbook as Playbook)
+        setRules((data.rules as PlaybookRule[]) ?? [])
+        setConfluences((data.confluences as PlaybookConfluence[]) ?? [])
+        setTradeDetails((data.tradeDetails as PlaybookTradeDetail[]) ?? [])
+        setExamples((data.examples as PlaybookExample[]) ?? [])
+        setIndicators((data.indicators as PlaybookIndicator[]) ?? [])
+        setRubric((data.rubric as PlaybookRubric | null) ?? null)
+        setSymbols((data.symbols as Symbol[]) ?? [])
+
+        // Calculate playbook stats
+        const rawTrades = (data.trades as TradeRecord[]) ?? []
+        const trades = rawTrades.map((t) => ({
+          ...t,
+          r_multiple: t.r_multiple ?? t.actual_rr ?? null,
+          closed_at: t.exit_date ?? null,
+        }))
+        const calculatedStats = calculatePlaybookStats(playbookId, trades)
+        setStats(calculatedStats.total_trades > 0 ? calculatedStats : null)
       } catch (error) {
         if (!cancelled) {
           console.error('Failed to load playbook:', error)
@@ -150,7 +119,7 @@ export default function EditPlaybookPage() {
     return () => {
       cancelled = true
     }
-  }, [playbookId, supabase, router])
+  }, [playbookId, router])
 
   if (loading) {
     return (
