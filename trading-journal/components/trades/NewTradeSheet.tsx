@@ -652,7 +652,17 @@ export function NewTradeSheet({
       rr_planned: rrPlannedNum,
       risk_r: riskRNum,
       r_multiple: rMultiple,
-      pnl: pnlAmount ? parseFloat(pnlAmount) : 0,  // sync with pnl_amount so table display works
+      // Enforce PNL sign from outcome: losses must be negative, wins positive
+      // This ensures win/loss stats are correct even if the user entered the wrong sign
+      pnl: (() => {
+        let v = pnlAmount ? parseFloat(pnlAmount) : 0
+        if (outcome === 'loss' && v > 0) v = -v
+        if (outcome === 'win' && v < 0) v = -v
+        if (outcome === 'breakeven') v = 0
+        return v
+      })(),
+      // Status: 'closed' when the trade has an exit date or a recorded P/L
+      status: (exitDate || pnlAmount) ? 'closed' : 'open',
       playbook_id: playbookId || null,
       rules_checked: playbookId ? rulesSnapshot : null,
       confluences_checked: playbookId ? confluencesSnapshot : null,
@@ -670,7 +680,14 @@ export function NewTradeSheet({
       notes: notes || null,
       media_urls: media.map((m) => m.url),
       htf_media_urls: htfMedia.length > 0 ? htfMedia.map((m) => m.url) : undefined,
-      pnl_amount: pnlAmount ? parseFloat(pnlAmount) : null,
+      pnl_amount: (() => {
+        if (!pnlAmount) return null
+        let v = parseFloat(pnlAmount)
+        if (outcome === 'loss' && v > 0) v = -v
+        if (outcome === 'win' && v < 0) v = -v
+        if (outcome === 'breakeven') v = 0
+        return v
+      })(),
       pnl_currency: selectedAccount?.currency || 'USD',
       currency: selectedAccount?.currency || 'USD',
       actual_rr: actualRr ? parseFloat(actualRr) : null,

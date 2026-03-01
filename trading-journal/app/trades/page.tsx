@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useDashboardFilters, computeDateRange } from '@/stores/dashboard-filters'
 import { useTradesFilters } from '@/stores/trades-filters'
+import { useTradeStore } from '@/stores'
 import type { Trade, Account, Playbook } from '@/types/supabase'
 import { TradesToolbar } from '@/components/trades/TradesToolbar'
 import { TradesTable } from '@/components/trades/TradesTable'
@@ -480,6 +481,9 @@ function TradesPageContent() {
     } else {
       setTrades((prev) => [savedTrade, ...prev])
     }
+
+    // Sync the dashboard Zustand store so stats update without requiring navigation
+    void useTradeStore.getState().fetchTrades()
 
     setTradeSheetOpen(false)
     setEditingTrade(null)

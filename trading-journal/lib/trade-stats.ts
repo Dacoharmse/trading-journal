@@ -183,9 +183,18 @@ export function calculateTradeStats(trades: Trade[]): TradeStats {
   }
 
   // Use all trades with a recorded PnL (open trades with pnl set count toward stats)
-  const closedTrades = trades.filter((trade) => trade.status === 'closed' || (trade.pnl != null && trade.pnl !== 0))
-  const winningTrades = closedTrades.filter((trade) => trade.pnl > 0)
-  const losingTrades = closedTrades.filter((trade) => trade.pnl < 0)
+  const closedTrades = trades.filter((trade) => trade.status === 'closed' || (trade.pnl != null && trade.pnl !== 0) || trade.outcome)
+  const winningTrades = closedTrades.filter((trade) => {
+    if (trade.pnl > 0) return true
+    if (trade.pnl < 0) return false
+    // pnl === 0: use outcome field as tiebreaker
+    return trade.outcome === 'win'
+  })
+  const losingTrades = closedTrades.filter((trade) => {
+    if (trade.pnl < 0) return true
+    if (trade.pnl > 0) return false
+    return trade.outcome === 'loss'
+  })
 
   const totalPnl = trades.reduce((sum, trade) => sum + (trade.pnl ?? 0), 0)
   const totalFees = trades.reduce((sum, trade) => sum + ((trade.fees ?? 0) + (trade.commission ?? 0) + (trade.swap ?? 0) + (trade.slippage ?? 0)), 0)
