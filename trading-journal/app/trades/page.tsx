@@ -3,7 +3,6 @@
 import React, { Suspense } from 'react'
 import { useShallow } from 'zustand/shallow'
 import { useSearchParams } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { useDashboardFilters, computeDateRange } from '@/stores/dashboard-filters'
 import { useTradesFilters } from '@/stores/trades-filters'
 import { useTradeStore } from '@/stores'
@@ -27,7 +26,6 @@ const TRADES_PER_PAGE = 100
 const INITIAL_LOAD = 50
 
 function TradesPageContent() {
-  const supabase = React.useMemo(() => createClient(), [])
   const searchParams = useSearchParams()
 
   // State
@@ -130,26 +128,26 @@ function TradesPageContent() {
     }
 
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      // Use server-side profile API instead of supabase.auth.getSession()
+      // which can hang indefinitely when another tab holds the token-refresh lock
+      const profileRes = await fetchWithTimeout('/api/user/profile')
 
-      if (!session?.user) {
+      if (profileRes.status === 401) {
         setAuthStatus('unauthenticated')
         throw new Error('You must be logged in to view trades. Please sign in to continue.')
       }
 
-      setAuthStatus('authenticated')
-      setUserId(session.user.id)
-
-      // Check mentor status on initial load (don't block on it)
-      if (!loadMore) {
-        fetch('/api/user/profile')
-          .then((r) => r.ok ? r.json() : null)
-          .then((data) => {
-            if (data?.profile?.is_mentor && data?.profile?.mentor_approved) {
-              setIsMentor(true)
-            }
-          })
-          .catch(() => {})
+      if (profileRes.ok) {
+        const profileData = await profileRes.json()
+        const profile = profileData?.profile
+        const resolvedUserId = profile?.user_id || profile?.id || ''
+        setAuthStatus('authenticated')
+        setUserId(resolvedUserId)
+        if (!loadMore && profile) {
+          setIsMentor(!!(profile.is_mentor && profile.mentor_approved))
+        }
+      } else {
+        setAuthStatus('authenticated')
       }
 
       // Only fetch accounts and playbooks on initial load
