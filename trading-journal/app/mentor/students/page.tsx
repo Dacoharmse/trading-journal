@@ -161,27 +161,36 @@ export default function MentorStudentsPage() {
 
       // Calculate stats
       const trades = tradesData || []
-      const closedTrades = trades.filter((t) => t.status === 'closed')
-      const winningTrades = closedTrades.filter((t) => t.pnl > 0)
-      const losingTrades = closedTrades.filter((t) => t.pnl < 0)
+      // Include trades with pnl set or outcome field, not just status === 'closed'
+      const closedTrades = trades.filter((t: any) => t.status === 'closed' || (t.pnl != null && t.pnl !== 0) || t.outcome)
+      const winningTrades = closedTrades.filter((t: any) => {
+        if (t.pnl > 0) return true
+        if (t.pnl < 0) return false
+        return t.outcome === 'win'
+      })
+      const losingTrades = closedTrades.filter((t: any) => {
+        if (t.pnl < 0) return true
+        if (t.pnl > 0) return false
+        return t.outcome === 'loss'
+      })
 
-      const totalPnl = closedTrades.reduce((sum, t) => sum + (t.pnl || 0), 0)
+      const totalPnl = trades.reduce((sum: number, t: any) => sum + (t.pnl || 0), 0)
       const winRate = closedTrades.length > 0 ? (winningTrades.length / closedTrades.length) * 100 : 0
 
       const avgWin = winningTrades.length > 0
-        ? winningTrades.reduce((sum, t) => sum + t.pnl, 0) / winningTrades.length
+        ? winningTrades.reduce((sum: number, t: any) => sum + t.pnl, 0) / winningTrades.length
         : 0
 
       const avgLoss = losingTrades.length > 0
-        ? losingTrades.reduce((sum, t) => sum + t.pnl, 0) / losingTrades.length
+        ? losingTrades.reduce((sum: number, t: any) => sum + t.pnl, 0) / losingTrades.length
         : 0
 
-      const bestTrade = closedTrades.length > 0
-        ? Math.max(...closedTrades.map((t) => t.pnl))
+      const bestTrade = trades.length > 0
+        ? Math.max(...trades.map((t: any) => t.pnl || 0))
         : 0
 
-      const worstTrade = closedTrades.length > 0
-        ? Math.min(...closedTrades.map((t) => t.pnl))
+      const worstTrade = trades.length > 0
+        ? Math.min(...trades.map((t: any) => t.pnl || 0))
         : 0
 
       const lastTrade = trades.length > 0 ? trades[0].entry_date : null
@@ -196,7 +205,7 @@ export default function MentorStudentsPage() {
         average_loss: avgLoss,
         best_trade: bestTrade,
         worst_trade: worstTrade,
-        active_trades: trades.filter((t) => t.status === 'open').length,
+        active_trades: trades.filter((t: any) => t.status === 'open').length,
         last_trade_date: lastTrade,
       })
     } catch (error) {
