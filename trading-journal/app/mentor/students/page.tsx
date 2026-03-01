@@ -15,7 +15,6 @@ import {
   GraduationCap,
   Zap,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { getCurrentUserProfile } from '@/lib/auth-utils'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -75,7 +74,6 @@ interface StudentTrade {
 
 export default function MentorStudentsPage() {
   const router = useRouter()
-  const supabase = React.useMemo(() => createClient(), [])
   const { toast } = useToast()
 
   const [loading, setLoading] = React.useState(true)
@@ -151,15 +149,13 @@ export default function MentorStudentsPage() {
     const studentUserId = student.user_id || student.id
 
     try {
-      // Load student's trades
-      const { data: tradesData, error: tradesError } = await supabase
-        .from('trades')
-        .select('*')
-        .eq('user_id', studentUserId)
-        .order('entry_date', { ascending: false })
-        .limit(50)
-
-      if (tradesError) throw tradesError
+      // Load student's trades via server API (bypasses RLS)
+      const res = await fetch(`/api/mentor/student-trades?userId=${studentUserId}`)
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.error || `Failed to load student trades (${res.status})`)
+      }
+      const { trades: tradesData } = await res.json()
 
       setStudentTrades(tradesData || [])
 
