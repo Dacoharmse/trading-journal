@@ -16,9 +16,9 @@ export async function GET() {
     const [accountsResult, playbooksResult] = await Promise.all([
       admin
         .from('accounts')
-        .select('id, name, currency, account_type, phase, account_status')
+        .select('id, name, broker, currency, account_type, phase, account_status, starting_balance, trading_pairs, is_active, risk_limit_type, risk_limit_value, session_risk_enabled, profit_target, max_drawdown, daily_drawdown, current_profits, current_drawdown, created_at')
         .eq('user_id', user.id)
-        .order('name'),
+        .order('created_at', { ascending: false }),
       admin
         .from('playbooks')
         .select('id, name, category, active')
@@ -44,6 +44,60 @@ export async function GET() {
     console.error('GET /api/accounts error:', err)
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Failed to fetch accounts' },
+      { status: 500 }
+    )
+  }
+}
+
+// POST /api/accounts — create a new account
+export async function POST(req: NextRequest) {
+  try {
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const input = await req.json()
+    const admin = createAdminClient()
+
+    const { data, error } = await admin
+      .from('accounts')
+      .insert({
+        user_id: user.id,
+        name: input.name,
+        broker: input.broker,
+        account_type: input.accountType,
+        currency: input.currency,
+        starting_balance: input.startingBalance,
+        current_balance: input.startingBalance,
+        trading_pairs: input.tradingPairs || [],
+        is_active: input.isActive ?? true,
+        risk_limit_type: input.riskLimitType || 'percentage',
+        risk_limit_value: input.riskLimitValue ?? 2.0,
+        session_risk_enabled: input.sessionRiskEnabled ?? false,
+        phase: input.propFirmSettings?.phase,
+        profit_target: input.propFirmSettings?.profitTarget,
+        max_drawdown: input.propFirmSettings?.maxDrawdown,
+        daily_drawdown: input.propFirmSettings?.dailyDrawdown,
+        account_status: input.propFirmSettings?.status || 'new',
+        current_profits: input.propFirmSettings?.currentProfits,
+        current_drawdown: input.propFirmSettings?.currentDrawdown,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('POST /api/accounts error:', error)
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    return NextResponse.json({ account: data })
+  } catch (err) {
+    console.error('POST /api/accounts error:', err)
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Failed to create account' },
       { status: 500 }
     )
   }

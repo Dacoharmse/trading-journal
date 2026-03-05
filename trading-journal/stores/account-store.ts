@@ -10,7 +10,6 @@ import {
   calculateAccountMetrics,
 } from '@/types/account';
 import { Trade } from '@/types/trade';
-import { createClient } from '@/lib/supabase/client';
 
 interface AccountState {
   accounts: TradingAccount[];
@@ -50,30 +49,21 @@ export const useAccountStore = create<AccountState>()(
         set({ isLoading: true, error: null });
 
         try {
-          const supabase = createClient();
-          const { data: { session } } = await supabase.auth.getSession();
-          let user = session?.user ?? null;
-
-          if (!user) {
-            const { data: { user: u } } = await supabase.auth.getUser();
-            user = u ?? null;
+          // Use API route to bypass RLS (browser Supabase client returns empty due to RLS)
+          const res = await fetch('/api/accounts');
+          if (!res.ok) {
+            if (res.status === 401) {
+              set({ isLoading: false });
+              return;
+            }
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.error || 'Failed to fetch accounts');
           }
 
-          if (!user) {
-            set({ isLoading: false });
-            return;
-          }
-
-          const { data, error } = await supabase
-            .from('accounts')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
-
-          if (error) throw error;
+          const { accounts: data } = await res.json();
 
           // Transform database rows to TradingAccount format
-          const accounts: TradingAccount[] = (data || []).map((row) => ({
+          const accounts: TradingAccount[] = (data || []).map((row: any) => ({
             id: row.id,
             name: row.name,
             broker: row.broker,
@@ -82,6 +72,9 @@ export const useAccountStore = create<AccountState>()(
             startingBalance: Number(row.starting_balance),
             tradingPairs: row.trading_pairs || [],
             isActive: row.is_active,
+            riskLimitType: row.risk_limit_type || 'percentage',
+            riskLimitValue: row.risk_limit_value ? Number(row.risk_limit_value) : 2.0,
+            sessionRiskEnabled: row.session_risk_enabled ?? false,
             propFirmSettings: row.account_type === 'prop-firm' ? {
               phase: row.phase as PropFirmPhase | undefined,
               profitTarget: row.profit_target ? Number(row.profit_target) : undefined,
@@ -129,42 +122,19 @@ export const useAccountStore = create<AccountState>()(
         set({ isLoading: true, error: null });
 
         try {
-          const supabase = createClient();
-          const { data: { session } } = await supabase.auth.getSession();
-          const user = session?.user ?? null;
+          // Use API route to bypass RLS
+          const res = await fetch('/api/accounts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(input),
+          });
 
-          if (!user) {
-            set({ error: 'User not authenticated', isLoading: false });
-            return null;
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.error || 'Failed to create account');
           }
 
-          const { data, error } = await supabase
-            .from('accounts')
-            .insert({
-              user_id: user.id,
-              name: input.name,
-              broker: input.broker,
-              account_type: input.accountType,
-              currency: input.currency,
-              starting_balance: input.startingBalance,
-              current_balance: input.startingBalance,
-              trading_pairs: input.tradingPairs || [],
-              is_active: input.isActive ?? true,
-              risk_limit_type: input.riskLimitType || 'percentage',
-              risk_limit_value: input.riskLimitValue ?? 2.0,
-              session_risk_enabled: input.sessionRiskEnabled ?? false,
-              phase: input.propFirmSettings?.phase,
-              profit_target: input.propFirmSettings?.profitTarget,
-              max_drawdown: input.propFirmSettings?.maxDrawdown,
-              daily_drawdown: input.propFirmSettings?.dailyDrawdown,
-              account_status: input.propFirmSettings?.status || 'new',
-              current_profits: input.propFirmSettings?.currentProfits,
-              current_drawdown: input.propFirmSettings?.currentDrawdown,
-            })
-            .select()
-            .single();
-
-          if (error) throw error;
+          const { account: data } = await res.json();
 
           // Transform to TradingAccount format
           const newAccount: TradingAccount = {
@@ -199,7 +169,7 @@ export const useAccountStore = create<AccountState>()(
           return newAccount;
         } catch (error: any) {
           set({ error: error.message, isLoading: false });
-                    return null;
+          return null;
         }
       },
 
