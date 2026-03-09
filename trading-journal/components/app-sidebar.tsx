@@ -235,8 +235,9 @@ const bottomItems = [
   },
   {
     title: "Support",
-    url: "/support",
+    url: "https://whop.com/joined/2g-s-trading/help-KG3upPC5IV17Vg/app/",
     icon: MessageSquare,
+    external: true,
   },
   {
     title: "Settings",
