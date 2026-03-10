@@ -288,7 +288,8 @@ function TradesPageContent() {
   // Filter trades
   const filteredTrades = React.useMemo(() => {
     // Separate open positions — always show them regardless of any filter
-    const openTrades = trades.filter((t) => !t.exit_date && t.status !== 'closed')
+    // A trade is open if it has no exit_date (regardless of status field)
+    const openTrades = trades.filter((t) => !t.exit_date)
     const openIds = new Set(openTrades.map((t) => t.id))
     let filtered = trades.filter((t) => !openIds.has(t.id))
 
