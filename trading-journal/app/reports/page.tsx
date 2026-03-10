@@ -1,7 +1,6 @@
 'use client'
 
 import * as React from 'react'
-import { createClient } from '@/lib/supabase/client'
 import type { Trade } from '@/types/supabase'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -38,8 +37,6 @@ import {
 import { format } from 'date-fns'
 
 export default function ReportsPage() {
-  const supabase = React.useMemo(() => createClient(), [])
-
   const [loading, setLoading] = React.useState(true)
   const [generating, setGenerating] = React.useState(false)
   const [allTrades, setAllTrades] = React.useState<Trade[]>([])
@@ -71,22 +68,15 @@ export default function ReportsPage() {
     const load = async () => {
       setLoading(true)
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session?.user || cancelled) return
-
         const [tradesRes, playbooksRes] = await Promise.all([
-          supabase
-            .from('trades')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .order('closed_at', { ascending: false }),
-          supabase.from('playbooks').select('id, name').eq('user_id', session.user.id),
+          fetch('/api/trades?limit=2000').then((r) => (r.ok ? r.json() : { trades: [] })),
+          fetch('/api/playbook/list').then((r) => (r.ok ? r.json() : { playbooks: [] })),
         ])
 
         if (!cancelled) {
-          const trades = (tradesRes.data as Trade[]) ?? []
+          const trades = (tradesRes.trades as Trade[]) ?? []
           setAllTrades(trades)
-          setPlaybooks((playbooksRes.data as Array<{ id: string; name: string }>) ?? [])
+          setPlaybooks((playbooksRes.playbooks as Array<{ id: string; name: string }>) ?? [])
 
           // Extract unique symbols
           const uniqueSymbols = Array.from(new Set(trades.map((t) => t.symbol).filter(Boolean)))
@@ -104,7 +94,7 @@ export default function ReportsPage() {
     return () => {
       cancelled = true
     }
-  }, [supabase])
+  }, [])
 
   // Generate report
   const handleGenerateReport = () => {

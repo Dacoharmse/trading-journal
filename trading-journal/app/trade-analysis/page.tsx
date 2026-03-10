@@ -1,7 +1,6 @@
 'use client'
 
 import * as React from 'react'
-import { createClient } from '@/lib/supabase/client'
 import type { Trade } from '@/types/supabase'
 import { TradeAnalysisFilters } from '@/components/trade-analysis/TradeAnalysisFilters'
 import { TradeAnalysisChart } from '@/components/trade-analysis/TradeAnalysisChart'
@@ -62,41 +61,11 @@ export default function TradeAnalysisPage() {
     let cancelled = false
 
     const loadTrades = async () => {
-      console.log('[Trade Analysis] Starting to load trades...')
-
       try {
-        const supabase = createClient()
-        console.log('[Trade Analysis] Getting user...')
-
-        const { data: { session } } = await supabase.auth.getSession()
-
-        if (!session?.user) {
-          if (!cancelled) {
-            setLoading(false)
-            setAllTrades([])
-          }
-          return
-        }
-
-        const { data, error } = await supabase
-          .from('trades')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .order('exit_date', { ascending: true, nullsFirst: false })
-
-        if (error) {
-          console.error('[Trade Analysis] Trades error:', error)
-          if (!cancelled) {
-            setLoading(false)
-            setAllTrades([])
-          }
-          return
-        }
-
-        console.log('[Trade Analysis] Loaded', data?.length || 0, 'trades')
-
+        const res = await fetch('/api/trades?limit=2000')
         if (!cancelled) {
-          setAllTrades((data as Trade[]) || [])
+          const json = res.ok ? await res.json() : { trades: [] }
+          setAllTrades((json.trades as Trade[]) ?? [])
           setLoading(false)
         }
       } catch (error) {

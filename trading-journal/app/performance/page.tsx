@@ -1,7 +1,6 @@
 'use client'
 
 import * as React from 'react'
-import { createClient } from '@/lib/supabase/client'
 import type { Trade, Account } from '@/types/supabase'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -42,8 +41,6 @@ import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 
 export default function PerformancePage() {
-  const supabase = React.useMemo(() => createClient(), [])
-
   const [loading, setLoading] = React.useState(true)
   const [allTrades, setAllTrades] = React.useState<Trade[]>([])
   const [accounts, setAccounts] = React.useState<Account[]>([])
@@ -69,21 +66,14 @@ export default function PerformancePage() {
     const load = async () => {
       setLoading(true)
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session?.user || cancelled) return
-
         const [tradesRes, accountsRes] = await Promise.all([
-          supabase
-            .from('trades')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .order('closed_at', { ascending: false }),
-          supabase.from('accounts').select('*').eq('user_id', session.user.id),
+          fetch('/api/trades?limit=2000').then((r) => (r.ok ? r.json() : { trades: [] })),
+          fetch('/api/accounts').then((r) => (r.ok ? r.json() : { accounts: [] })),
         ])
 
         if (!cancelled) {
-          setAllTrades((tradesRes.data as Trade[]) ?? [])
-          const accountsList = (accountsRes.data as Account[]) ?? []
+          setAllTrades((tradesRes.trades as Trade[]) ?? [])
+          const accountsList = (accountsRes.accounts as Account[]) ?? []
           setAccounts(accountsList)
 
           // Set starting balance from first account
@@ -103,7 +93,7 @@ export default function PerformancePage() {
     return () => {
       cancelled = true
     }
-  }, [supabase])
+  }, [])
 
   // Calculate performance metrics
   React.useEffect(() => {

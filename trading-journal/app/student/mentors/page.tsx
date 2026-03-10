@@ -2,8 +2,6 @@
 
 import * as React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { createClient } from '@/lib/supabase/client'
-import { getCurrentUserProfile } from '@/lib/auth-utils'
 import type { UserProfile } from '@/types/mentorship'
 import {
   Users,
@@ -22,67 +20,17 @@ interface MentorInfo extends UserProfile {
 }
 
 export default function StudentMentorsPage() {
-  const supabase = React.useMemo(() => createClient(), [])
   const { toast } = useToast()
   const [loading, setLoading] = React.useState(true)
   const [mentors, setMentors] = React.useState<MentorInfo[]>([])
 
   React.useEffect(() => {
-    loadMentors()
-  }, [supabase])
-
-  const loadMentors = async () => {
-    try {
-      // Get all approved mentors (Keegan van Dyk and Chris Dicks)
-      const { data: allMentors } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('is_mentor', true)
-        .eq('mentor_approved', true)
-        .neq('role', 'admin')
-
-      const mentorsWithCounts: MentorInfo[] = []
-
-      for (const mentor of allMentors || []) {
-        // Get published trades count
-        const { count: tradesCount } = await supabase
-          .from('published_trades')
-          .select('*', { count: 'exact', head: true })
-          .eq('mentor_id', mentor.id)
-
-        // Get students count
-        const { count: studentsCount } = await supabase
-          .from('mentor_relationships')
-          .select('*', { count: 'exact', head: true })
-          .eq('mentor_id', mentor.id)
-          .eq('status', 'accepted')
-
-        // Get shared playbooks count
-        const { count: playbooksCount } = await supabase
-          .from('shared_playbooks')
-          .select('*', { count: 'exact', head: true })
-          .eq('mentor_id', mentor.id)
-
-        mentorsWithCounts.push({
-          ...mentor,
-          publishedTradesCount: tradesCount || 0,
-          studentsCount: studentsCount || 0,
-          sharedPlaybooksCount: playbooksCount || 0,
-        })
-      }
-
-      setMentors(mentorsWithCounts)
-    } catch (error) {
-      console.error('Failed to load mentors:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to load mentors',
-        variant: 'destructive',
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
+    fetch('/api/student/mentors')
+      .then((r) => (r.ok ? r.json() : { mentors: [] }))
+      .then((json) => setMentors(json.mentors ?? []))
+      .catch(() => toast({ title: 'Error', description: 'Failed to load mentors', variant: 'destructive' }))
+      .finally(() => setLoading(false))
+  }, [])
 
   if (loading) {
     return (

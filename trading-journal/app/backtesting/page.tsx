@@ -2,7 +2,6 @@
 
 import * as React from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import type { Backtest } from '@/lib/backtest-selectors'
 import { backtestKPIs } from '@/lib/backtest-selectors'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -33,7 +32,6 @@ interface PlaybookWithStats {
 }
 
 export default function BacktestingPage() {
-  const supabase = createClient()
   const [loading, setLoading] = React.useState(true)
   const [playbooks, setPlaybooks] = React.useState<PlaybookWithStats[]>([])
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
@@ -46,40 +44,33 @@ export default function BacktestingPage() {
     const load = async () => {
       setLoading(true)
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session?.user) return
-
-        const [playbooksRes, backtestsRes] = await Promise.all([
-          supabase.from('playbooks').select('id, name, trade_type, active'),
-          supabase.from('backtests').select('*'),
-        ])
-
+        const res = await fetch('/api/backtests')
         if (!cancelled) {
-          const playbooksData = playbooksRes.data as Array<{
+          const json = res.ok ? await res.json() : { playbooks: [], backtests: [] }
+
+          const playbooksData = (json.playbooks as Array<{
             id: string
             name: string
             trade_type: string | null
             active: boolean
-          }> | null
+          }>) ?? []
 
-          const backtestsData = (backtestsRes.data as Backtest[]) ?? []
+          const backtestsData = (json.backtests as Backtest[]) ?? []
 
-          const playbooksWithStats: PlaybookWithStats[] =
-            playbooksData?.map((pb) => {
-              const pbBacktests = backtestsData.filter((bt) => bt.playbook_id === pb.id)
-              const kpis = backtestKPIs(pbBacktests)
-
-              return {
-                id: pb.id,
-                name: pb.name,
-                trade_type: pb.trade_type,
-                active: pb.active,
-                backtestCount: kpis.n,
-                winRate: kpis.winRate,
-                expectancyR: kpis.expectancyR,
-                profitFactor: kpis.pfR,
-              }
-            }) ?? []
+          const playbooksWithStats: PlaybookWithStats[] = playbooksData.map((pb) => {
+            const pbBacktests = backtestsData.filter((bt) => bt.playbook_id === pb.id)
+            const kpis = backtestKPIs(pbBacktests)
+            return {
+              id: pb.id,
+              name: pb.name,
+              trade_type: pb.trade_type,
+              active: pb.active,
+              backtestCount: kpis.n,
+              winRate: kpis.winRate,
+              expectancyR: kpis.expectancyR,
+              profitFactor: kpis.pfR,
+            }
+          })
 
           setPlaybooks(playbooksWithStats)
         }
@@ -95,44 +86,37 @@ export default function BacktestingPage() {
     return () => {
       cancelled = true
     }
-  }, [supabase])
+  }, [])
 
   const loadData = React.useCallback(async () => {
     setLoading(true)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user) return
+      const res = await fetch('/api/backtests')
+      const json = res.ok ? await res.json() : { playbooks: [], backtests: [] }
 
-      const [playbooksRes, backtestsRes] = await Promise.all([
-        supabase.from('playbooks').select('id, name, trade_type, active'),
-        supabase.from('backtests').select('*'),
-      ])
-
-      const playbooksData = playbooksRes.data as Array<{
+      const playbooksData = (json.playbooks as Array<{
         id: string
         name: string
         trade_type: string | null
         active: boolean
-      }> | null
+      }>) ?? []
 
-      const backtestsData = (backtestsRes.data as Backtest[]) ?? []
+      const backtestsData = (json.backtests as Backtest[]) ?? []
 
-      const playbooksWithStats: PlaybookWithStats[] =
-        playbooksData?.map((pb) => {
-          const pbBacktests = backtestsData.filter((bt) => bt.playbook_id === pb.id)
-          const kpis = backtestKPIs(pbBacktests)
-
-          return {
-            id: pb.id,
-            name: pb.name,
-            trade_type: pb.trade_type,
-            active: pb.active,
-            backtestCount: kpis.n,
-            winRate: kpis.winRate,
-            expectancyR: kpis.expectancyR,
-            profitFactor: kpis.pfR,
-          }
-        }) ?? []
+      const playbooksWithStats: PlaybookWithStats[] = playbooksData.map((pb) => {
+        const pbBacktests = backtestsData.filter((bt) => bt.playbook_id === pb.id)
+        const kpis = backtestKPIs(pbBacktests)
+        return {
+          id: pb.id,
+          name: pb.name,
+          trade_type: pb.trade_type,
+          active: pb.active,
+          backtestCount: kpis.n,
+          winRate: kpis.winRate,
+          expectancyR: kpis.expectancyR,
+          profitFactor: kpis.pfR,
+        }
+      })
 
       setPlaybooks(playbooksWithStats)
     } catch (error) {
@@ -140,7 +124,7 @@ export default function BacktestingPage() {
     } finally {
       setLoading(false)
     }
-  }, [supabase])
+  }, [])
 
   const openDeleteDialog = React.useCallback((playbook: PlaybookWithStats) => {
     setPlaybookToDelete(playbook)
@@ -152,13 +136,8 @@ export default function BacktestingPage() {
 
     setIsDeleting(true)
     try {
-      // Delete all backtests for this playbook
-      const { error: deleteError } = await supabase
-        .from('backtests')
-        .delete()
-        .eq('playbook_id', playbookToDelete.id)
-
-      if (deleteError) throw deleteError
+      const res = await fetch(`/api/backtests?playbook_id=${playbookToDelete.id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to delete')
 
       setDeleteDialogOpen(false)
       setPlaybookToDelete(null)
@@ -169,7 +148,7 @@ export default function BacktestingPage() {
     } finally {
       setIsDeleting(false)
     }
-  }, [playbookToDelete, supabase, loadData])
+  }, [playbookToDelete, loadData])
 
   if (loading) {
     return (

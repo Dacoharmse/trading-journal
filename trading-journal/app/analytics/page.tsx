@@ -1,7 +1,6 @@
 'use client'
 
 import * as React from 'react'
-import { createClient } from '@/lib/supabase/client'
 import type { Trade } from '@/types/supabase'
 import {
   selectTradesInScope,
@@ -33,8 +32,6 @@ import { TradeTypePerformance } from '@/components/analytics/TradeTypePerformanc
 import type { Playbook } from '@/types/supabase'
 
 export default function AnalyticsPage() {
-  const supabase = React.useMemo(() => createClient(), [])
-
   const [loading, setLoading] = React.useState(true)
   const [rawTrades, setRawTrades] = React.useState<Trade[]>([])
   const [playbooks, setPlaybooks] = React.useState<Array<{ id: string; name: string; trade_type?: Playbook['trade_type'] }>>([])
@@ -52,26 +49,14 @@ export default function AnalyticsPage() {
     const load = async () => {
       setLoading(true)
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        let user = session?.user ?? null
-        if (!user) {
-          const { data: { user: u } } = await supabase.auth.getUser()
-          user = u ?? null
-        }
-        if (!user) return
-
         const [tradesRes, playbooksRes] = await Promise.all([
-          supabase
-            .from('trades')
-            .select('*')
-            .gte('exit_date', filters.dateFrom)
-            .order('exit_date', { ascending: false }),
-          supabase.from('playbooks').select('id, name, trade_type'),
+          fetch('/api/trades?limit=2000').then((r) => (r.ok ? r.json() : { trades: [] })),
+          fetch('/api/playbook/list').then((r) => (r.ok ? r.json() : { playbooks: [] })),
         ])
 
         if (!cancelled) {
           // Normalize trades: backfill r_multiple from actual_rr, compute hold_mins from open/close time
-          const trades = ((tradesRes.data as Trade[]) ?? []).map(t => {
+          const trades = ((tradesRes.trades as Trade[]) ?? []).map(t => {
             const rMultiple = t.r_multiple ?? (t as any).actual_rr ?? null
             let holdMins = t.hold_mins ?? null
             if (holdMins == null && t.open_time && t.close_time) {
@@ -84,7 +69,7 @@ export default function AnalyticsPage() {
             return { ...t, r_multiple: rMultiple, hold_mins: holdMins }
           })
           setRawTrades(trades)
-          setPlaybooks((playbooksRes.data as Array<{ id: string; name: string }>) ?? [])
+          setPlaybooks((playbooksRes.playbooks as Array<{ id: string; name: string }>) ?? [])
         }
       } catch (error) {
         console.error('Failed to load analytics data:', error)
@@ -98,7 +83,7 @@ export default function AnalyticsPage() {
     return () => {
       cancelled = true
     }
-  }, [supabase, filters.dateFrom, filters.dateTo])
+  }, [])
 
   // Compute scoped and trimmed trades
   const scopedTrades = React.useMemo(() => {
