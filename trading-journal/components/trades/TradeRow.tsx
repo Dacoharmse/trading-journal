@@ -297,6 +297,10 @@ export function TradeRow({
             }`}>
               {trade.outcome}
             </span>
+          ) : !trade.exit_date && trade.status !== 'closed' ? (
+            <span className="text-xs px-2 py-1 rounded-full font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+              Open
+            </span>
           ) : (
             <span className="text-xs text-neutral-400">—</span>
           )}

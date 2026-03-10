@@ -287,9 +287,12 @@ function TradesPageContent() {
 
   // Filter trades
   const filteredTrades = React.useMemo(() => {
-    let filtered = trades
+    // Separate open positions — always show them regardless of any filter
+    const openTrades = trades.filter((t) => !t.exit_date && t.status !== 'closed')
+    const openIds = new Set(openTrades.map((t) => t.id))
+    let filtered = trades.filter((t) => !openIds.has(t.id))
 
-    // Date range
+    // Date range (closed trades only)
     filtered = filtered.filter((trade) => {
       const tradeDate = new Date(trade.exit_date || trade.entry_date || '')
       return tradeDate >= dateRange.start && tradeDate <= dateRange.end
@@ -373,7 +376,14 @@ function TradesPageContent() {
       })
     }
 
-    return filtered
+    // Open positions always appear at the top, sorted by entry_date desc
+    const sortedOpen = [...openTrades].sort((a, b) => {
+      const aDate = a.entry_date || ''
+      const bDate = b.entry_date || ''
+      return bDate.localeCompare(aDate)
+    })
+
+    return [...sortedOpen, ...filtered]
   }, [
     trades,
     dateRange,
