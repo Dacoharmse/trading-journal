@@ -18,7 +18,6 @@ import {
   ThumbsUp,
   MessageSquare,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -79,7 +78,6 @@ interface PublishedTrade {
 
 export default function StudentTradesPage() {
   const router = useRouter()
-  const supabase = React.useMemo(() => createClient(), [])
 
   const [loading, setLoading] = React.useState(true)
   const [publishedTrades, setPublishedTrades] = React.useState<PublishedTrade[]>([])
@@ -92,106 +90,27 @@ export default function StudentTradesPage() {
   const [selectedTrade, setSelectedTrade] = React.useState<PublishedTrade | null>(null)
 
   React.useEffect(() => {
-    loadPublishedTrades()
+    fetch('/api/student/published-trades')
+      .then((r) => (r.ok ? r.json() : { trades: [] }))
+      .then((json) => setPublishedTrades(json.trades ?? []))
+      .catch((err) => console.error('Error loading published trades:', err))
+      .finally(() => setLoading(false))
   }, [])
 
-  const loadPublishedTrades = async () => {
-    try {
-      setLoading(true)
-      const { data: { session } } = await supabase.auth.getSession()
-      const user = session?.user ?? null
-      if (!user) {
-        router.push('/login')
-        return
-      }
-
-      // Get connected mentor IDs
-      const { data: connections, error: connectionsError } = await supabase
-        .from('mentorship_connections')
-        .select('mentor_id')
-        .eq('student_id', user.id)
-        .eq('status', 'active')
-
-      if (connectionsError) throw connectionsError
-
-      const mentorIds = connections?.map((c: any) => c.mentor_id) || []
-
-      // Load published trades
-      const { data: tradesData, error: tradesError } = await supabase
-        .from('published_trades')
-        .select(`
-          id,
-          trade_id,
-          mentor_id,
-          title,
-          description,
-          lessons_learned,
-          tags,
-          visibility,
-          student_ids,
-          view_count,
-          published_at,
-          trade:trade_id (
-            id,
-            symbol,
-            trade_type,
-            entry_date,
-            exit_date,
-            entry_price,
-            exit_price,
-            quantity,
-            pnl,
-            chart_image_url,
-            notes,
-            strategy
-          ),
-          mentor:mentor_id (
-            id,
-            full_name,
-            email,
-            bio
-          )
-        `)
-        .order('published_at', { ascending: false })
-
-      if (tradesError) throw tradesError
-
-      // Filter trades based on visibility rules
-      const accessibleTrades = tradesData?.filter((trade: any) => {
-        if (trade.visibility === 'public') return true
-        if (trade.visibility === 'all_students' && mentorIds.includes(trade.mentor_id)) return true
-        if (trade.visibility === 'specific_students' && trade.student_ids?.includes(user.id)) return true
-        return false
-      }) || []
-
-      setPublishedTrades(accessibleTrades)
-    } catch (error) {
-      console.error('Error loading published trades:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleViewTrade = async (publishedTrade: PublishedTrade) => {
+  const handleViewTrade = (publishedTrade: PublishedTrade) => {
     setSelectedTrade(publishedTrade)
     setShowTradeDetails(true)
 
     // Increment view count
-    try {
-      await supabase
-        .from('published_trades')
-        .update({ view_count: publishedTrade.view_count + 1 })
-        .eq('id', publishedTrade.id)
-
-      // Update local state
-      setPublishedTrades((prev) =>
-        prev.map((t) =>
-          t.id === publishedTrade.id ? { ...t, view_count: t.view_count + 1 } : t
-        )
-      )
-    } catch (error) {
-      console.error('Error updating view count:', error)
-    }
+    const newCount = publishedTrade.view_count + 1
+    fetch('/api/student/published-trades', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: publishedTrade.id, view_count: newCount }),
+    }).catch(() => {})
+    setPublishedTrades((prev) =>
+      prev.map((t) => (t.id === publishedTrade.id ? { ...t, view_count: newCount } : t))
+    )
   }
 
   const filteredTrades = React.useMemo(() => {

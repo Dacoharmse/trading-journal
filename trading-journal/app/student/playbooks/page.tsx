@@ -15,7 +15,6 @@ import {
   Users,
   Clock,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -81,7 +80,6 @@ interface PlaybookConfluence {
 
 export default function StudentPlaybooksPage() {
   const router = useRouter()
-  const supabase = React.useMemo(() => createClient(), [])
 
   const [loading, setLoading] = React.useState(true)
   const [sharedPlaybooks, setSharedPlaybooks] = React.useState<SharedPlaybook[]>([])
@@ -96,106 +94,20 @@ export default function StudentPlaybooksPage() {
   const [loadingDetails, setLoadingDetails] = React.useState(false)
 
   React.useEffect(() => {
-    loadSharedPlaybooks()
+    fetch('/api/student/shared-playbooks')
+      .then((r) => (r.ok ? r.json() : { playbooks: [] }))
+      .then((json) => setSharedPlaybooks(json.playbooks ?? []))
+      .catch((err) => console.error('Error loading shared playbooks:', err))
+      .finally(() => setLoading(false))
   }, [])
-
-  const loadSharedPlaybooks = async () => {
-    try {
-      setLoading(true)
-      const { data: { session } } = await supabase.auth.getSession()
-      const user = session?.user ?? null
-      if (!user) {
-        router.push('/login')
-        return
-      }
-
-      // Get connected mentor IDs
-      const { data: connections, error: connectionsError } = await supabase
-        .from('mentorship_connections')
-        .select('mentor_id')
-        .eq('student_id', user.id)
-        .eq('status', 'active')
-
-      if (connectionsError) throw connectionsError
-
-      const mentorIds = connections?.map((c: any) => c.mentor_id) || []
-
-      if (mentorIds.length === 0) {
-        setSharedPlaybooks([])
-        setLoading(false)
-        return
-      }
-
-      // Load shared playbooks
-      const { data: playbooksData, error: playbooksError } = await supabase
-        .from('shared_playbooks')
-        .select(`
-          id,
-          playbook_id,
-          mentor_id,
-          shared_with,
-          student_ids,
-          shared_note,
-          created_at,
-          playbook:playbook_id (
-            id,
-            name,
-            description,
-            category,
-            sessions,
-            symbols,
-            rr_min,
-            active,
-            created_at
-          ),
-          mentor:mentor_id (
-            id,
-            full_name,
-            email
-          )
-        `)
-        .in('mentor_id', mentorIds)
-        .order('created_at', { ascending: false })
-
-      if (playbooksError) throw playbooksError
-
-      // Filter playbooks based on sharing rules
-      const accessiblePlaybooks = playbooksData?.filter((pb: any) => {
-        if (pb.shared_with === 'all_students') return true
-        if (pb.shared_with === 'specific_students' && pb.student_ids?.includes(user.id)) return true
-        return false
-      }) || []
-
-      setSharedPlaybooks(accessiblePlaybooks)
-    } catch (error) {
-      console.error('Error loading shared playbooks:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const loadPlaybookDetails = async (playbookId: string) => {
     try {
       setLoadingDetails(true)
-
-      // Load rules
-      const { data: rulesData, error: rulesError } = await supabase
-        .from('playbook_rules')
-        .select('id, title, description, rule_type, is_required')
-        .eq('playbook_id', playbookId)
-        .order('is_required', { ascending: false })
-
-      if (rulesError) throw rulesError
-      setPlaybookRules(rulesData || [])
-
-      // Load confluences
-      const { data: confluencesData, error: confluencesError } = await supabase
-        .from('playbook_confluences')
-        .select('id, name, description')
-        .eq('playbook_id', playbookId)
-
-      if (confluencesError) throw confluencesError
-      setPlaybookConfluences(confluencesData || [])
+      const res = await fetch(`/api/student/shared-playbooks?playbook_id=${playbookId}`)
+      const json = res.ok ? await res.json() : { rules: [], confluences: [] }
+      setPlaybookRules(json.rules ?? [])
+      setPlaybookConfluences(json.confluences ?? [])
     } catch (error) {
       console.error('Error loading playbook details:', error)
     } finally {
