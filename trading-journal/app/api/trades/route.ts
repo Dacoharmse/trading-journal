@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       .from('trades')
       .select('*', { count: 'exact' })
       .eq('user_id', user.id)
-      .order('exit_date', { ascending: false, nullsFirst: false })
+      .order('exit_date', { ascending: false, nullsFirst: true })
       .order('entry_date', { ascending: false })
       .range(offset, offset + limit - 1)
 
