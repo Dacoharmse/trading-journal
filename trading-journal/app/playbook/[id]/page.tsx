@@ -76,13 +76,14 @@ export default function EditPlaybookPage() {
           throw new Error(`Failed to load playbook (${res.status})`)
         }
 
-        const data = await res.json()
+        const [data, profileRes] = await Promise.all([
+          res.json(),
+          fetch('/api/user/profile').then(r => r.json()).catch(() => ({})),
+        ])
         if (cancelled) return
 
-        // Derive userId from profile fetch (non-blocking, best-effort)
-        fetch('/api/user/profile').then(r => r.json()).then(({ profile }) => {
-          if (profile?.id || profile?.user_id) setUserId(profile.user_id || profile.id)
-        }).catch(() => {})
+        const profile = profileRes?.profile
+        if (profile?.id || profile?.user_id) setUserId(profile.user_id || profile.id)
 
         setPlaybook(data.playbook as Playbook)
         setRules((data.rules as PlaybookRule[]) ?? [])
