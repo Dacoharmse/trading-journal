@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 
-// GET /api/student/mentors — fetch approved mentors with counts (bypasses RLS)
+// GET /api/student/mentors — fetch all mentors visible to traders (bypasses RLS)
 export async function GET() {
   try {
     const supabase = await createClient()
@@ -10,20 +10,22 @@ export async function GET() {
 
     const admin = createAdminClient()
 
+    // Fetch all mentor-role users (is_mentor = true) — all traders see all mentors
     const { data: mentors, error } = await admin
       .from('user_profiles')
-      .select('id, user_id, full_name, email, avatar_url, instagram_url, bio, experience_level')
+      .select('id, user_id, full_name, email, avatar_url, experience_level')
       .eq('is_mentor', true)
-      .eq('mentor_approved', true)
-      .neq('role', 'admin')
       .order('full_name')
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error('GET /api/student/mentors query error:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
 
     const mentorList = mentors ?? []
     if (mentorList.length === 0) return NextResponse.json({ mentors: [] })
 
-    // Fetch counts for each mentor in parallel
+    // Fetch counts for each mentor in parallel, ignore errors on optional tables
     const mentorsWithCounts = await Promise.all(
       mentorList.map(async (mentor) => {
         const mentorId = mentor.id
@@ -32,16 +34,22 @@ export async function GET() {
           admin
             .from('published_trades')
             .select('id', { count: 'exact', head: true })
-            .eq('mentor_id', mentorId),
+            .eq('mentor_id', mentorId)
+            .then((r) => r)
+            .catch(() => ({ count: 0 })),
           admin
             .from('mentor_relationships')
             .select('id', { count: 'exact', head: true })
             .eq('mentor_id', mentorId)
-            .eq('status', 'accepted'),
+            .eq('status', 'accepted')
+            .then((r) => r)
+            .catch(() => ({ count: 0 })),
           admin
             .from('shared_playbooks')
             .select('id', { count: 'exact', head: true })
-            .eq('mentor_id', mentorId),
+            .eq('mentor_id', mentorId)
+            .then((r) => r)
+            .catch(() => ({ count: 0 })),
         ])
 
         return {
