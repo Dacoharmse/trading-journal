@@ -186,6 +186,12 @@ const mentorNavItems = [
     description: "Manage students",
   },
   {
+    title: "Analyze Playbooks",
+    url: "/mentor/playbook-analysis",
+    icon: ClipboardCheck,
+    description: "Review and comment on student playbooks",
+  },
+  {
     title: "Share Playbook",
     url: "/mentor/playbooks",
     icon: Share2,
